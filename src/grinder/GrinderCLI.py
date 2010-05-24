@@ -171,15 +171,15 @@ class RepoDriver(CliDriver):
     parallel = 5
     def __init__(self):
         usage = "usage: %prog yum [OPTIONS]"
-        shortdesc = "Fetches content from a yum repo."
+        shortdesc = "Fetches content from a yum Repository."
         desc = "yum"
         CliDriver.__init__(self, "yum", usage, shortdesc, desc)
         #GrinderLog.setup(self.debug)
 
         self.parser.add_option("--label", dest="label",
-                          help="Repo label")
+                          help="Label for the content fetched from repository URL")
         self.parser.add_option('-U', "--url", dest="url",
-                          help="Repo URL to fetch the content bits.")
+                          help="URL to the repository whose content to fetch")
         self.parser.add_option("--cacert", dest="cacert",
                           help="Path location to CA Certificate.")
         self.parser.add_option("--cert", dest="clicert",
@@ -189,7 +189,7 @@ class RepoDriver(CliDriver):
         self.parser.add_option('-P', "--parallel", dest="parallel",
                           help="Thread count to fetch the bits in parallel. Defaults to 5")
         self.parser.add_option('-b', '--basepath', dest="basepath",
-                          help="Directory path to store the fetched content.Defaults to Current working Directory")
+                          help="Directory path to store the fetched content.Defaults to current working directory")
 
     def _validate_options(self):
         if not self.options.label:
@@ -197,7 +197,7 @@ class RepoDriver(CliDriver):
             sys.exit(-1)
 
         if not self.options.url:
-            print("No Url specific to fetch content. Try --help")
+            print("No Url specified to fetch content. Try --help")
             sys.exit(-1)
 
         if self.options.parallel:
