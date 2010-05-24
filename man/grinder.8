@@ -37,23 +37,23 @@ Debug level\&.
 .IP "\fB\-\-label\fP"
 Repo label\&.
 .br
-.IP "\fB\-\-url\fP"
+.IP "\fB\-U, \-\-url\fP"
 URL to fetch the content bits from\&.
+.br
+.IP "\fB\-P, \-\-parallel\fP"
+Number of parallel connections to use\&.
+.br
+.IP "\fB\-b, \-\-basepath\fP"
+Directory to store fetched content in\&.
 .br
 .IP "\fB\-\-cacert\fP"
 Path to location of CA Certificate\&.
 .br
-.IP "\fB\-\-clicert\fP"
+.IP "\fB\-\-cert\fP"
 Path to location of Client SSL Certificate\&.
 .br
-.IP "\fB\-\-clikey\fP"
+.IP "\fB\-\-key\fP"
 Path to location of Client Certificate Key\&.
-.br
-.IP "\fB\-\-parallel\fP"
-Number of parallel connections to use\&.
-.br
-.IP "\fB\-\-dir\fP"
-Directory to store fetched content in\&.
 .br
 .SH "RHN OPTIONS"
 .PP
@@ -108,8 +108,11 @@ Synchronize packages from channel 'rhel-i386-server-5' & 'rhel-i386-server-vt-5'
 .IP "\fB\ grinder rhn -k rhel-i386-server-5 rhel-i386-server-vt-5\fP"
 Synchronize packages and kickstarts from channel 'rhel-i386-server-5' & 'rhel-i386-server-vt-5'
 .br
-.IP "\fB\ grinder yum --dir /tmp --label test-f12 --url http://download.fedora.redhat.com/pub/fedora/linux/releases/12/Everything/x86_64/os/\fP"
+.IP "\fB\ grinder yum --basepath /tmp --label test-f12 --url http://download.fedora.redhat.com/pub/fedora/linux/releases/12/Everything/x86_64/os/\fP"
 Synchronize packages from a fedora repo
+.br
+.IP "\fB\ grinder yum --base /tmp --label test-rhel --cacert /etc/pki/cds-trusted-ssl-cert --cert /etc/pki/entitlement/rhel.pem --key /etc/pki/entitlement/key.pem --url https://content.redhat.com/pub/rhel-i386-server-5\fP"
+Synchronize packages from an authenticated repo
 .br
 .PP
 .PP
