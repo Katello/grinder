@@ -178,18 +178,18 @@ class RepoDriver(CliDriver):
 
         self.parser.add_option("--label", dest="label",
                           help="Repo label")
-        self.parser.add_option("--url", dest="url",
+        self.parser.add_option('-U', "--url", dest="url",
                           help="Repo URL to fetch the content bits.")
         self.parser.add_option("--cacert", dest="cacert",
                           help="Path location to CA Certificate.")
-        self.parser.add_option("--clicert", dest="clicert",
+        self.parser.add_option("--cert", dest="clicert",
                           help="Path location to Client SSl Certificate.")
-        self.parser.add_option("--clikey", dest="clikey",
+        self.parser.add_option("--key", dest="clikey",
                           help="Path location to Client Certificate Key.")
-        self.parser.add_option("--parallel", dest="parallel",
+        self.parser.add_option('-P', "--parallel", dest="parallel",
                           help="Thread count to fetch the bits in parallel. Defaults to 5")
-        self.parser.add_option("--dir", dest="dir",
-                          help="Directory path to store the fetched content. Defaults to Current working Directory")
+        self.parser.add_option('-b', '--basepath', dest="basepath",
+                          help="Directory path to store the fetched content.Defaults to Current working Directory")
 
     def _validate_options(self):
         if not self.options.label:
@@ -215,8 +215,8 @@ class RepoDriver(CliDriver):
         else:
             self.yfetch = YumRepoGrinder(self.options.label, self.options.url, \
                                 self.parallel)
-        if self.options.dir:
-            self.yfetch.fetchYumRepo(self.options.dir)
+        if self.options.basepath:
+            self.yfetch.fetchYumRepo(self.options.basepath)
         else:
             self.yfetch.fetchYumRepo()
 
