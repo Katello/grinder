@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.49
+Version: 0.0.50
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue May 25 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.50-1
+- set the primary_db to not retrieved so repo can refecth it for metadata dir
+- 594496 - fix typos in help messages
+- 572597 - updating grinder man page to include new options for yum
+- 592316: making cli options for yuma nd rhn look close
+
 * Fri May 21 2010 John Matthews <jmatthew@redhat.com> 0.0.49-1
 - fix 'fetch' call to pass in hashType, this prob showed up during a long sync
   when auth data became stale we would refresh auth data, then re-call fetch.
