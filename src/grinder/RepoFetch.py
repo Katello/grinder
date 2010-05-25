@@ -102,13 +102,14 @@ class RepoFetch(BaseFetch):
                 os.makedirs(local_repo_path)
             except IOError, e:
                 LOG.error("Unable to create repo directory %s" % local_repo_path)
-
         for ftype in self.repo.repoXML.fileTypes():
             try:
+                if ftype == "primary_db":
+                    self.repo.retrieved["primary_db"] = 0
                 ftypefile = self.repo.retrieveMD(ftype)
                 basename  = os.path.basename(ftypefile)
                 destfile  = "%s/%s" % (local_repo_path, basename)
-                shutil.copyfile(ftypefile, destfile)
+                shutil.move(ftypefile, destfile)
                 if ftype == "prestodelta": 
                     self.deltamd = destfile 
             except Exception, e:
