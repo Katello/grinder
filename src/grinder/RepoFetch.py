@@ -54,8 +54,6 @@ class RepoFetch(BaseFetch):
         else:
             self.repo.baseurl = [self.repourl]
         self.repo.baseurlSetup()
-        self.repo.dirSetup()
-        self.repo.setup(False)
         self.deltamd = None
         self.repo.sslcacert = self.sslcacert
         self.repo.sslclientcert = self.sslclientcert
@@ -109,7 +107,7 @@ class RepoFetch(BaseFetch):
                 ftypefile = self.repo.retrieveMD(ftype)
                 basename  = os.path.basename(ftypefile)
                 destfile  = "%s/%s" % (local_repo_path, basename)
-                shutil.move(ftypefile, destfile)
+                shutil.copyfile(ftypefile, destfile)
                 if ftype == "prestodelta": 
                     self.deltamd = destfile 
             except Exception, e:
