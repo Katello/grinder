@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.51
+Version: 0.0.52
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed May 26 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.52-1
+- copy repofiles to repodata dir instead of move so packagesack can use the
+  primary (pkilambi@redhat.com)
+
 * Wed May 26 2010 John Matthews <jmatthew@redhat.com> 0.0.51-1
 - fix for activation, we dropped called to "activate" when porting to new CLI
   (jmatthew@redhat.com)
