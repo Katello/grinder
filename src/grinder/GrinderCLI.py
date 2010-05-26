@@ -24,6 +24,7 @@ import GrinderLog
 from optparse import OptionParser
 from RepoFetch import YumRepoGrinder
 from RHNSync import RHNSync
+from GrinderExceptions import CantActivateException, SystemNotActivatedException
 
 LOG = logging.getLogger("grinder.GrinderCLI")
 
@@ -126,7 +127,18 @@ class RHNDriver(CliDriver):
         Executes the command.
         """
         self._validate_options()
-        
+        try:
+            self.rhnSync.activate()
+        except SystemNotActivatedException, e:
+            LOG.debug("%s" % (traceback.format_exc()))
+            systemExit(1, "System is not activated. Please pass in a valid username/password")
+        except CantActivateException, e:
+            LOG.debug("%s" % (traceback.format_exc()))
+            systemExit(1, "Unable to activate system.")
+        except Exception, e:
+            LOG.critical("%s" % (traceback.format_exc()))
+            systemExit(1, "Unknown error from checking/attempting activation.")
+            
         if self.options.listchannels:
             self.rhnSync.displayListOfChannels()
         else:
