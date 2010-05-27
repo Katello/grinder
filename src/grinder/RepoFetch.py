@@ -168,6 +168,7 @@ class YumRepoGrinder(object):
         LOG.info("%s delta rpms have been marked to be fetched" % len(deltarpms))
 
     def fetchYumRepo(self, basepath="./"):
+        LOG.info("fetchYumRepo() basepath = %s" % (basepath))
         startTime = time.time()
         self.yumFetch = RepoFetch(self.repo_label, repourl=self.repo_url, \
                             cacert=self.sslcacert, clicert=self.sslclientcert, \
