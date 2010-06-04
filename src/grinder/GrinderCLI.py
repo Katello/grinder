@@ -18,6 +18,7 @@ import os
 import sys
 import optparse
 import signal
+import socket
 import traceback
 import logging
 import GrinderLog
@@ -135,6 +136,9 @@ class RHNDriver(CliDriver):
         except CantActivateException, e:
             LOG.debug("%s" % (traceback.format_exc()))
             systemExit(1, "Unable to activate system.")
+        except socket.gaierror, e:
+            LOG.debug("%s" % (traceback.format_exc()))
+            systemExit(1, "Error communicating to: %s\n%s" % (self.rhnSync.getURL(), e))
         except Exception, e:
             LOG.critical("%s" % (traceback.format_exc()))
             systemExit(1, "Unknown error from checking/attempting activation.")
