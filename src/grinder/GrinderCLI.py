@@ -102,6 +102,7 @@ class RHNDriver(CliDriver):
                 systemExit(1, "Unable to parse config file: %s" % (self.options.config))
         if self.options.all:
             self.rhnSync.setFetchAllPackages(self.options.all)
+            self.rhnSync.setRemoveOldPackages(False)
         if self.options.basepath:
             self.rhnSync.setBasePath(self.options.basepath)
         if self.options.url:
@@ -122,6 +123,7 @@ class RHNDriver(CliDriver):
             self.rhnSync.setVerbose(self.options.debug)
         if self.options.removeold:
             self.rhnSync.setRemoveOldPackages(self.options.removeold)
+            self.rhnSync.setFetchAllPackages(False)
 
     def _do_command(self):
         """
