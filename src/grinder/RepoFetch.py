@@ -160,7 +160,7 @@ class YumRepoGrinder(object):
             relativepath = dpkg.deltas.values()[0].filename
             info['fileName'] = dpkg.deltas.values()[0].filename
             info['downloadurl'] = self.yumFetch.repourl + '/' + relativepath
-            info['savepath'] = self.yumFetch.repo_dir + '/' + os.path.dirname(relativepath)
+            info['savepath'] = self.yumFetch.repo_dir
             info['checksumtype'] = dpkg.deltas.values()[0].checksum_type
             info['checksum'] = dpkg.deltas.values()[0].checksum
             info['size'] = dpkg.deltas.values()[0].size
