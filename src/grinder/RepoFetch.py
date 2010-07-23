@@ -4,8 +4,6 @@
 #
 # Module to fetch content from yum repos
 #
-# Authors: Pradeep Kilambi <pkilambi@redhat.com>
-#
 # This software is licensed to you under the GNU General Public License,
 # version 2 (GPLv2). There is NO WARRANTY for this software, express or
 # implied, including the implied warranties of MERCHANTABILITY or FITNESS
@@ -28,7 +26,6 @@ import traceback
 from PrestoParser import PrestoParser
 from ParallelFetch import ParallelFetch
 from BaseFetch import BaseFetch
-
 LOG = logging.getLogger("grinder.RepoFetch")
 
 class RepoFetch(BaseFetch):
