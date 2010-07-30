@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.53
+Version: 0.0.54
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Jul 30 2010 Jay Dobies <jason.dobies@redhat.com> 0.0.54-1
+- 
+
 * Fri Jul 30 2010 Jay Dobies <jason.dobies@redhat.com> 0.0.53-1
 - Adding http proxy support to grinder's yum repo fetches - user/password auth
   is not implemented for the pkg dowload yet (jmatthew@redhat.com)
