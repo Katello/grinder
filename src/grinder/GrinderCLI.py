@@ -206,6 +206,14 @@ class RepoDriver(CliDriver):
                           help="Thread count to fetch the bits in parallel. Defaults to 5")
         self.parser.add_option('-b', '--basepath', dest="basepath",
                           help="Directory path to store the fetched content.Defaults to current working directory")
+        self.parser.add_option('--proxy_url', dest="proxy_url",
+                          help="proxy url, example 'http://172.31.1.1'", default=None)
+        self.parser.add_option('--proxy_port', dest="proxy_port",
+                          help="proxy port, default is 3128", default='3128')
+        self.parser.add_option('--proxy_user', dest="proxy_user",
+                          help="proxy username, if auth is required", default=None)
+        self.parser.add_option('--proxy_pass', dest="proxy_pass",
+                          help="proxy password, if auth is required", default=None)
 
     def _validate_options(self):
         if not self.options.label:
@@ -227,10 +235,17 @@ class RepoDriver(CliDriver):
         if self.options.cacert and self.options.clicert and self.options.clikey:
             self.yfetch = YumRepoGrinder(self.options.label, self.options.url, \
                                 self.parallel, cacert=self.options.cacert, \
-                                clicert=self.options.clicert, clikey=self.options.clikey)
+                                clicert=self.options.clicert, clikey=self.options.clikey, \
+                                proxy_url=self.options.proxy_url, 
+                                proxy_port=self.options.proxy_port, \
+                                proxy_user=self.options.proxy_user, \
+                                proxy_pass=self.options.proxy_pass)
         else:
             self.yfetch = YumRepoGrinder(self.options.label, self.options.url, \
-                                self.parallel)
+                                self.parallel, proxy_url=self.options.proxy_url, \
+                                proxy_port = self.options.proxy_port, \
+                                proxy_user=self.options.proxy_user, \
+                                proxy_pass=self.options.proxy_pass)
         if self.options.basepath:
             self.yfetch.fetchYumRepo(self.options.basepath)
         else:

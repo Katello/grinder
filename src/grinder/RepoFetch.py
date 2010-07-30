@@ -33,13 +33,20 @@ class RepoFetch(BaseFetch):
      Module to fetch content from remote yum repos
     """
     def __init__(self, repo_label, repourl, cacert=None, clicert=None, clikey=None, 
-                 mirrorlist=None, download_dir='./'):
-        BaseFetch.__init__(self, cacert=cacert, clicert=clicert, clikey=clikey)
+                 mirrorlist=None, download_dir='./', proxy_url=None, 
+                 proxy_port=None, proxy_user=None, proxy_pass=None):
+        BaseFetch.__init__(self, cacert=cacert, clicert=clicert, clikey=clikey,
+                proxy_url=proxy_url, proxy_port=proxy_port, 
+                proxy_user=proxy_user, proxy_pass=proxy_pass)
         self.repo_label = repo_label
         self.repourl = repourl.encode('ascii', 'ignore')
         self.mirrorlist = mirrorlist
         self.local_dir = download_dir
         self.repo_dir = os.path.join(self.local_dir, self.repo_label)
+        self.proxy_url = proxy_url
+        self.proxy_port = proxy_port
+        self.proxy_user = proxy_user
+        self.proxy_pass = proxy_pass
 
     def setupRepo(self):
         self.repo = yum.yumRepo.YumRepository(self.repo_label)
@@ -50,6 +57,12 @@ class RepoFetch(BaseFetch):
             self.repo.mirrorlist = self.repourl
         else:
             self.repo.baseurl = [self.repourl]
+        if self.proxy_url:
+            if not self.proxy_port:
+                raise GrinderException("Proxy url is defined, but proxy_port is not specified")
+            self.repo.proxy = "%s:%s" % (self.proxy_url, self.proxy_port)
+            self.repo.proxy_username = self.proxy_user
+            self.repo.proxy_password = self.proxy_pass
         self.repo.baseurlSetup()
         self.deltamd = None
         self.repo.sslcacert = self.sslcacert
@@ -122,7 +135,9 @@ class YumRepoGrinder(object):
       Driver module to initiate the repo fetching
     """
     def __init__(self, repo_label, repo_url, parallel, mirrors=None, \
-                       cacert=None, clicert=None, clikey=None):
+                       cacert=None, clicert=None, clikey=None, \
+                       proxy_url=None, proxy_port=None, proxy_user=None, \
+                       proxy_pass=None):
         self.repo_label = repo_label
         self.repo_url = repo_url
         self.mirrors = mirrors
@@ -133,6 +148,10 @@ class YumRepoGrinder(object):
         self.sslcacert = cacert
         self.sslclientcert = clicert
         self.sslclientkey = clikey
+        self.proxy_url = proxy_url
+        self.proxy_port = proxy_port
+        self.proxy_user = proxy_user
+        self.proxy_pass = proxy_pass
 
     def prepareRPMS(self):
         pkglist = self.yumFetch.getPackageList()
@@ -170,7 +189,9 @@ class YumRepoGrinder(object):
         self.yumFetch = RepoFetch(self.repo_label, repourl=self.repo_url, \
                             cacert=self.sslcacert, clicert=self.sslclientcert, \
                             clikey=self.sslclientkey, mirrorlist=self.mirrors, \
-                            download_dir=basepath)
+                            download_dir=basepath, proxy_url=self.proxy_url, \
+                            proxy_port=self.proxy_port, proxy_user=self.proxy_user, \
+                            proxy_pass=self.proxy_pass)
         self.yumFetch.setupRepo()
         LOG.info("Fetching repo metadata...")
         # first fetch the metadata

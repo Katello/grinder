@@ -24,6 +24,7 @@ import hashlib
 import types
 import unicodedata
 
+from GrinderExceptions import GrinderException
 LOG = logging.getLogger("grinder.BaseFetch")
 
 class BaseFetch(object):
@@ -34,10 +35,16 @@ class BaseFetch(object):
     STATUS_ERROR = 'error'
     STATUS_UNAUTHORIZED = "unauthorized"
 
-    def __init__(self, cacert=None, clicert=None, clikey=None):
+    def __init__(self, cacert=None, clicert=None, clikey=None, 
+            proxy_url=None, proxy_port=None, proxy_user=None, 
+            proxy_pass=None):
         self.sslcacert = cacert
         self.sslclientcert = clicert
         self.sslclientkey = clikey
+        self.proxy_url = proxy_url
+        self.proxy_port = proxy_port
+        self.proxy_user = proxy_user
+        self.proxy_pass = proxy_pass
 
     def validateDownload(self, filePath, size, hashtype, checksum, verbose=False):
         statinfo = os.stat(filePath)
@@ -99,6 +106,17 @@ class BaseFetch(object):
                 curl.setopt(curl.SSLKEY, self.sslclientkey)
             if headers:
                 curl.setopt(pycurl.HTTPHEADER, curlifyHeaders(headers))
+            if self.proxy_url:
+                if not self.proxy_port:
+                    raise GrinderException("Proxy url defined, but no port specified")
+                curl.setopt(pycurl.PROXY, self.proxy_url)
+                curl.setopt(pycurl.PROXYPORT, int(self.proxy_port))
+                curl.setopt(pycurl.PROXYTYPE, pycurl.PROXYTYPE_HTTP)
+                #if self.proxy_user:
+                #    if not self.proxy_pass:
+                #        raise GrinderException("Proxy username is defined, but not password was specified")
+                #    curl.setopt(pycurl.PROXYAUTH, pycurl.HTTPAUTH_NTLM)
+                #    curl.setopt(pycurl.PROXYUSERPWD, "%s:%s" % (self.proxy_user, self.proxy_pass)
             curl.setopt(curl.WRITEFUNCTION, f.write)
             curl.setopt(curl.FOLLOWLOCATION, 1)
             LOG.info("Fetching %s bytes: %s from %s" % (itemSize, fileName, fetchURL))
