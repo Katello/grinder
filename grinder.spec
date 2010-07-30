@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.52
+Version: 0.0.53
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,19 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Jul 30 2010 Jay Dobies <jason.dobies@redhat.com> 0.0.53-1
+- Adding http proxy support to grinder's yum repo fetches - user/password auth
+  is not implemented for the pkg dowload yet (jmatthew@redhat.com)
+- moving code authors to a separate AUTHORS file (pkilambi@redhat.com)
+- 602243 - fixing the drpm path (pkilambi@redhat.com)
+- 570887 - grinder, running grinder with -a option gives conflicting options
+  specified error. If --all is specified on command line, disable removeold If
+  --removeold is specified on command line, disable fetchall
+  (jmatthew@redhat.com)
+- 573138 - traceback when using a bad URL (jmatthew@redhat.com)
+- adding a debug line to display what basepath is set to for yum fetches
+  (jmatthew@redhat.com)
+
 * Wed May 26 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.52-1
 - copy repofiles to repodata dir instead of move so packagesack can use the
   primary (pkilambi@redhat.com)
