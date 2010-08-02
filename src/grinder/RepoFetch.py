@@ -135,7 +135,7 @@ class YumRepoGrinder(object):
       Driver module to initiate the repo fetching
     """
     def __init__(self, repo_label, repo_url, parallel, mirrors=None, \
-                       cacert=None, clicert=None, clikey=None, \
+                       newest=False, cacert=None, clicert=None, clikey=None, \
                        proxy_url=None, proxy_port=None, proxy_user=None, \
                        proxy_pass=None):
         self.repo_label = repo_label
@@ -152,9 +152,10 @@ class YumRepoGrinder(object):
         self.proxy_port = proxy_port
         self.proxy_user = proxy_user
         self.proxy_pass = proxy_pass
+        self.newest = newest
 
     def prepareRPMS(self):
-        pkglist = self.yumFetch.getPackageList()
+        pkglist = self.yumFetch.getPackageList(newest=self.newest)
         for pkg in pkglist:
             info = {}
             #urljoin doesnt like epoch in rpm name so using string concat
@@ -217,5 +218,5 @@ class YumRepoGrinder(object):
 
 if __name__ == "__main__":
     yfetch = YumRepoGrinder("fedora12", \
-        "http://download.fedora.devel.redhat.com/pub/fedora/linux/releases/12/Everything/x86_64/os/", 20)
+        "http://download.fedora.devel.redhat.com/pub/fedora/linux/releases/12/Everything/x86_64/os/", 20, newest=True)
     yfetch.fetchYumRepo()
