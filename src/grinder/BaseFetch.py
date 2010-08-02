@@ -112,11 +112,11 @@ class BaseFetch(object):
                 curl.setopt(pycurl.PROXY, self.proxy_url)
                 curl.setopt(pycurl.PROXYPORT, int(self.proxy_port))
                 curl.setopt(pycurl.PROXYTYPE, pycurl.PROXYTYPE_HTTP)
-                #if self.proxy_user:
-                #    if not self.proxy_pass:
-                #        raise GrinderException("Proxy username is defined, but not password was specified")
-                #    curl.setopt(pycurl.PROXYAUTH, pycurl.HTTPAUTH_NTLM)
-                #    curl.setopt(pycurl.PROXYUSERPWD, "%s:%s" % (self.proxy_user, self.proxy_pass)
+                if self.proxy_user:
+                    if not self.proxy_pass:
+                        raise GrinderException("Proxy username is defined, but no password was specified")
+                    curl.setopt(pycurl.PROXYAUTH, pycurl.HTTPAUTH_BASIC)
+                    curl.setopt(pycurl.PROXYUSERPWD, "%s:%s" % (self.proxy_user, self.proxy_pass))
             curl.setopt(curl.WRITEFUNCTION, f.write)
             curl.setopt(curl.FOLLOWLOCATION, 1)
             LOG.info("Fetching %s bytes: %s from %s" % (itemSize, fileName, fetchURL))
