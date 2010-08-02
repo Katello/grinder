@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.54
+Version: 0.0.55
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Aug 02 2010 John Matthews <jmatthew@redhat.com> 0.0.55-1
+- add proxy basic http user authentication to package fetch
+  (jmatthew@redhat.com)
+
 * Fri Jul 30 2010 Jay Dobies <jason.dobies@redhat.com> 0.0.54-1
 - 
 
