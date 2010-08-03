@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.56
+Version: 0.0.57
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Aug 03 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.57-1
+- 620791 - exclude epoch from the filename stored on disk (pkilambi@redhat.com)
+
 * Mon Aug 02 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.56-1
 - exposing the newest package download flag to YumRepoGrinder class
   (pkilambi@redhat.com)
