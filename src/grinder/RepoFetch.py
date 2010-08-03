@@ -159,7 +159,9 @@ class YumRepoGrinder(object):
         for pkg in pkglist:
             info = {}
             #urljoin doesnt like epoch in rpm name so using string concat
-            info['fileName'] = pkg.__str__() + ".rpm"
+            info['fileName'] = pkg.name + "-" + pkg.version + "-" + \
+                                pkg.release + "." + pkg.arch + ".rpm"
+
             info['downloadurl'] = self.yumFetch.repourl + '/' + pkg.relativepath
             info['savepath'] = self.yumFetch.repo_dir + '/' + os.path.dirname(pkg.relativepath)
             info['checksumtype'], info['checksum'], status = pkg.checksums[0]
