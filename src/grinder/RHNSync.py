@@ -24,6 +24,7 @@ import commands
 import rpm
 import rpmUtils
 import rpmUtils.miscutils
+import yum
 try:
     import hashlib as md5
 except:
@@ -386,6 +387,33 @@ class RHNSync(BaseSync):
                 os.path.join(savePath,"repodata/"))
         return report
     
+    def fetchRepomdXML(self, channelLabel, savePath='./'):
+        """
+        Fetch repomd.xml to get the checksum info for
+        metadata files
+        """
+        try:
+            self.rhnComm = RHNComm(self.baseURL, self.systemid)
+            repomdxml = self.rhnComm.getRepodata(channelLabel, "repomd.xml")
+        except GetRequestException, ge:
+            if (ge.code == 404):
+                LOG.info("Could not fetch repomd.xml")
+            else:
+                raise ge
+        if not savePath:
+            savePath = channelLabel
+        repomd_path = os.path.join(savePath, "repomd.xml")
+        f = open(repomd_path, "w")
+        f.write(repomdxml)
+        f.close()
+        
+        repomd = yum.repoMDObject.RepoMD("temp_repo", repomd_path)
+        repomd_info = {}
+        for rtype in repomd.fileTypes():
+            repomd_info[rtype] = repomd.getData(rtype)
+        os.unlink(repomd_path)
+        return repomd_info
+        
     def fetchCompsXML(self, savePath, channelLabel):
         ###
         # Fetch comps.xml, used by createrepo for "groups" info
@@ -412,8 +440,14 @@ class RHNSync(BaseSync):
         import gzip
         updateinfo_gz = ""
         try:
+            repomdinfo = self.fetchRepomdXML(channelLabel)
+            updateinfo_label = "updateinfo.xml.gz"
+            if repomdinfo.has_key('updateinfo'):
+                # the checksum data format is (sha, <checksum>)
+                updateinfo_label = repomdinfo['updateinfo'].checksum[1] + '-' + updateinfo_label
+            LOG.info("updateinfo to be fetched %s" % updateinfo_label)
             self.rhnComm = RHNComm(self.baseURL, self.systemid)
-            updateinfo_gz = self.rhnComm.getRepodata(channelLabel, "updateinfo.xml.gz")
+            updateinfo_gz = self.rhnComm.getRepodata(channelLabel, updateinfo_label)
         except GetRequestException, ge:
             if (ge.code == 404):
                 LOG.info("Channel has no Updateinfo")
