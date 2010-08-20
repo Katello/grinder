@@ -42,9 +42,9 @@ class PackageFetch(BaseFetch):
 
     def fetchItem(self, itemInfo):
         authMap = self.login()
-        fileName = itemInfo['filename']
+        fileName = itemInfo['fileName']
         fetchName = itemInfo['fetch_name']
-        itemSize = itemInfo['package_size']
+        itemSize = itemInfo['size']
         md5sum = itemInfo['md5sum']
         hashType = itemInfo['hashtype']
         fetchURL = self.getFetchURL(self.channelLabel, fetchName)
@@ -66,10 +66,10 @@ if __name__ == "__main__":
     pkg = {}
     pkg['nevra'] = "Virtualization-es-ES-5.2-9.noarch.rpm"
     pkg['fetch_name'] = "Virtualization-es-ES-5.2-9:.noarch.rpm"
-    pkg['package_size'] = "1731195"
+    pkg['size'] = "1731195"
     pkg['md5sum'] = "91b0f20aeeda88ddae4959797003a173" 
     pkg['hashtype'] = 'md5'
-    pkg['filename'] = "Virtualization-es-ES-5.2-9.noarch.rpm"
+    pkg['fileName'] = "Virtualization-es-ES-5.2-9.noarch.rpm"
     status = pf.fetchItem(pkg)
     print "Package fetch status is %s" % (status)
 

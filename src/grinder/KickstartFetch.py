@@ -38,7 +38,7 @@ class KickstartFetch(BaseFetch):
     def fetchItem(self, itemInfo):
         authMap = self.login()
 
-        fileName = itemInfo['relative-path']
+        fileName = itemInfo['fileName']
         itemSize = itemInfo['size']
         md5sum = itemInfo['md5sum']
         hashType = itemInfo['hashtype']
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     savePath = "./test123"
     kf = KickstartFetch(systemId, baseURL)
     item = {}
-    item['relative-path'] = "GPL"
+    item['fileName'] = "GPL"
     item['size'] = "18416"
     item['md5sum'] = "6ebd41aa30b178eacb885447b1682e2d"
     item["ksLabel"] = ksLabel
@@ -73,9 +73,9 @@ if __name__ == "__main__":
     item["hashtype"] = "md5"
     status = kf.fetchItem(item)
     assert status in [BaseFetch.STATUS_NOOP, BaseFetch.STATUS_DOWNLOADED]
-    print "Kickstart fetch of %s has status %s" % (item['relative-path'], status)
+    print "Kickstart fetch of %s has status %s" % (item['fileName'], status)
     badItem = {}
-    badItem['relative-path'] = "EULA"
+    badItem['fileName'] = "EULA"
     badItem['size'] = "8446"
     badItem['md5sum'] = "4cb33358ca64e87f7650525BADbebd67" #intentional bad md5sum
     badItem['hashtype'] = "md5"
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     assert status == BaseFetch.STATUS_MD5_MISSMATCH
     print "Test of bad md5sum passed"
     badItem = {}
-    badItem['relative-path'] = "ClusterStorage/repodata/primary.xml.gz"
+    badItem['fileName'] = "ClusterStorage/repodata/primary.xml.gz"
     badItem['size'] = "123456" #intentional bad size
     badItem['md5sum'] = "66ab1dd4e02e4e0f8655d3ee2489c18a"
     badItem['hashtype'] = "md5"

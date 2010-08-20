@@ -186,7 +186,7 @@ class YumRepoGrinder(object):
             self.downloadinfo.append(info)
         LOG.info("%s delta rpms have been marked to be fetched" % len(deltarpms))
 
-    def fetchYumRepo(self, basepath="./"):
+    def fetchYumRepo(self, basepath="./", callback=None):
         LOG.info("fetchYumRepo() basepath = %s" % (basepath))
         startTime = time.time()
         self.yumFetch = RepoFetch(self.repo_label, repourl=self.repo_url, \
@@ -205,7 +205,7 @@ class YumRepoGrinder(object):
         # get drpms to fetch
         self.prepareDRPMS()
         # prepare for download
-        self.fetchPkgs = ParallelFetch(self.yumFetch, self.numThreads)
+        self.fetchPkgs = ParallelFetch(self.yumFetch, self.numThreads, callback=callback)
         self.fetchPkgs.addItemList(self.downloadinfo)
         self.fetchPkgs.start()
         report = self.fetchPkgs.waitForFinish()

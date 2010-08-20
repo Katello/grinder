@@ -16,10 +16,11 @@
 import time
 import logging
 import threading
-from threading import Thread
+from threading import Thread, Lock
 import Queue
 
 from BaseFetch import BaseFetch
+from GrinderCallback import ProgressReport
 
 LOG = logging.getLogger("grinder.ParallelFetch")
 
@@ -32,25 +33,90 @@ class SyncReport:
         return "%s successes, %s downloads, %s errors" % (self.successes, self.downloads, self.errors)
 
 class ParallelFetch(object):
-    def __init__(self, fetcher, numThreads=3):
+    def __init__(self, fetcher, numThreads=3, callback=None):
+        self.fetcher = fetcher
+        self.numThreads = numThreads
+        self.callback = callback
+        self.sizeTotal = 0
+        self.sizeLeft = 0
+        self.itemTotal = 0
+        self.statusLock = Lock()
+        self.syncStatusDict = dict()
+        self.syncStatusDict[BaseFetch.STATUS_NOOP] = 0
+        self.syncStatusDict[BaseFetch.STATUS_DOWNLOADED] = 0
+        self.syncStatusDict[BaseFetch.STATUS_SIZE_MISSMATCH] = 0
+        self.syncStatusDict[BaseFetch.STATUS_MD5_MISSMATCH] = 0
+        self.syncStatusDict[BaseFetch.STATUS_ERROR] = 0
         self.toSyncQ = Queue.Queue()
         self.syncCompleteQ = Queue.Queue()
         self.syncErrorQ = Queue.Queue()
         self.threads = []
-        self.numThreads = numThreads
-        self.fetcher = fetcher
         for i in range(self.numThreads):
-            wt = WorkerThread(self.toSyncQ, self.syncCompleteQ, self.syncErrorQ, fetcher)
+            wt = WorkerThread(self, fetcher)
             self.threads.append(wt)
 
     def addItem(self, item):
+        if item.has_key("size"):
+            self.sizeTotal = self.sizeTotal + int(item['size'])
         self.toSyncQ.put(item)
 
     def addItemList(self, items):
         for p in items:
+            if p.has_key("size"):
+                self.sizeTotal = self.sizeTotal + int(p['size'])
             self.toSyncQ.put(p)
 
+    def getWorkItem(self):
+        """
+        Returns an item, or throws Queue.Empty exception if queue is empty
+        """
+        item = None
+        # Usage of statusLock is to ensure that reporting of items
+        # left to work on are reported accurately through markStatus
+        self.statusLock.acquire()
+        try:
+            item = self.toSyncQ.get_nowait()
+        finally:
+            self.statusLock.release()
+        return item
+
+    def markStatus(self, itemInfo, status):
+        self.statusLock.acquire()
+        try:
+            if status in self.syncStatusDict:
+                self.syncStatusDict[status] = self.syncStatusDict[status] + 1
+            else:
+                self.syncStatusDict[status] = 1
+            if status != BaseFetch.STATUS_ERROR:
+                self.syncCompleteQ.put(itemInfo)
+            else:
+                self.syncErrorQ.put(itemInfo)
+            LOG.debug("%s status updated, %s success %s error" % (itemInfo,
+                self.syncCompleteQ.qsize(), self.syncErrorQ.qsize()))
+            if itemInfo.has_key("size"):
+                self.sizeLeft = self.sizeLeft - int(itemInfo['size'])
+            if self.callback is not None:
+                itemsLeft = self.itemTotal - (self.syncErrorQ.qsize() + self.syncCompleteQ.qsize())
+                r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, itemsLeft)
+                if itemInfo.has_key("fileName"):
+                    r.item_name = itemInfo["fileName"]
+                r.status = status
+                r.num_error = self.syncErrorQ.qsize()
+                r.num_success = self.syncCompleteQ.qsize()
+                self.callback(r)
+        finally:
+            self.statusLock.release()
+
     def start(self):
+        # Assumption is all adds to toSyncQ have been completed at this point
+        # We will grab the size of the items for total number of items to sync
+        # before we kick off the threads to start fetching
+        self.sizeLeft = self.sizeTotal
+        self.itemTotal = self.toSyncQ.qsize()
+        if self.callback is not None:
+            r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, self.toSyncQ.qsize())
+            r.status = "STARTED"
+            self.callback(r)
         for t in self.threads:
             t.start()
 
@@ -89,34 +155,33 @@ class ParallelFetch(object):
             p = self.syncErrorQ.get_nowait()
             errorList.append(p)
         report = SyncReport()
-        for t in self.threads:
-            report.successes = report.successes + t.syncStatusDict[BaseFetch.STATUS_DOWNLOADED]
-            report.successes = report.successes + t.syncStatusDict[BaseFetch.STATUS_NOOP]
-            report.downloads = report.downloads + t.syncStatusDict[BaseFetch.STATUS_DOWNLOADED]
-            report.errors = report.errors + t.syncStatusDict[BaseFetch.STATUS_ERROR]
-            report.errors = report.errors + t.syncStatusDict[BaseFetch.STATUS_MD5_MISSMATCH]
-            report.errors = report.errors + t.syncStatusDict[BaseFetch.STATUS_SIZE_MISSMATCH]
+        report.successes = self.syncStatusDict[BaseFetch.STATUS_DOWNLOADED]
+        report.successes = report.successes + self.syncStatusDict[BaseFetch.STATUS_NOOP]
+        report.downloads = self.syncStatusDict[BaseFetch.STATUS_DOWNLOADED]
+        report.errors = self.syncStatusDict[BaseFetch.STATUS_ERROR]
+        report.errors = report.errors + self.syncStatusDict[BaseFetch.STATUS_MD5_MISSMATCH]
+        report.errors = report.errors + self.syncStatusDict[BaseFetch.STATUS_SIZE_MISSMATCH]
 
         LOG.info("ParallelFetch: %s items successfully processed, %s downloaded, %s items had errors" %
             (report.successes, report.downloads, report.errors))
-
+        if self.callback is not None:
+            r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, self.toSyncQ.qsize())
+            r.status = "FINISHED"
+            r.num_error = self.syncErrorQ.qsize()
+            r.num_success = self.syncCompleteQ.qsize()
+            self.callback(r)
         return report
-
 
 class WorkerThread(Thread):
 
-    def __init__(self, toSyncQ, syncCompleteQ, syncErrorQ, fetcher):
+    def __init__(self, pFetch, fetcher):
+        """
+        pFetch - reference to ParallelFetch instance
+        fetcher - reference to a class instantiating BaseFetch
+        """
         Thread.__init__(self)
-        self.toSyncQ = toSyncQ
-        self.syncCompleteQ = syncCompleteQ
-        self.syncErrorQ = syncErrorQ
+        self.pFetch = pFetch
         self.fetcher = fetcher
-        self.syncStatusDict = dict()
-        self.syncStatusDict[BaseFetch.STATUS_NOOP] = 0
-        self.syncStatusDict[BaseFetch.STATUS_DOWNLOADED] = 0
-        self.syncStatusDict[BaseFetch.STATUS_SIZE_MISSMATCH] = 0
-        self.syncStatusDict[BaseFetch.STATUS_MD5_MISSMATCH] = 0
-        self.syncStatusDict[BaseFetch.STATUS_ERROR] = 0
         self._stop = threading.Event()
 
     def stop(self):
@@ -124,26 +189,21 @@ class WorkerThread(Thread):
 
     def run(self):
         LOG.debug("Run has started")
-        while not self.toSyncQ.empty() and not self._stop.isSet():
-            LOG.info("%s items left on Queue" % (self.toSyncQ.qsize()))
+        while not self._stop.isSet():
             try:
-                itemInfo = self.toSyncQ.get_nowait()
+                itemInfo = self.pFetch.getWorkItem()
+                if itemInfo is None:
+                    break
                 status = self.fetcher.fetchItem(itemInfo)
-                if status in self.syncStatusDict:
-                    self.syncStatusDict[status] = self.syncStatusDict[status] + 1
-                else:
-                    self.syncStatusDict[status] = 1
-                if status != BaseFetch.STATUS_ERROR:
-                    self.syncCompleteQ.put(itemInfo)
-                else:
-                    self.syncErrorQ.put(itemInfo)
+                self.pFetch.markStatus(itemInfo, status)
             except Queue.Empty:
                 LOG.debug("Queue is empty, thread will end")
+                break
         LOG.debug("Thread ending")
 
-
-
 if __name__ == "__main__":
+    import GrinderLog
+    GrinderLog.setup(True)
     # This a very basic test just to feel out the flow of the threads 
     # pulling items from a shared Queue and exiting cleanly
     # Create a simple fetcher that sleeps every few items

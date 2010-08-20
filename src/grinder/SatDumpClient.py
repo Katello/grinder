@@ -83,7 +83,9 @@ class SatDumpClient(object):
                     #     md5sum="1bbc90ffcc96b5c6edea23876ad80f66" relative-path=".discinfo"/>
                     fileInfo = {}
                     fileInfo["hashtype"] = "md5"
-                    for key in ["file-size", "last-modified", "relative-path", "md5sum"]:
+                    fileInfo["size"] = f.getAttribute("file-size")
+                    fileInfo["fileName"] = f.getAttribute("relative-path")
+                    for key in ["last-modified", "md5sum"]:
                         fileInfo[key] = f.getAttribute(key)
                     retVal[ksLabel]["files"].append(fileInfo)
         return retVal
@@ -188,7 +190,7 @@ class SatDumpClient(object):
         info = {}
         name = pkgShort.getAttribute("name")
         info["name"] = name
-        info["package_size"] = pkgShort.getAttribute("package-size")
+        info["size"] = pkgShort.getAttribute("package-size")
         info["hashtype"] = "md5"
         info["md5sum"] = pkgShort.getAttribute("md5sum")
         info["arch"] = pkgShort.getAttribute("package-arch")
@@ -200,7 +202,7 @@ class SatDumpClient(object):
         info["fetch_name"] = self.formFetchName(info)
         nevra = self.formNEVRA(info)
         info["nevra"] = nevra
-        info["filename"] = self.formFileName(info)
+        info["fileName"] = self.formFileName(info)
         return name, nevra, info
 
 

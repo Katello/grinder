@@ -303,11 +303,12 @@ class RHNSync(BaseSync):
             for l in labels[lbl]:
                 print("    %s" % (l))
 
-    def syncKickstarts(self, channelLabel, savePath, verbose=0):
+    def syncKickstarts(self, channelLabel, savePath, verbose=0, callback=None):
         """
         channelLabel - channel to sync kickstarts from
         savePath - path to save kickstarts, relative to basePath if basePath has been set
         verbose - if true display more output
+        callback - function to use for a progress callback
         """
         if self.getBasePath():
             savePath = os.path.join(self.getBasePath(), savePath)
@@ -326,7 +327,7 @@ class RHNSync(BaseSync):
             for ksFile in metadata[ksLbl]["files"]:
                 info = {}
                 info["relative-path"] = ksFile["relative-path"]
-                info["size"] = ksFile["file-size"]
+                info["size"] = ksFile["size"]
                 info["md5sum"] = ksFile["md5sum"]
                 info["ksLabel"] = ksLbl
                 info["channelLabel"] = channelLabel
@@ -335,7 +336,7 @@ class RHNSync(BaseSync):
                 ksFiles.append(info)
         ksFetch = KickstartFetch(self.systemid, self.baseURL)
         numThreads = int(self.parallel)
-        self.parallelFetchKickstarts = ParallelFetch(ksFetch, numThreads)
+        self.parallelFetchKickstarts = ParallelFetch(ksFetch, numThreads, callback=callback)
         self.parallelFetchKickstarts.addItemList(ksFiles)
         self.parallelFetchKickstarts.start()
         report = self.parallelFetchKickstarts.waitForFinish()
@@ -345,11 +346,12 @@ class RHNSync(BaseSync):
                     report.errors, (endTime-startTime)))
         return report
 
-    def syncPackages(self, channelLabel, savePath, verbose=0):
+    def syncPackages(self, channelLabel, savePath, verbose=0, callback=None):
         """
         channelLabel - channel to sync packages from
         savePath - path to save packages, relative to basePath if basePath has been set
         verbose - if true display more output
+        callback - function to use for a progress callback
         """
         if self.getBasePath():
             savePath = os.path.join(self.getBasePath(), savePath)
@@ -369,7 +371,7 @@ class RHNSync(BaseSync):
         numThreads = int(self.parallel)
         LOG.info("Running in parallel fetch mode with %s threads" % (numThreads))
         pkgFetch = PackageFetch(self.systemid, self.baseURL, channelLabel, savePath)
-        self.parallelFetchPkgs = ParallelFetch(pkgFetch, numThreads)
+        self.parallelFetchPkgs = ParallelFetch(pkgFetch, numThreads, callback=callback)
         self.parallelFetchPkgs.addItemList(pkgInfo.values())
         self.parallelFetchPkgs.start()
         report = self.parallelFetchPkgs.waitForFinish()
@@ -440,7 +442,7 @@ class RHNSync(BaseSync):
         import gzip
         updateinfo_gz = ""
         try:
-            repomdinfo = self.fetchRepomdXML(channelLabel)
+            repomdinfo = self.fetchRepomdXML(channelLabel, savePath)
             updateinfo_label = "updateinfo.xml.gz"
             if repomdinfo.has_key('updateinfo'):
                 # the checksum data format is (sha, <checksum>)
