@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.57
+Version: 0.0.58
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Aug 24 2010 John Matthews <jmatthew@redhat.com> 0.0.58-1
+- Adding a progress callback (jmatthew@redhat.com)
+- RHN now expects the updateinfo fetch to use <checksum>-updateinfo.xml.gz as
+  the request file, so we ask for repomd.xml, get the checksum for updateinfo
+  and construct the request name to match RHN (pkilambi@redhat.com)
+
 * Tue Aug 03 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.57-1
 - 620791 - exclude epoch from the filename stored on disk (pkilambi@redhat.com)
 
