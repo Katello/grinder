@@ -212,11 +212,32 @@ class YumRepoGrinder(object):
         endTime = time.time()
         LOG.info("Processed <%s> packages in [%d] seconds" % (len(self.downloadinfo), \
                   (endTime - startTime)))
+        LOG.info("Cleaning any orphaned packages..")
+        self.purgeOrphanPackages(self.yumFetch.getPackageList(), self.yumFetch.repo_dir)
         return report
 
     def stop(self):
         if self.fetchPkgs:
             self.fetchPkgs.stop()
+            
+    def purgeOrphanPackages(self, downloadlist, repo_dir):
+        """
+        While re-sync purge any orphaned packages in the Repo that are not in
+        updated primary.xml download list. 
+        """
+        dpkgs = []
+        save_path = repo_dir
+        for pkg in downloadlist:
+            rpmName = pkg.name + "-" + pkg.version + "-" + \
+                                pkg.release + "." + pkg.arch + ".rpm"
+            save_path = repo_dir + '/' + os.path.dirname(pkg.relativepath)
+            dpkgs.append(rpmName)
+        for ppkg in os.listdir(save_path):
+            if not ppkg.endswith('.rpm'):
+                continue
+            if ppkg not in dpkgs:
+                os.remove(os.path.join(save_path, ppkg))
+                
 
 if __name__ == "__main__":
     yfetch = YumRepoGrinder("fedora12", \
