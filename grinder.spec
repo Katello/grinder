@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.58
+Version: 0.0.59
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,14 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Sep 02 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.59-1
+- Adding central package location support for grinder. Packages are synced to
+  packages_location and symlined to repo directory. Default is repo directory
+  unless packages_location is passed. DRPMS will be stored in individual repos
+  as usual (pkilambi@redhat.com)
+- purge orphaned packages that are not part of updated repodata
+  (pkilambi@redhat.com)
+
 * Tue Aug 24 2010 John Matthews <jmatthew@redhat.com> 0.0.58-1
 - Adding a progress callback (jmatthew@redhat.com)
 - RHN now expects the updateinfo fetch to use <checksum>-updateinfo.xml.gz as
