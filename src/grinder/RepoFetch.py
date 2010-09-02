@@ -91,7 +91,7 @@ class RepoFetch(BaseFetch):
                           info['size'], 
                           info['checksumtype'], 
                           info['checksum'],
-                          info['savepath'])
+                          info['savepath'], packages_location=info['pkgpath'] or None)
 
     def fetchAll(self):
         plist = self.getPackageList()
@@ -137,7 +137,7 @@ class YumRepoGrinder(object):
     def __init__(self, repo_label, repo_url, parallel, mirrors=None, \
                        newest=False, cacert=None, clicert=None, clikey=None, \
                        proxy_url=None, proxy_port=None, proxy_user=None, \
-                       proxy_pass=None):
+                       proxy_pass=None, packages_location=None):
         self.repo_label = repo_label
         self.repo_url = repo_url
         self.mirrors = mirrors
@@ -153,6 +153,8 @@ class YumRepoGrinder(object):
         self.proxy_user = proxy_user
         self.proxy_pass = proxy_pass
         self.newest = newest
+        # set this if you want all packages to be stored in a central location
+        self.pkgpath = packages_location
 
     def prepareRPMS(self):
         pkglist = self.yumFetch.getPackageList(newest=self.newest)
@@ -166,6 +168,10 @@ class YumRepoGrinder(object):
             info['savepath'] = self.yumFetch.repo_dir + '/' + os.path.dirname(pkg.relativepath)
             info['checksumtype'], info['checksum'], status = pkg.checksums[0]
             info['size'] = pkg.size
+            if self.pkgpath:
+                info['pkgpath']  = "%s/%s/%s/%s/%s" % (self.pkgpath, pkg.name, pkg.version, pkg.release, pkg.arch)
+            else:
+                info['pkgpath'] = None 
             self.downloadinfo.append(info)
         LOG.info("%s packages have been marked to be fetched" % len(pkglist))
 
@@ -183,6 +189,7 @@ class YumRepoGrinder(object):
             info['checksumtype'] = dpkg.deltas.values()[0].checksum_type
             info['checksum'] = dpkg.deltas.values()[0].checksum
             info['size'] = dpkg.deltas.values()[0].size
+            info['pkgpath']  = self.pkgpath
             self.downloadinfo.append(info)
         LOG.info("%s delta rpms have been marked to be fetched" % len(deltarpms))
 
@@ -240,6 +247,10 @@ class YumRepoGrinder(object):
                 
 
 if __name__ == "__main__":
-    yfetch = YumRepoGrinder("fedora12", \
-        "http://download.fedora.devel.redhat.com/pub/fedora/linux/releases/12/Everything/x86_64/os/", 20, newest=True)
+#    yfetch = YumRepoGrinder("fedora12", \
+#         "http://download.fedora.devel.redhat.com/pub/fedora/linux/releases/12/Everything/x86_64/os/", 10, newest=True, pkg_path="/var/lib/pulp/packages/")
+#    yfetch.fetchYumRepo()
+    
+    yfetch = YumRepoGrinder("testrepo", "http://mmccune.fedorapeople.org/pulp/", 
+                            10, packages_location="/var/lib/pulp/packages/")
     yfetch.fetchYumRepo()

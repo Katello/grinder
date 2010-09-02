@@ -64,15 +64,22 @@ class BaseFetch(object):
         LOG.debug("Package [%s] is valid with checksum [%s] and size [%s]" % (fileName, checksum, size))
         return BaseFetch.STATUS_DOWNLOADED
     
-    def fetch(self, fileName, fetchURL, itemSize, hashtype, checksum, savePath, headers=None, retryTimes=2):
+    def fetch(self, fileName, fetchURL, itemSize, hashtype, checksum, 
+              savePath, headers=None, retryTimes=2, packages_location=None):
         """
         Input:
             itemInfo = dict with keys: 'file_name', 'fetch_url', 'item_size', 'hashtype', 'checksum'
             retryTimes = how many times to retry fetch if an error occurs
         Will return a true/false if item was fetched successfully 
         """
-
-        filePath = os.path.join(savePath, fileName)
+        if packages_location is not None:
+            # this option is to store packages in a central location
+            # and symlink pkgs to individual repo directories
+            filePath = os.path.join(packages_location, fileName)
+            repofilepath = os.path.join(savePath, fileName)
+        else:
+            repofilepath = None
+            filePath = os.path.join(savePath, fileName)
         tempDirPath = os.path.dirname(filePath)
         if not os.path.isdir(tempDirPath):
             LOG.info("Creating directory: %s" % tempDirPath)
@@ -90,6 +97,10 @@ class BaseFetch(object):
         if os.path.exists(filePath) and \
             verifyChecksum(filePath, hashtype, checksum):
             LOG.info("%s exists with correct size and md5sum, no need to fetch." % (filePath))
+            if repofilepath is not None and not os.path.exists(repofilepath):
+                LOG.info("Symlink missing in repo directory. Creating link %s" % repofilepath)
+                if not os.path.islink(repofilepath):
+                    os.symlink(filePath, repofilepath)
             return BaseFetch.STATUS_NOOP
 
         try:
@@ -134,7 +145,8 @@ class BaseFetch(object):
                 if retryTimes > 0:
                     retryTimes -= 1
                     LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
-                    return self.fetch(fileName, fetchURL, itemSize, hashtype, checksum, savePath, headers, retryTimes)
+                    return self.fetch(fileName, fetchURL, itemSize, hashtype, 
+                                      checksum, savePath, headers, retryTimes, packages_location)
                 return BaseFetch.STATUS_ERROR
             if vstatus in [BaseFetch.STATUS_ERROR, BaseFetch.STATUS_SIZE_MISSMATCH, 
                 BaseFetch.STATUS_MD5_MISSMATCH] and retryTimes > 0:
@@ -143,7 +155,13 @@ class BaseFetch(object):
                 #
                 retryTimes -= 1
                 LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
-                return self.fetch(fileName, fetchURL, itemSize, hashtype, checksum, savePath, headers, retryTimes)
+                return self.fetch(fileName, fetchURL, itemSize, hashtype, 
+                                  checksum, savePath, headers, retryTimes, packages_location)
+            if os.path.exists(filePath):
+                LOG.info("Create a link in repo directory for the package at %s" % repofilepath)
+                if os.path.islink(repofilepath):
+                    os.unlink(repofilepath)
+                os.symlink(filePath, repofilepath)
             LOG.debug("Successfully Fetched Package - [%s]" % filePath)
             return vstatus
         except Exception, e:
@@ -153,7 +171,8 @@ class BaseFetch(object):
             if retryTimes > 0:
                 retryTimes -= 1
                 LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
-                return self.fetch(fileName, fetchURL, itemSize, hashtype, checksum, savePath, headers, retryTimes)
+                return self.fetch(fileName, fetchURL, itemSize, hashtype, 
+                                  checksum, savePath, headers, retryTimes, packages_location)
             return BaseFetch.STATUS_ERROR
 
 def getFileChecksum(hashtype, filename=None, fd=None, file=None, buffer_size=None):

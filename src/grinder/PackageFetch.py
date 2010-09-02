@@ -47,12 +47,14 @@ class PackageFetch(BaseFetch):
         itemSize = itemInfo['size']
         md5sum = itemInfo['md5sum']
         hashType = itemInfo['hashtype']
+        pkgPath = itemInfo['pkgpath'] or None
+        print "PPPPPPPPPPPPPP",pkg_path
         fetchURL = self.getFetchURL(self.channelLabel, fetchName)
         status = self.fetch(fileName, fetchURL, itemSize, hashType, md5sum, self.savePath, headers=authMap)
         if status == BaseFetch.STATUS_UNAUTHORIZED:
             LOG.warn("Unauthorized request from fetch().  Will attempt to update authentication credentials and retry")
             authMap = self.login(refresh=True)
-            return self.fetch(fileName, fetchURL, itemSize, hashType,md5sum, self.savePath, headers=authMap)
+            return self.fetch(fileName, fetchURL, itemSize, hashType,md5sum, self.savePath, headers=authMap, pkgpath=pkgPath)
         return status
 
 if __name__ == "__main__":
