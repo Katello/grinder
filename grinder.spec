@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.59
+Version: 0.0.59.1
 Release: 1%{?dist}
 Summary: A tool synching content
 
