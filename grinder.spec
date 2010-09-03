@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Sep 03 2010 Jay Dobies <jason.dobies@redhat.com> 0.0.59.1-1
+- Updated to an extra release version to match pulp. (jason.dobies@redhat.com)
+
 * Thu Sep 02 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.59-1
 - Adding central package location support for grinder. Packages are synced to
   packages_location and symlined to repo directory. Default is repo directory

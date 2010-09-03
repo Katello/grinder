@@ -21,7 +21,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="grinder",
-    version='0.0.59',
+    version='0.0.59.1',
     description='A tool for synching content from the Red Hat Network.',
     author='Mike McCune, John Matthews',
     author_email='mmccune@redhat.com',
