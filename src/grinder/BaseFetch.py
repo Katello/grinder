@@ -100,6 +100,9 @@ class BaseFetch(object):
             if repofilepath is not None and not os.path.exists(repofilepath):
                 LOG.info("Symlink missing in repo directory. Creating link %s" % repofilepath)
                 if not os.path.islink(repofilepath):
+                    basedir = os.path.dirname(repofilepath)
+                    if basedir and not os.path.exists(basedir):
+			os.makedirs(basedir)
                     os.symlink(filePath, repofilepath)
             return BaseFetch.STATUS_NOOP
 
