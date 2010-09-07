@@ -169,7 +169,7 @@ class YumRepoGrinder(object):
             info['checksumtype'], info['checksum'], status = pkg.checksums[0]
             info['size'] = pkg.size
             if self.pkgpath:
-                info['pkgpath']  = "%s/%s/%s/%s/%s" % (self.pkgpath, pkg.name, pkg.version, pkg.release, pkg.arch)
+                info['pkgpath']  = "%s/%s/%s/%s/%s/%s" % (self.pkgpath, info['checksum'][:3], pkg.name, pkg.version, pkg.release, pkg.arch)
             else:
                 info['pkgpath'] = None 
             self.downloadinfo.append(info)
