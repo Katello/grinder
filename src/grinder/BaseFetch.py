@@ -34,6 +34,7 @@ class BaseFetch(object):
     STATUS_MD5_MISSMATCH = 'md5_missmatch'
     STATUS_ERROR = 'error'
     STATUS_UNAUTHORIZED = "unauthorized"
+    STATUS_SKIP_VALIDATE = "skip_validate"
 
     def __init__(self, cacert=None, clicert=None, clikey=None, 
             proxy_url=None, proxy_port=None, proxy_user=None, 
@@ -64,8 +65,8 @@ class BaseFetch(object):
         LOG.debug("Package [%s] is valid with checksum [%s] and size [%s]" % (fileName, checksum, size))
         return BaseFetch.STATUS_DOWNLOADED
     
-    def fetch(self, fileName, fetchURL, itemSize, hashtype, checksum, 
-              savePath, headers=None, retryTimes=2, packages_location=None):
+    def fetch(self, fileName, fetchURL, savePath, itemSize=None, hashtype=None, checksum=None, 
+             headers=None, retryTimes=2, packages_location=None):
         """
         Input:
             itemInfo = dict with keys: 'file_name', 'fetch_url', 'item_size', 'hashtype', 'checksum'
@@ -77,6 +78,9 @@ class BaseFetch(object):
             # and symlink pkgs to individual repo directories
             filePath = os.path.join(packages_location, fileName)
             repofilepath = os.path.join(savePath, fileName)
+            basedir = os.path.dirname(repofilepath)
+            if basedir and not os.path.exists(basedir):
+                os.makedirs(basedir)
         else:
             repofilepath = None
             filePath = os.path.join(savePath, fileName)
@@ -100,9 +104,6 @@ class BaseFetch(object):
             if repofilepath is not None and not os.path.exists(repofilepath):
                 LOG.info("Symlink missing in repo directory. Creating link %s" % repofilepath)
                 if not os.path.islink(repofilepath):
-                    basedir = os.path.dirname(repofilepath)
-                    if basedir and not os.path.exists(basedir):
-			os.makedirs(basedir)
                     os.symlink(filePath, repofilepath)
             return BaseFetch.STATUS_NOOP
 
@@ -133,13 +134,16 @@ class BaseFetch(object):
                     curl.setopt(pycurl.PROXYUSERPWD, "%s:%s" % (self.proxy_user, self.proxy_pass))
             curl.setopt(curl.WRITEFUNCTION, f.write)
             curl.setopt(curl.FOLLOWLOCATION, 1)
-            LOG.info("Fetching %s bytes: %s from %s" % (itemSize, fileName, fetchURL))
+            LOG.info("Fetching %s bytes: %s from %s" % (itemSize or "Unknown", fileName, fetchURL))
             curl.perform()
             status = curl.getinfo(curl.HTTP_CODE)
             curl.close()
             f.close()
             # validate the fetched bits
-            vstatus = self.validateDownload(filePath, int(itemSize), hashtype, checksum)
+            if itemSize is not None and hashtype is not None and checksum is not None:
+                vstatus = self.validateDownload(filePath, int(itemSize), hashtype, checksum)
+            else:
+                vstatus = BaseFetch.STATUS_SKIP_VALIDATE
             if status == 401:
                 LOG.warn("Unauthorized request from: %s" % (fetchURL))
                 return BaseFetch.STATUS_UNAUTHORIZED
@@ -148,8 +152,8 @@ class BaseFetch(object):
                 if retryTimes > 0:
                     retryTimes -= 1
                     LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
-                    return self.fetch(fileName, fetchURL, itemSize, hashtype, 
-                                      checksum, savePath, headers, retryTimes, packages_location)
+                    return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
+                                      checksum , headers, retryTimes, packages_location)
                 return BaseFetch.STATUS_ERROR
             if vstatus in [BaseFetch.STATUS_ERROR, BaseFetch.STATUS_SIZE_MISSMATCH, 
                 BaseFetch.STATUS_MD5_MISSMATCH] and retryTimes > 0:
@@ -158,9 +162,9 @@ class BaseFetch(object):
                 #
                 retryTimes -= 1
                 LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
-                return self.fetch(fileName, fetchURL, itemSize, hashtype, 
-                                  checksum, savePath, headers, retryTimes, packages_location)
-            if os.path.exists(filePath):
+                return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
+                                  checksum, headers, retryTimes, packages_location)
+            if packages_location and os.path.exists(filePath):
                 LOG.info("Create a link in repo directory for the package at %s" % repofilepath)
                 if os.path.islink(repofilepath):
                     os.unlink(repofilepath)
@@ -174,8 +178,8 @@ class BaseFetch(object):
             if retryTimes > 0:
                 retryTimes -= 1
                 LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
-                return self.fetch(fileName, fetchURL, itemSize, hashtype, 
-                                  checksum, savePath, headers, retryTimes, packages_location)
+                return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
+                                  checksum, headers, retryTimes, packages_location)
             return BaseFetch.STATUS_ERROR
 
 def getFileChecksum(hashtype, filename=None, fd=None, file=None, buffer_size=None):
@@ -212,6 +216,9 @@ def getFileChecksum(hashtype, filename=None, fd=None, file=None, buffer_size=Non
     return m.hexdigest()
 
 def verifyChecksum(filePath, hashtype, checksum):
+    if hashtype is None or checksum is None:
+        #Nothing to perform
+        return False
     if getFileChecksum(hashtype, filename=filePath) == checksum:
         return True
     return False

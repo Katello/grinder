@@ -56,13 +56,13 @@ class ParallelFetch(object):
             self.threads.append(wt)
 
     def addItem(self, item):
-        if item.has_key("size"):
+        if item.has_key("size") and item['size'] is not None:
             self.sizeTotal = self.sizeTotal + int(item['size'])
         self.toSyncQ.put(item)
 
     def addItemList(self, items):
         for p in items:
-            if p.has_key("size"):
+            if p.has_key("size") and p['size'] is not None:
                 self.sizeTotal = self.sizeTotal + int(p['size'])
             self.toSyncQ.put(p)
 
@@ -93,7 +93,7 @@ class ParallelFetch(object):
                 self.syncErrorQ.put(itemInfo)
             LOG.debug("%s status updated, %s success %s error" % (itemInfo,
                 self.syncCompleteQ.qsize(), self.syncErrorQ.qsize()))
-            if itemInfo.has_key("size"):
+            if itemInfo.has_key("size")  and itemInfo['size'] is not None:
                 self.sizeLeft = self.sizeLeft - int(itemInfo['size'])
             if self.callback is not None:
                 itemsLeft = self.itemTotal - (self.syncErrorQ.qsize() + self.syncCompleteQ.qsize())

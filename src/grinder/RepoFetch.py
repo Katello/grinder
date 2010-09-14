@@ -22,6 +22,7 @@ import logging
 import shutil
 import pycurl
 import traceback
+import ConfigParser
 
 from PrestoParser import PrestoParser
 from ParallelFetch import ParallelFetch
@@ -88,10 +89,11 @@ class RepoFetch(BaseFetch):
     def fetchItem(self, info):
         return self.fetch(info['fileName'], 
                           str(info['downloadurl']), 
-                          info['size'], 
-                          info['checksumtype'], 
-                          info['checksum'],
-                          info['savepath'], packages_location=info['pkgpath'] or None)
+                          info['savepath'],
+                          itemSize=info['size'], 
+                          hashtype=info['checksumtype'], 
+                          checksum=info['checksum'],
+                          packages_location=info['pkgpath'] or None)
 
     def fetchAll(self):
         plist = self.getPackageList()
@@ -192,6 +194,73 @@ class YumRepoGrinder(object):
             info['pkgpath']  = self.pkgpath
             self.downloadinfo.append(info)
         LOG.info("%s delta rpms have been marked to be fetched" % len(deltarpms))
+        
+    def prepareTrees(self):
+        LOG.info("Preparing to fetch any available trees..")
+        tree_manifest = '.treeinfo'
+        treeinfo_url = self.yumFetch.repourl + '/' + tree_manifest
+        treeinfo_name   = tree_manifest
+        treeinfo_path   = self.yumFetch.repo_dir
+        info = {
+            'downloadurl'   : treeinfo_url,
+            'fileName'      : treeinfo_name,
+            'savepath'      : treeinfo_path,
+            'checksumtype'  :  None,
+            'checksum'      : None,
+            'size'          : None,
+            'pkgpath'       : None,
+        }
+        self.yumFetch.fetchItem(info)
+        if not os.path.exists(os.path.join(treeinfo_path, tree_manifest)):
+            LOG.info("No Trees found in this repo.")
+            return
+        cfgparser = ConfigParser.ConfigParser()
+        cfgparser.optionxform = str
+        try:
+            treecfg = open(os.path.join(treeinfo_path, tree_manifest))
+            cfgparser.readfp(treecfg)
+        except:
+            LOG.info("Unable to read the tree info config.")
+            return
+
+        tree_info = {} 
+        if cfgparser.has_section('checksums'):
+            # This should give us all the kernel/image files
+            for opt_fn in cfgparser.options('checksums'):
+                (csum_type, csum) = cfgparser.get('checksums', opt_fn).split(':')
+                tree_info[opt_fn] = (csum_type, csum)
+        else:
+            #No checksum section, look manually for images
+            arch = None
+            if cfgparser.has_section('general'):
+                arch = cfgparser.get('general', 'arch')   
+            if cfgparser.has_section('images-%s' % arch):
+                try:
+                    imgs = 'images-%s' % arch
+                    for fn in cfgparser.options(imgs):
+                        fileinf = cfgparser.get(imgs, fn)
+                        tree_info[fileinf] = (None, None)
+                    if cfgparser.has_section('stage2'):
+                        mainimage = cfgparser.get('stage2', 'mainimage')
+                    else:
+                        mainimage = 'images/stage2.img'
+                    tree_info[mainimage] = (None, None)
+                except ConfigParser.NoOptionError, e:
+                    LOG.info("Invalid treeinfo: %s" % str(e))
+                    return
+        treecfg.close()
+        for relpath, hashinfo in tree_info.items():
+            print relpath, hashinfo
+            info = {}
+            info['downloadurl'] = self.yumFetch.repourl + '/' + relpath
+            info['fileName']    = os.path.basename(relpath)
+            info['savepath']    = treeinfo_path + '/' + os.path.dirname(relpath)
+            (info['checksumtype'], info['checksum']) = hashinfo
+            info['size']        = None
+            info['pkgpath'] = None
+            self.downloadinfo.append(info)
+        LOG.info("%s Tree files have been marked to be fetched" % len(tree_info['files']))
+            
 
     def fetchYumRepo(self, basepath="./", callback=None):
         LOG.info("fetchYumRepo() basepath = %s" % (basepath))
@@ -211,6 +280,8 @@ class YumRepoGrinder(object):
         self.prepareRPMS()
         # get drpms to fetch
         self.prepareDRPMS()
+        # get Trees to fetch
+        self.prepareTrees()
         # prepare for download
         self.fetchPkgs = ParallelFetch(self.yumFetch, self.numThreads, callback=callback)
         self.fetchPkgs.addItemList(self.downloadinfo)
@@ -247,10 +318,6 @@ class YumRepoGrinder(object):
                 
 
 if __name__ == "__main__":
-#    yfetch = YumRepoGrinder("fedora12", \
-#         "http://download.fedora.devel.redhat.com/pub/fedora/linux/releases/12/Everything/x86_64/os/", 10, newest=True, pkg_path="/var/lib/pulp/packages/")
-#    yfetch.fetchYumRepo()
-    
-    yfetch = YumRepoGrinder("testrepo", "http://mmccune.fedorapeople.org/pulp/", 
-                            10, packages_location="/var/lib/pulp/packages/")
+    yfetch = YumRepoGrinder("testrepo", "http://download.fedora.redhat.com/pub/fedora/linux/releases/13/Fedora/i386/os/", 
+                            10)
     yfetch.fetchYumRepo()
