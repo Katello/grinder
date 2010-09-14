@@ -259,7 +259,7 @@ class YumRepoGrinder(object):
             info['size']        = None
             info['pkgpath'] = None
             self.downloadinfo.append(info)
-        LOG.info("%s Tree files have been marked to be fetched" % len(tree_info['files']))
+        LOG.info("%s Tree files have been marked to be fetched" % len(tree_info))
             
 
     def fetchYumRepo(self, basepath="./", callback=None):
