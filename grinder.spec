@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.60
+Version: 0.0.61
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Sep 17 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.61-1
+- removes unused files key (pkilambi@redhat.com)
+- Adding support to be able to sync down trees associated to the product repo
+  (pkilambi@redhat.com)
+- include checksum in package store path (pkilambi@redhat.com)
+
 * Tue Sep 07 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.60-1
 - Somtimes the package path could have directories, created the dirs before
   creating symlinks (pkilambi@redhat.com)
