@@ -136,7 +136,7 @@ class YumRepoGrinder(object):
     """
       Driver module to initiate the repo fetching
     """
-    def __init__(self, repo_label, repo_url, parallel, mirrors=None, \
+    def __init__(self, repo_label, repo_url, parallel=50, mirrors=None, \
                        newest=False, cacert=None, clicert=None, clikey=None, \
                        proxy_url=None, proxy_port=None, proxy_user=None, \
                        proxy_pass=None, packages_location=None):
@@ -197,25 +197,29 @@ class YumRepoGrinder(object):
         
     def prepareTrees(self):
         LOG.info("Preparing to fetch any available trees..")
-        tree_manifest = '.treeinfo'
-        treeinfo_url = self.yumFetch.repourl + '/' + tree_manifest
-        treeinfo_name   = tree_manifest
-        treeinfo_path   = self.yumFetch.repo_dir
-        info = {
-            'downloadurl'   : treeinfo_url,
-            'fileName'      : treeinfo_name,
-            'savepath'      : treeinfo_path,
-            'checksumtype'  :  None,
-            'checksum'      : None,
-            'size'          : None,
-            'pkgpath'       : None,
-        }
-        self.yumFetch.fetchItem(info)
-        if not os.path.exists(os.path.join(treeinfo_path, tree_manifest)):
-            LOG.info("No Trees found in this repo.")
-            return
+        # In certain cases, treeinfo is not a hidden file. Try if one fails..
+        for treeinfo in ['.treeinfo', 'treeinfo']: 
+            tree_manifest = treeinfo
+            treeinfo_url = self.yumFetch.repourl + '/' + tree_manifest
+            treeinfo_name   = tree_manifest
+            treeinfo_path   = self.yumFetch.repo_dir
+            info = {
+                    'downloadurl'   : treeinfo_url,
+                    'fileName'      : treeinfo_name,
+                    'savepath'      : treeinfo_path,
+                    'checksumtype'  :  None,
+                    'checksum'      : None,
+                    'size'          : None,
+                    'pkgpath'       : None,
+                    }
+
+            self.yumFetch.fetchItem(info)
+            if os.path.exists(os.path.join(treeinfo_path, tree_manifest)):
+                LOG.info("Tree info fetched from %s" % treeinfo_url)
+                break
+        
         cfgparser = ConfigParser.ConfigParser()
-        cfgparser.optionxform = str
+        cfgparser.optionxform = str # prevent cfgparser to converts data to lowercase.
         try:
             treecfg = open(os.path.join(treeinfo_path, tree_manifest))
             cfgparser.readfp(treecfg)

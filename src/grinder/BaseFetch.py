@@ -146,6 +146,7 @@ class BaseFetch(object):
                 vstatus = BaseFetch.STATUS_SKIP_VALIDATE
             if status == 401:
                 LOG.warn("Unauthorized request from: %s" % (fetchURL))
+                cleanup(filePath)
                 return BaseFetch.STATUS_UNAUTHORIZED
             if status != 200:
                 LOG.critical("ERROR: Response = %s fetching %s." % (status, fetchURL))
@@ -154,6 +155,7 @@ class BaseFetch(object):
                     LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
                     return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                       checksum , headers, retryTimes, packages_location)
+                cleanup(filePath)
                 return BaseFetch.STATUS_ERROR
             if vstatus in [BaseFetch.STATUS_ERROR, BaseFetch.STATUS_SIZE_MISSMATCH, 
                 BaseFetch.STATUS_MD5_MISSMATCH] and retryTimes > 0:
@@ -162,6 +164,7 @@ class BaseFetch(object):
                 #
                 retryTimes -= 1
                 LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
+                cleanup(filePath)
                 return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                   checksum, headers, retryTimes, packages_location)
             if packages_location and os.path.exists(filePath):
@@ -180,7 +183,12 @@ class BaseFetch(object):
                 LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
                 return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                   checksum, headers, retryTimes, packages_location)
+            cleanup(filePath)
             return BaseFetch.STATUS_ERROR
+
+def cleanup(filepath):
+    if os.path.exists(filepath):
+        os.unlink(filepath)
 
 def getFileChecksum(hashtype, filename=None, fd=None, file=None, buffer_size=None):
     """ Compute a file's checksum
