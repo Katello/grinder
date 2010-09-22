@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.61
+Version: 0.0.62
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Sep 22 2010 John Matthews <jmatthew@redhat.com> 0.0.62-1
+- fix for rhn sync (jmatthew@redhat.com)
+- In certain case such as CDN, dotted files are not allowed. Try a treeinfo if
+  .treeinfo fails before quitting (pkilambi@redhat.com)
+
 * Fri Sep 17 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.61-1
 - removes unused files key (pkilambi@redhat.com)
 - Adding support to be able to sync down trees associated to the product repo
