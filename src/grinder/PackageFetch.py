@@ -47,7 +47,7 @@ class PackageFetch(BaseFetch):
         itemSize = itemInfo['size']
         md5sum = itemInfo['md5sum']
         hashType = itemInfo['hashtype']
-        pkgPath = itemInfo['pkgpath'] or None
+        pkgPath = itemInfo['pkgpath'] if itemInfo.has_key('pkgpath') else None
         fetchURL = self.getFetchURL(self.channelLabel, fetchName)
         status = self.fetch(fileName, fetchURL, self.savePath, itemSize, hashType, md5sum,  headers=authMap)
         if status == BaseFetch.STATUS_UNAUTHORIZED:
