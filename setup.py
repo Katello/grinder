@@ -23,7 +23,7 @@ setup(
     name="grinder",
     version='0.0.61',
     description='A tool for synching content from the Red Hat Network.',
-    author='Mike McCune, John Matthews', 'Pradeep Kilambi'
+    author='Mike McCune, John Matthews, Pradeep Kilambi',
     author_email='mmccune@redhat.com',
     url='http://github.com/mccun934/grinder',
     license='GPLv2+',
