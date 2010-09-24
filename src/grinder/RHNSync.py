@@ -20,6 +20,7 @@ import glob
 import httplib
 import urlparse
 import time
+import traceback
 import commands
 import rpm
 import rpmUtils
@@ -52,18 +53,6 @@ class RHNSync(BaseSync):
     def __init__(self):
         BaseSync.__init__(self)
         self.baseURL = "http://satellite.rhn.redhat.com"
-        try:
-            certFile = "/etc/sysconfig/rhn/entitlement-cert.xml"
-            self.cert = open(certFile, 'r').read()
-        except:
-            LOG.debug("Unable to read cert from %s" % (certFile))
-            self.cert = None
-        try:
-            systemidFile = "/etc/sysconfig/rhn/systemid"
-            self.systemid = open(systemidFile, 'r').read()
-        except:
-            LOG.debug("Unable to read systemid from %s" % (systemidFile))
-            self.systemid = None
         self.username = None
         self.password = None
         self.parallel = 5
@@ -78,6 +67,28 @@ class RHNSync(BaseSync):
         self.basePath = None
         self.channelSyncList = []
         self.verbose = False
+        self.certFile = "/etc/sysconfig/rhn/entitlement-cert.xml"
+        self.cert = None
+        self.systemidFile = "/etc/sysconfig/rhn/systemid"
+        self.systemid = None
+
+    def init(self):
+        try:
+            if not self.cert:
+                self.cert = open(self.certFile, 'r').read()
+        except Exception, e:
+            LOG.debug("%s" % traceback.format_exc())
+            LOG.error("Unable to read cert from %s" % (self.certFile))
+            self.cert = None
+            raise BadCertificateException()
+        try:
+            if not self.systemid:
+                self.systemid = open(self.systemidFile, 'r').read()
+        except Exception, e:
+            LOG.debug("%s" % traceback.format_exc())
+            LOG.error("Unable to read systemid from %s" % (self.systemidFile))
+            self.systemid = None
+            raise BadSystemIdException()
 
     def setPassword(self, pword):
         LOG.debug("setPassword(%s)" % (pword))
@@ -188,11 +199,9 @@ class RHNSync(BaseSync):
         if configInfo.has_key("all"):
             self.setFetchAllPackages(configInfo["all"])
         if configInfo.has_key("cert") and configInfo["cert"] is not None:
-            cert = open(configInfo["cert"], 'r').read()
-            self.setCert(cert)
+            self.certFile = configInfo["cert"]
         if configInfo.has_key("systemid") and configInfo["systemid"] is not None:
-            sysid = open(configInfo["systemid"], 'r').read()
-            self.setSystemId(sysid)
+            self.systemidFile = configInfo["systemid"]
         if configInfo.has_key("parallel"):
             self.setParallel(int(configInfo["parallel"]))
         if configInfo.has_key("url"):
@@ -219,6 +228,7 @@ class RHNSync(BaseSync):
         return self.channelSyncList
 
     def deactivate(self):
+        self.init()
         SATELLITE_URL = "%s/rpc/api" % (self.baseURL)
         client = getRhnApi(SATELLITE_URL, verbose=self.verbose)
         key = client.auth.login(self.username, self.password)
@@ -228,6 +238,7 @@ class RHNSync(BaseSync):
         print "Deactivated!"
 
     def activate(self):
+        self.init()
         rhn = RHNTransport()    
         satClient = getRhnApi(self.baseURL + "/SAT", 
             verbose=self.verbose, transport=rhn)
@@ -269,6 +280,7 @@ class RHNSync(BaseSync):
         Output:
              list containing bad channel names
         """
+        self.init()
         satDump = SatDumpClient(self.baseURL)
         channelFamilies = satDump.getChannelFamilies(self.systemid)
         badChannel = []
@@ -286,6 +298,7 @@ class RHNSync(BaseSync):
 
 
     def getChannelLabels(self):
+        self.init()
         labels = {}
         satDump = SatDumpClient(self.baseURL)
         channelFamilies = satDump.getChannelFamilies(self.systemid)
@@ -310,6 +323,7 @@ class RHNSync(BaseSync):
         verbose - if true display more output
         callback - function to use for a progress callback
         """
+        self.init()
         if self.getBasePath():
             savePath = os.path.join(self.getBasePath(), savePath)
             LOG.info("Adjusting save path to: %s" % (savePath))
@@ -353,6 +367,7 @@ class RHNSync(BaseSync):
         verbose - if true display more output
         callback - function to use for a progress callback
         """
+        self.init()
         if self.getBasePath():
             savePath = os.path.join(self.getBasePath(), savePath)
             LOG.info("Adjusting save path to: %s" % (savePath))

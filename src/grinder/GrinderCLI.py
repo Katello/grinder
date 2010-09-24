@@ -23,7 +23,7 @@ import GrinderLog
 from optparse import OptionParser
 from RepoFetch import YumRepoGrinder
 from RHNSync import RHNSync
-from GrinderExceptions import CantActivateException, SystemNotActivatedException
+from GrinderExceptions import *
 
 LOG = logging.getLogger("grinder.GrinderCLI")
 
@@ -136,6 +136,12 @@ class RHNDriver(CliDriver):
         except CantActivateException, e:
             LOG.debug("%s" % (traceback.format_exc()))
             systemExit(1, "Unable to activate system.")
+        except BadSystemIdException, e:
+            LOG.debug("%s" % (traceback.format_exc()))
+            systemExit(1, "Problem with systemid")
+        except BadCertificateException, e:
+            LOG.debug("%s" % (traceback.format_exc()))
+            systemExit(1, "Problem with satellite certificate")
         except socket.gaierror, e:
             LOG.debug("%s" % (traceback.format_exc()))
             systemExit(1, "Error communicating to: %s\n%s" % (self.rhnSync.getURL(), e))

@@ -9,6 +9,12 @@ class NoChannelLabelException(GrinderException):
     def __str__(self):
         return "No channel label was specified"
 
+class BadCertificateException(GrinderException):
+    def __init__(self):
+        return
+    def __str__(self):
+        return "Unable to read certificate"
+
 class BadSystemIdException(GrinderException):
     def __init__(self):
         return
