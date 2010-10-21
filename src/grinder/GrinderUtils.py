@@ -22,8 +22,8 @@ import rpmUtils
 import rpmUtils.miscutils
 
 
-LOG = logging.getLogger("grinder.BaseSync")
-class BaseSync(object):
+LOG = logging.getLogger("grinder.GrinderUtils")
+class GrinderUtils(object):
 
     def __init__(self):
         self.numOldPkgsKeep = 2

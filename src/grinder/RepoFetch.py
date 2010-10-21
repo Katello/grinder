@@ -27,6 +27,8 @@ import ConfigParser
 from PrestoParser import PrestoParser
 from ParallelFetch import ParallelFetch
 from BaseFetch import BaseFetch
+from GrinderUtils import GrinderUtils
+
 LOG = logging.getLogger("grinder.RepoFetch")
 
 class RepoFetch(BaseFetch):
@@ -139,7 +141,7 @@ class YumRepoGrinder(object):
     def __init__(self, repo_label, repo_url, parallel=50, mirrors=None, \
                        newest=False, cacert=None, clicert=None, clikey=None, \
                        proxy_url=None, proxy_port=None, proxy_user=None, \
-                       proxy_pass=None, packages_location=None):
+                       proxy_pass=None, packages_location=None, numOldPackages=2):
         self.repo_label = repo_label
         self.repo_url = repo_url
         self.mirrors = mirrors
@@ -157,6 +159,8 @@ class YumRepoGrinder(object):
         self.newest = newest
         # set this if you want all packages to be stored in a central location
         self.pkgpath = packages_location
+        self.numOldPackages = 2
+        self.pkgsavepath = ''
 
     def prepareRPMS(self):
         pkglist = self.yumFetch.getPackageList(newest=self.newest)
@@ -296,6 +300,9 @@ class YumRepoGrinder(object):
                   (endTime - startTime)))
         LOG.info("Cleaning any orphaned packages..")
         self.purgeOrphanPackages(self.yumFetch.getPackageList(), self.yumFetch.repo_dir)
+        LOG.info("Removing old packages to limit to %s" % self.numOldPackages)
+        gutils = GrinderUtils()
+        gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
         return report
 
     def stop(self):
@@ -308,17 +315,18 @@ class YumRepoGrinder(object):
         updated primary.xml download list. 
         """
         dpkgs = []
-        save_path = repo_dir
+        self.pkgsavepath = repo_dir
         for pkg in downloadlist:
             rpmName = pkg.name + "-" + pkg.version + "-" + \
                                 pkg.release + "." + pkg.arch + ".rpm"
-            save_path = repo_dir + '/' + os.path.dirname(pkg.relativepath)
+            pkg_path = os.path.dirname(pkg.relativepath)
+            self.pkgsavepath = repo_dir + '/' + pkg_path
             dpkgs.append(rpmName)
-        for ppkg in os.listdir(save_path):
+        for ppkg in os.listdir(self.pkgsavepath):
             if not ppkg.endswith('.rpm'):
                 continue
             if ppkg not in dpkgs:
-                os.remove(os.path.join(save_path, ppkg))
+                os.remove(os.path.join(self.pkgsavepath, ppkg))
                 
 
 if __name__ == "__main__":

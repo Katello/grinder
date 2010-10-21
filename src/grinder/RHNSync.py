@@ -45,13 +45,13 @@ from PackageFetch import PackageFetch
 from GrinderExceptions import *
 from SatDumpClient import SatDumpClient
 from RHNComm import RHNComm
-from BaseSync import BaseSync
+from GrinderUtils import GrinderUtils
 
 LOG = logging.getLogger("grinder.RHNSync")
 
-class RHNSync(BaseSync):
+class RHNSync(object):
     def __init__(self):
-        BaseSync.__init__(self)
+        self.gutils = GrinderUtils()
         self.baseURL = "http://satellite.rhn.redhat.com"
         self.username = None
         self.password = None
@@ -155,10 +155,10 @@ class RHNSync(BaseSync):
 
     def setNumOldPackagesToKeep(self, num):
         LOG.debug("setNumOldPackagesToKeep(%s)" % (num))
-        self.numOldPkgsKeep = num
+        self.gutils.numOldPkgsKeep = num
 
     def getNumOldPackagesToKeep(self):
-        return self.numOldPkgsKeep
+        return self.gutils.numOldPkgsKeep
 
     def setBasePath(self, p):
         LOG.debug("setBasePath(%s)" % (p))
@@ -398,7 +398,7 @@ class RHNSync(BaseSync):
                 % (channelLabel, report.successes, report.downloads, report.errors, (endTime-startTime)))
         if self.removeOldPackages:
             LOG.info("Remove old packages from %s" % (savePath))
-            self.runRemoveOldPackages(savePath)
+            self.gutils.runRemoveOldPackages(savePath)
         self.createRepo(savePath)
         self.updateRepo(os.path.join(savePath,"updateinfo.xml"),
                 os.path.join(savePath,"repodata/"))
