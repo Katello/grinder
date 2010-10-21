@@ -159,7 +159,7 @@ class YumRepoGrinder(object):
         self.newest = newest
         # set this if you want all packages to be stored in a central location
         self.pkgpath = packages_location
-        self.numOldPackages = 2
+        self.numOldPackages = numOldPackages
         self.pkgsavepath = ''
 
     def prepareRPMS(self):
