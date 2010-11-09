@@ -141,7 +141,8 @@ class YumRepoGrinder(object):
     def __init__(self, repo_label, repo_url, parallel=50, mirrors=None, \
                        newest=False, cacert=None, clicert=None, clikey=None, \
                        proxy_url=None, proxy_port=None, proxy_user=None, \
-                       proxy_pass=None, packages_location=None, numOldPackages=2):
+                       proxy_pass=None, packages_location=None, remove_old=False,
+                       numOldPackages=2):
         self.repo_label = repo_label
         self.repo_url = repo_url
         self.mirrors = mirrors
@@ -161,6 +162,7 @@ class YumRepoGrinder(object):
         self.pkgpath = packages_location
         self.numOldPackages = numOldPackages
         self.pkgsavepath = ''
+        self.remove_old = remove_old
 
     def prepareRPMS(self):
         pkglist = self.yumFetch.getPackageList(newest=self.newest)
@@ -258,7 +260,6 @@ class YumRepoGrinder(object):
                     return
         treecfg.close()
         for relpath, hashinfo in tree_info.items():
-            print relpath, hashinfo
             info = {}
             info['downloadurl'] = self.yumFetch.repourl + '/' + relpath
             info['fileName']    = os.path.basename(relpath)
@@ -300,9 +301,10 @@ class YumRepoGrinder(object):
                   (endTime - startTime)))
         LOG.info("Cleaning any orphaned packages..")
         self.purgeOrphanPackages(self.yumFetch.getPackageList(), self.yumFetch.repo_dir)
-        LOG.info("Removing old packages to limit to %s" % self.numOldPackages)
-        gutils = GrinderUtils()
-        gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
+        if self.remove_old:
+            LOG.info("Removing old packages to limit to %s" % self.numOldPackages)
+            gutils = GrinderUtils()
+            gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
         return report
 
     def stop(self):
