@@ -142,7 +142,7 @@ class YumRepoGrinder(object):
                        newest=False, cacert=None, clicert=None, clikey=None, \
                        proxy_url=None, proxy_port=None, proxy_user=None, \
                        proxy_pass=None, packages_location=None, remove_old=False,
-                       numOldPackages=2):
+                       numOldPackages=2, skip={}):
         self.repo_label = repo_label
         self.repo_url = repo_url
         self.mirrors = mirrors
@@ -163,6 +163,7 @@ class YumRepoGrinder(object):
         self.numOldPackages = numOldPackages
         self.pkgsavepath = ''
         self.remove_old = remove_old
+        self.skip = skip
 
     def prepareRPMS(self):
         pkglist = self.yumFetch.getPackageList(newest=self.newest)
@@ -285,12 +286,18 @@ class YumRepoGrinder(object):
         # first fetch the metadata
         self.yumFetch.getRepoData()
         LOG.info("Determining downloadable Content bits...")
-        # get rpms to fetch
-        self.prepareRPMS()
-        # get drpms to fetch
-        self.prepareDRPMS()
-        # get Trees to fetch
-        self.prepareTrees()
+        if not self.skip.has_key('packages') or self.skip['packages'] != 0:
+            # get rpms to fetch
+            self.prepareRPMS()
+            # get drpms to fetch
+            self.prepareDRPMS()
+	else:
+	   LOG.info("Skipping packages preparation from sync process")
+        if not self.skip.has_key('distribution') or self.skip['distribution'] != 0:
+            # get Trees to fetch
+            self.prepareTrees()
+	else:
+	   LOG.info("Skipping distribution preparation from sync process")
         # prepare for download
         self.fetchPkgs = ParallelFetch(self.yumFetch, self.numThreads, callback=callback)
         self.fetchPkgs.addItemList(self.downloadinfo)
