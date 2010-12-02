@@ -286,14 +286,14 @@ class YumRepoGrinder(object):
         # first fetch the metadata
         self.yumFetch.getRepoData()
         LOG.info("Determining downloadable Content bits...")
-        if not self.skip.has_key('packages') or self.skip['packages'] != 0:
+        if not self.skip.has_key('packages') or self.skip['packages'] != 1:
             # get rpms to fetch
             self.prepareRPMS()
             # get drpms to fetch
             self.prepareDRPMS()
 	else:
 	   LOG.info("Skipping packages preparation from sync process")
-        if not self.skip.has_key('distribution') or self.skip['distribution'] != 0:
+        if not self.skip.has_key('distribution') or self.skip['distribution'] != 1:
             # get Trees to fetch
             self.prepareTrees()
 	else:
