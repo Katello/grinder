@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.65
+Version: 0.0.66
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Dec 02 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.66-1
+- changing the skip check to use right value (pkilambi@redhat.com)
+- Adding option to skip specific content types from syncs (pkilambi@redhat.com)
+
 * Tue Nov 09 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.65-1
 - Adding support for RepoFetch to pass in remove_old checks. CLean up print
   statements (pkilambi@redhat.com)
