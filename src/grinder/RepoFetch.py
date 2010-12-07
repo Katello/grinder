@@ -291,13 +291,13 @@ class YumRepoGrinder(object):
             self.prepareRPMS()
             # get drpms to fetch
             self.prepareDRPMS()
-	else:
-	   LOG.info("Skipping packages preparation from sync process")
+        else:
+            LOG.info("Skipping packages preparation from sync process")
         if not self.skip.has_key('distribution') or self.skip['distribution'] != 1:
             # get Trees to fetch
             self.prepareTrees()
-	else:
-	   LOG.info("Skipping distribution preparation from sync process")
+        else:
+            LOG.info("Skipping distribution preparation from sync process")
         # prepare for download
         self.fetchPkgs = ParallelFetch(self.yumFetch, self.numThreads, callback=callback)
         self.fetchPkgs.addItemList(self.downloadinfo)
