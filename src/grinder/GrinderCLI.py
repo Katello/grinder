@@ -208,6 +208,8 @@ class RepoDriver(CliDriver):
                           help="Path location to Client SSl Certificate.")
         self.parser.add_option("--key", dest="clikey",
                           help="Path location to Client Certificate Key.")
+        self.parser.add_option("--nosslverify", action="store_true", dest="nosslverify",
+                          help="disable ssl verify of server cert")
         self.parser.add_option('-P', "--parallel", dest="parallel",
                           help="Thread count to fetch the bits in parallel. Defaults to 5")
         self.parser.add_option('-b', '--basepath', dest="basepath",
@@ -238,6 +240,9 @@ class RepoDriver(CliDriver):
         Executes the command.
         """
         self._validate_options()
+        sslverify=1
+        if self.options.nosslverify:
+            sslverify=0
         if self.options.cacert and self.options.clicert and self.options.clikey:
             self.yfetch = YumRepoGrinder(self.options.label, self.options.url, \
                                 self.parallel, cacert=self.options.cacert, \
@@ -245,13 +250,14 @@ class RepoDriver(CliDriver):
                                 proxy_url=self.options.proxy_url, 
                                 proxy_port=self.options.proxy_port, \
                                 proxy_user=self.options.proxy_user, \
-                                proxy_pass=self.options.proxy_pass)
+                                proxy_pass=self.options.proxy_pass,
+                                sslverify=sslverify)
         else:
             self.yfetch = YumRepoGrinder(self.options.label, self.options.url, \
                                 self.parallel, proxy_url=self.options.proxy_url, \
                                 proxy_port = self.options.proxy_port, \
                                 proxy_user=self.options.proxy_user, \
-                                proxy_pass=self.options.proxy_pass)
+                                proxy_pass=self.options.proxy_pass, sslverify=sslverify)
         if self.options.basepath:
             self.yfetch.fetchYumRepo(self.options.basepath)
         else:

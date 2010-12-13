@@ -37,10 +37,10 @@ class RepoFetch(BaseFetch):
     """
     def __init__(self, repo_label, repourl, cacert=None, clicert=None, clikey=None, 
                  mirrorlist=None, download_dir='./', proxy_url=None, 
-                 proxy_port=None, proxy_user=None, proxy_pass=None):
+                 proxy_port=None, proxy_user=None, proxy_pass=None, sslverify=1):
         BaseFetch.__init__(self, cacert=cacert, clicert=clicert, clikey=clikey,
                 proxy_url=proxy_url, proxy_port=proxy_port, 
-                proxy_user=proxy_user, proxy_pass=proxy_pass)
+                proxy_user=proxy_user, proxy_pass=proxy_pass, sslverify=sslverify)
         self.repo_label = repo_label
         self.repourl = repourl.encode('ascii', 'ignore')
         self.mirrorlist = mirrorlist
@@ -50,6 +50,7 @@ class RepoFetch(BaseFetch):
         self.proxy_port = proxy_port
         self.proxy_user = proxy_user
         self.proxy_pass = proxy_pass
+        self.sslverify  = sslverify
 
     def setupRepo(self):
         self.repo = yum.yumRepo.YumRepository(self.repo_label)
@@ -71,7 +72,7 @@ class RepoFetch(BaseFetch):
         self.repo.sslcacert = self.sslcacert
         self.repo.sslclientcert = self.sslclientcert
         self.repo.sslclientkey = self.sslclientkey
-        self.repo.sslverify = 1
+        self.repo.sslverify = self.sslverify
 
     def getPackageList(self, newest=False):
         sack = self.repo.getPackageSack()
@@ -141,8 +142,8 @@ class YumRepoGrinder(object):
     def __init__(self, repo_label, repo_url, parallel=50, mirrors=None, \
                        newest=False, cacert=None, clicert=None, clikey=None, \
                        proxy_url=None, proxy_port=None, proxy_user=None, \
-                       proxy_pass=None, packages_location=None, remove_old=False,
-                       numOldPackages=2, skip={}):
+                       proxy_pass=None, sslverify=1, packages_location=None, \
+                       remove_old=False, numOldPackages=2, skip={}):
         self.repo_label = repo_label
         self.repo_url = repo_url
         self.mirrors = mirrors
@@ -164,6 +165,7 @@ class YumRepoGrinder(object):
         self.pkgsavepath = ''
         self.remove_old = remove_old
         self.skip = skip
+        self.sslverify  = sslverify
 
     def prepareRPMS(self):
         pkglist = self.yumFetch.getPackageList(newest=self.newest)
@@ -280,7 +282,7 @@ class YumRepoGrinder(object):
                             clikey=self.sslclientkey, mirrorlist=self.mirrors, \
                             download_dir=basepath, proxy_url=self.proxy_url, \
                             proxy_port=self.proxy_port, proxy_user=self.proxy_user, \
-                            proxy_pass=self.proxy_pass)
+                            proxy_pass=self.proxy_pass, sslverify=self.sslverify)
         self.yumFetch.setupRepo()
         LOG.info("Fetching repo metadata...")
         # first fetch the metadata

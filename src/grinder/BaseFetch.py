@@ -38,7 +38,7 @@ class BaseFetch(object):
 
     def __init__(self, cacert=None, clicert=None, clikey=None, 
             proxy_url=None, proxy_port=None, proxy_user=None, 
-            proxy_pass=None):
+            proxy_pass=None, sslverify=1):
         self.sslcacert = cacert
         self.sslclientcert = clicert
         self.sslclientkey = clikey
@@ -46,6 +46,7 @@ class BaseFetch(object):
         self.proxy_port = proxy_port
         self.proxy_user = proxy_user
         self.proxy_pass = proxy_pass
+        self.sslverify  = sslverify
 
     def validateDownload(self, filePath, size, hashtype, checksum, verbose=False):
         statinfo = os.stat(filePath)
@@ -119,6 +120,8 @@ class BaseFetch(object):
                 curl.setopt(curl.CAINFO, self.sslcacert)
                 curl.setopt(curl.SSLCERT, self.sslclientcert)
                 curl.setopt(curl.SSLKEY, self.sslclientkey)
+            if not self.sslverify:
+                curl.setopt(curl.SSL_VERIFYPEER, 0)
             if headers:
                 curl.setopt(pycurl.HTTPHEADER, curlifyHeaders(headers))
             if self.proxy_url:
