@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.66
+Version: 0.0.67
 Release: 1%{?dist}
 Summary: A tool synching content
 
@@ -47,6 +47,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Dec 13 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.67-1
+- makeing sslverify an option that can be passed to YumRepoGrinder api call as
+  well as a cli option to pass in --nosslverify (pkilambi@redhat.com)
+- fixing indentation (pkilambi@redhat.com)
+
 * Thu Dec 02 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.66-1
 - changing the skip check to use right value (pkilambi@redhat.com)
 - Adding option to skip specific content types from syncs (pkilambi@redhat.com)
