@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.67
+Version: 0.0.68
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Dec 22 2010 Jay Dobies <jason.dobies@redhat.com> 0.0.68-1
+- Fixed spec description (jason.dobies@redhat.com)
+
 * Mon Dec 13 2010 Pradeep Kilambi <pkilambi@redhat.com> 0.0.67-1
 - makeing sslverify an option that can be passed to YumRepoGrinder api call as
   well as a cli option to pass in --nosslverify (pkilambi@redhat.com)
