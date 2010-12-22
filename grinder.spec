@@ -3,7 +3,7 @@
 Name: grinder
 Version: 0.0.67
 Release: 1%{?dist}
-Summary: A tool synching content
+Summary: A tool for synchronizing repositories and their contents
 
 Group: Development/Tools
 License: GPLv2
