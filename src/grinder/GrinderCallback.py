@@ -29,6 +29,7 @@ class ProgressReport(object):
         self.status = status            # Status Message
         self.num_error = 0              # Number of Errors
         self.num_success = 0            # Number of Successes
+        self.num_download = 0          # Number of actual downloads
 
     def __str__(self):
         s = ""

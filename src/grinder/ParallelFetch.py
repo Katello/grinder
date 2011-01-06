@@ -17,6 +17,7 @@ import time
 import logging
 import threading
 from threading import Thread, Lock
+import traceback
 import Queue
 
 from BaseFetch import BaseFetch
@@ -132,9 +133,11 @@ class ParallelFetch(object):
         return (working > 0)
 
     def _waitForThreads(self):
-        while (self._running()):
-            LOG.debug("Wait 1.  check again")
+        num_alive_threads = self._running()
+        while (num_alive_threads):
+            LOG.debug("Waiting for threads to finish, %s still active" % (num_alive_threads))
             time.sleep(0.5)
+            num_alive_threads = self._running()
 
     def waitForFinish(self):
         """
@@ -167,8 +170,9 @@ class ParallelFetch(object):
         if self.callback is not None:
             r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, self.toSyncQ.qsize())
             r.status = "FINISHED"
-            r.num_error = self.syncErrorQ.qsize()
-            r.num_success = self.syncCompleteQ.qsize()
+            r.num_error = report.errors
+            r.num_success = report.successes
+            r.num_download = report.downloads
             self.callback(r)
         return report
 
@@ -192,13 +196,19 @@ class WorkerThread(Thread):
         while not self._stop.isSet():
             try:
                 itemInfo = self.pFetch.getWorkItem()
-                if itemInfo is None:
-                    break
-                status = self.fetcher.fetchItem(itemInfo)
-                self.pFetch.markStatus(itemInfo, status)
             except Queue.Empty:
                 LOG.debug("Queue is empty, thread will end")
                 break
+            if itemInfo is None:
+                break
+            try:
+                status = self.fetcher.fetchItem(itemInfo)
+            except Exception, e:
+                LOG.error("%s" % (traceback.format_exc()))
+                LOG.error(e)
+                self.pFetch.markStatus(itemInfo, BaseFetch.STATUS_ERROR)
+                break
+            self.pFetch.markStatus(itemInfo, status)
         LOG.debug("Thread ending")
 
 if __name__ == "__main__":
