@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.68
+Version: 0.0.69
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Jan 06 2011 John Matthews <jmatthew@redhat.com> 0.0.69-1
+- 662760 - Failed repo sync still shows success (jmatthews@redhat.com)
+
 * Wed Dec 22 2010 Jay Dobies <jason.dobies@redhat.com> 0.0.68-1
 - Fixed spec description (jason.dobies@redhat.com)
 
