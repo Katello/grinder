@@ -130,12 +130,15 @@ class ParallelFetch(object):
         for t in self.threads:
             if (t.isAlive()):
                 working += 1
-        return (working > 0)
+        return working
 
     def _waitForThreads(self):
         num_alive_threads = self._running()
+        counter = 0
         while (num_alive_threads):
-            LOG.debug("Waiting for threads to finish, %s still active" % (num_alive_threads))
+            counter += 1
+            if counter % 10 == 0:
+                LOG.debug("Waiting for threads to finish, %s still active" % (num_alive_threads))
             time.sleep(0.5)
             num_alive_threads = self._running()
 

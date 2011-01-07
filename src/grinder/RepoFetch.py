@@ -316,9 +316,11 @@ class YumRepoGrinder(object):
             gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
         return report
 
-    def stop(self):
+    def stop(self, block=True):
         if self.fetchPkgs:
             self.fetchPkgs.stop()
+            if block:
+                self.fetchPkgs._waitForThreads()
             
     def purgeOrphanPackages(self, downloadlist, repo_dir):
         """
