@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.70
+Version: 0.0.71
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Jan 14 2011 John Matthews <jmatthews@redhat.com> 0.0.71-1
+- 662744 - [RFE] Sync progress indicator need to show stats for all content
+  types (pkgs, errata, files, distros, etc) (jmatthews@redhat.com)
+
 * Fri Jan 07 2011 John Matthews <jmatthews@redhat.com> 0.0.70-1
 - YumRepoFetch will block when stop() is called until all threads have
   finished. (jmatthews@redhat.com)
