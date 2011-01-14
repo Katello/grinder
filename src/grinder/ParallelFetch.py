@@ -41,6 +41,7 @@ class ParallelFetch(object):
         self.sizeTotal = 0
         self.sizeLeft = 0
         self.itemTotal = 0
+        self.details = {}
         self.statusLock = Lock()
         self.syncStatusDict = dict()
         self.syncStatusDict[BaseFetch.STATUS_NOOP] = 0
@@ -56,16 +57,34 @@ class ParallelFetch(object):
             wt = WorkerThread(self, fetcher)
             self.threads.append(wt)
 
+    def _update_totals(self, item):
+        if item.has_key("item_type"):
+            item_type = item["item_type"]
+            if not self.details.has_key(item_type):
+                self.details[item_type] = {}
+            # How many items of this type
+            if not self.details[item_type].has_key("total_count"):
+                self.details[item_type]["total_count"] = 1
+            else:
+                self.details[item_type]["total_count"] += 1
+            self.details[item_type]["items_left"] = self.details[item_type]["total_count"]
+            # Total size in bytes of this type
+            if not self.details[item_type].has_key("total_size_bytes"):
+                self.details[item_type]["total_size_bytes"] = item["size"]
+            else:
+                self.details[item_type]["total_size_bytes"] += item["size"]
+
+
+            
     def addItem(self, item):
         if item.has_key("size") and item['size'] is not None:
             self.sizeTotal = self.sizeTotal + int(item['size'])
+        self._update_totals(item)
         self.toSyncQ.put(item)
 
     def addItemList(self, items):
         for p in items:
-            if p.has_key("size") and p['size'] is not None:
-                self.sizeTotal = self.sizeTotal + int(p['size'])
-            self.toSyncQ.put(p)
+            self.addItem(p)
 
     def getWorkItem(self):
         """
@@ -96,6 +115,18 @@ class ParallelFetch(object):
                 self.syncCompleteQ.qsize(), self.syncErrorQ.qsize()))
             if itemInfo.has_key("size")  and itemInfo['size'] is not None:
                 self.sizeLeft = self.sizeLeft - int(itemInfo['size'])
+                if itemInfo.has_key("item_type"):
+                    item_type = itemInfo["item_type"]
+                    if not self.details[item_type].has_key("size_left"):
+                        self.details[item_type]["size_left"] = self.details[item_type]["total_size_bytes"] 
+                    else:
+                        self.details[item_type]["size_left"] -= int(itemInfo['size'])
+            if itemInfo.has_key("item_type"):
+                item_type = itemInfo["item_type"]
+                if not self.details[item_type].has_key("items_left"):
+                    self.details[item_type]["items_left"] = self.details[item_type]["total_count"]
+                else:
+                    self.details[item_type]["items_left"] -= 1
             if self.callback is not None:
                 itemsLeft = self.itemTotal - (self.syncErrorQ.qsize() + self.syncCompleteQ.qsize())
                 r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, itemsLeft)
@@ -104,6 +135,8 @@ class ParallelFetch(object):
                 r.status = status
                 r.num_error = self.syncErrorQ.qsize()
                 r.num_success = self.syncCompleteQ.qsize()
+                r.sync_status = self.syncStatusDict
+                r.details = self.details
                 self.callback(r)
         finally:
             self.statusLock.release()
@@ -117,6 +150,7 @@ class ParallelFetch(object):
         if self.callback is not None:
             r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, self.toSyncQ.qsize())
             r.status = "STARTED"
+            r.details = self.details
             self.callback(r)
         for t in self.threads:
             t.start()
@@ -176,6 +210,7 @@ class ParallelFetch(object):
             r.num_error = report.errors
             r.num_success = report.successes
             r.num_download = report.downloads
+            r.details = self.details
             self.callback(r)
         return report
 

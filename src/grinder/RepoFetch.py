@@ -182,7 +182,8 @@ class YumRepoGrinder(object):
             if self.pkgpath:
                 info['pkgpath']  = "%s/%s/%s/%s/%s/%s" % (self.pkgpath, info['checksum'][:3], pkg.name, pkg.version, pkg.release, pkg.arch)
             else:
-                info['pkgpath'] = None 
+                info['pkgpath'] = None
+            info['item_type'] = BaseFetch.RPM
             self.downloadinfo.append(info)
         LOG.info("%s packages have been marked to be fetched" % len(pkglist))
 
@@ -201,6 +202,7 @@ class YumRepoGrinder(object):
             info['checksum'] = dpkg.deltas.values()[0].checksum
             info['size'] = dpkg.deltas.values()[0].size
             info['pkgpath']  = self.pkgpath
+            info['item_type'] = BaseFetch.DELTA_RPM
             self.downloadinfo.append(info)
         LOG.info("%s delta rpms have been marked to be fetched" % len(deltarpms))
         
@@ -270,6 +272,7 @@ class YumRepoGrinder(object):
             (info['checksumtype'], info['checksum']) = hashinfo
             info['size']        = None
             info['pkgpath'] = None
+            info['item_type'] = BaseFetch.TREE_FILE
             self.downloadinfo.append(info)
         LOG.info("%s Tree files have been marked to be fetched" % len(tree_info))
             

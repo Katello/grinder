@@ -21,15 +21,16 @@ from logging.handlers import RotatingFileHandler
 class ProgressReport(object):
 
     def __init__(self, sizeTotal, sizeLeft, itemTotal, itemLeft, itemName="", status=""):
-        self.items_total = itemTotal    # Total number of bytes
-        self.items_left = itemLeft      # Bytes left to process
-        self.size_total = sizeTotal     # Total number of items 
-        self.size_left = sizeLeft       # Number of items left to process
+        self.items_total = itemTotal    # Total number of items
+        self.items_left = itemLeft      # Number of items left to process
+        self.size_total = sizeTotal     # Total number of bytes 
+        self.size_left = sizeLeft       # Bytes left to process
         self.item_name = itemName       # Name of last item worked on
         self.status = status            # Status Message
         self.num_error = 0              # Number of Errors
         self.num_success = 0            # Number of Successes
         self.num_download = 0          # Number of actual downloads
+        self.details = {}               # Details about specific file types
 
     def __str__(self):
         s = ""

@@ -36,6 +36,10 @@ class BaseFetch(object):
     STATUS_UNAUTHORIZED = "unauthorized"
     STATUS_SKIP_VALIDATE = "skip_validate"
 
+    RPM = 'rpm'
+    DELTA_RPM = 'delta_rpm'
+    TREE_FILE = 'tree_file'
+
     def __init__(self, cacert=None, clicert=None, clikey=None, 
             proxy_url=None, proxy_port=None, proxy_user=None, 
             proxy_pass=None, sslverify=1):
