@@ -63,13 +63,15 @@ class ParallelFetch(object):
             if not self.details.has_key(item_type):
                 self.details[item_type] = {}
             # How many items of this type
-            if not self.details[item_type].has_key("total_count"):
+            if not self.details[item_type].has_key("total_count") or \
+                not self.details[item_type]["total_count"]:
                 self.details[item_type]["total_count"] = 1
             else:
                 self.details[item_type]["total_count"] += 1
             self.details[item_type]["items_left"] = self.details[item_type]["total_count"]
             # Total size in bytes of this type
-            if not self.details[item_type].has_key("total_size_bytes"):
+            if not self.details[item_type].has_key("total_size_bytes") or \
+                not self.details[item_type]["total_size_bytes"]:
                 self.details[item_type]["total_size_bytes"] = item["size"]
             else:
                 self.details[item_type]["total_size_bytes"] += item["size"]
