@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.72
+Version: 0.0.73
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Jan 20 2011 John Matthews <jmatthews@redhat.com> 0.0.73-1
+- 
+
 * Mon Jan 17 2011 John Matthews <jmatthew@redhat.com> 0.0.72-1
 - 670283 - Yum Repo sync failing for fedora channels (jmatthew@redhat.com)
 
