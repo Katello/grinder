@@ -30,6 +30,7 @@ class SyncReport:
         self.successes = 0
         self.downloads = 0
         self.errors = 0
+        self.last_progress = None
     def __str__(self):
         return "%s successes, %s downloads, %s errors" % (self.successes, self.downloads, self.errors)
 
@@ -53,6 +54,7 @@ class ParallelFetch(object):
         self.syncCompleteQ = Queue.Queue()
         self.syncErrorQ = Queue.Queue()
         self.threads = []
+        self.step = None
         for i in range(self.numThreads):
             wt = WorkerThread(self, fetcher)
             self.threads.append(wt)
@@ -102,7 +104,33 @@ class ParallelFetch(object):
             self.statusLock.release()
         return item
 
+    def processCallback(self, step, itemInfo=None):
+        if not self.callback:
+            return
+        r = self.formProgressReport(step, itemInfo)
+        self.callback(r)
+
+    def formProgressReport(self, step=None, itemInfo=None, status=None):
+        itemsLeft = self.itemTotal - (self.syncErrorQ.qsize() + self.syncCompleteQ.qsize())
+        r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, itemsLeft)
+        r.item_name = None
+        if itemInfo:
+            if itemInfo.has_key("fileName"):
+                r.item_name = itemInfo["fileName"]
+        r.status = None
+        if status:
+            r.status = status
+        r.num_error = self.syncErrorQ.qsize()
+        r.num_success = self.syncCompleteQ.qsize()
+        r.sync_status = self.syncStatusDict
+        r.details = self.details
+        if step:
+            self.step = step
+        r.step = self.step
+        return r
+
     def markStatus(self, itemInfo, status):
+        LOG.info("%s threads are active" % (self._running()))
         self.statusLock.acquire()
         try:
             if status in self.syncStatusDict:
@@ -130,15 +158,7 @@ class ParallelFetch(object):
                 else:
                     self.details[item_type]["items_left"] -= 1
             if self.callback is not None:
-                itemsLeft = self.itemTotal - (self.syncErrorQ.qsize() + self.syncCompleteQ.qsize())
-                r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, itemsLeft)
-                if itemInfo.has_key("fileName"):
-                    r.item_name = itemInfo["fileName"]
-                r.status = status
-                r.num_error = self.syncErrorQ.qsize()
-                r.num_success = self.syncCompleteQ.qsize()
-                r.sync_status = self.syncStatusDict
-                r.details = self.details
+                r = self.formProgressReport(ProgressReport.DownloadItems, itemInfo, status)
                 self.callback(r)
         finally:
             self.statusLock.release()
@@ -203,17 +223,18 @@ class ParallelFetch(object):
         report.errors = self.syncStatusDict[BaseFetch.STATUS_ERROR]
         report.errors = report.errors + self.syncStatusDict[BaseFetch.STATUS_MD5_MISSMATCH]
         report.errors = report.errors + self.syncStatusDict[BaseFetch.STATUS_SIZE_MISSMATCH]
-
+        
         LOG.info("ParallelFetch: %s items successfully processed, %s downloaded, %s items had errors" %
             (report.successes, report.downloads, report.errors))
         if self.callback is not None:
-            r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, self.toSyncQ.qsize())
+            r = self.formProgressReport()
             r.status = "FINISHED"
             r.num_error = report.errors
             r.num_success = report.successes
             r.num_download = report.downloads
             r.details = self.details
             self.callback(r)
+        report.last_progress = r
         return report
 
 class WorkerThread(Thread):

@@ -27,6 +27,7 @@ import ConfigParser
 from PrestoParser import PrestoParser
 from ParallelFetch import ParallelFetch
 from BaseFetch import BaseFetch
+from GrinderCallback import ProgressReport
 from GrinderUtils import GrinderUtils
 
 LOG = logging.getLogger("grinder.RepoFetch")
@@ -286,9 +287,11 @@ class YumRepoGrinder(object):
                             download_dir=basepath, proxy_url=self.proxy_url, \
                             proxy_port=self.proxy_port, proxy_user=self.proxy_user, \
                             proxy_pass=self.proxy_pass, sslverify=self.sslverify)
+        self.fetchPkgs = ParallelFetch(self.yumFetch, self.numThreads, callback=callback)
         self.yumFetch.setupRepo()
         LOG.info("Fetching repo metadata...")
         # first fetch the metadata
+        self.fetchPkgs.processCallback(ProgressReport.DownloadMetadata)
         self.yumFetch.getRepoData()
         LOG.info("Determining downloadable Content bits...")
         if not self.skip.has_key('packages') or self.skip['packages'] != 1:
@@ -304,7 +307,6 @@ class YumRepoGrinder(object):
         else:
             LOG.info("Skipping distribution preparation from sync process")
         # prepare for download
-        self.fetchPkgs = ParallelFetch(self.yumFetch, self.numThreads, callback=callback)
         self.fetchPkgs.addItemList(self.downloadinfo)
         self.fetchPkgs.start()
         report = self.fetchPkgs.waitForFinish()
@@ -312,9 +314,11 @@ class YumRepoGrinder(object):
         LOG.info("Processed <%s> packages in [%d] seconds" % (len(self.downloadinfo), \
                   (endTime - startTime)))
         LOG.info("Cleaning any orphaned packages..")
+        self.fetchPkgs.processCallback(ProgressReport.PurgeOrphanedPackages)
         self.purgeOrphanPackages(self.yumFetch.getPackageList(), self.yumFetch.repo_dir)
         if self.remove_old:
             LOG.info("Removing old packages to limit to %s" % self.numOldPackages)
+            self.fetchPkgs.processCallback(ProgressReport.RemoveOldPackages)
             gutils = GrinderUtils()
             gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
         return report

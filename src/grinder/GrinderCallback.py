@@ -19,7 +19,12 @@ from logging.handlers import RotatingFileHandler
 
 
 class ProgressReport(object):
+    DownloadMetadata = "Downloading Metadata"
+    DownloadItems = "Downloading Items"
+    PurgeOrphanedPackages = "Purging Orphaned Packages"
+    RemoveOldPackages = "Removing Old Packages"
 
+    
     def __init__(self, sizeTotal, sizeLeft, itemTotal, itemLeft, itemName="", status=""):
         self.items_total = itemTotal    # Total number of items
         self.items_left = itemLeft      # Number of items left to process
@@ -31,6 +36,7 @@ class ProgressReport(object):
         self.num_success = 0            # Number of Successes
         self.num_download = 0          # Number of actual downloads
         self.details = {}               # Details about specific file types
+        self.step = None
 
     def __str__(self):
         s = ""
