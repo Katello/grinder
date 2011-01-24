@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.73
+Version: 0.0.74
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Jan 24 2011 John Matthews <jmatthews@redhat.com> 0.0.74-1
+- Adding per item type num_success/num_error (jmatthews@redhat.com)
+- 670526 - Add more information to progress reporting (jmatthews@redhat.com)
+
 * Thu Jan 20 2011 John Matthews <jmatthews@redhat.com> 0.0.73-1
 - 
 
