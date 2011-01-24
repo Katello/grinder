@@ -55,6 +55,7 @@ class ParallelFetch(object):
         self.syncErrorQ = Queue.Queue()
         self.threads = []
         self.step = None
+        self.stopping = False
         for i in range(self.numThreads):
             wt = WorkerThread(self, fetcher)
             self.threads.append(wt)
@@ -77,7 +78,9 @@ class ParallelFetch(object):
                 self.details[item_type]["total_size_bytes"] = item["size"]
             else:
                 self.details[item_type]["total_size_bytes"] += item["size"]
-
+            # Initialize 'num_success'
+            if not self.details[item_type].has_key("num_success"):
+                self.details[item_type]["num_success"] = 0
 
             
     def addItem(self, item):
@@ -157,6 +160,18 @@ class ParallelFetch(object):
                     self.details[item_type]["items_left"] = self.details[item_type]["total_count"]
                 else:
                     self.details[item_type]["items_left"] -= 1
+                if status != BaseFetch.STATUS_ERROR:
+                    # Mark success for item
+                    if not self.details[item_type].has_key("num_success"):
+                        self.details[item_type]["num_success"] = 1
+                    else:
+                        self.details[item_type]["num_success"] += 1
+                else:
+                    # Mark failure
+                    if not self.details[item_type].has_key("num_error"):
+                        self.details[item_type]["num_error"] = 1
+                    else:
+                        self.details[item_type]["num_error"] += 1
             if self.callback is not None:
                 r = self.formProgressReport(ProgressReport.DownloadItems, itemInfo, status)
                 self.callback(r)
@@ -178,6 +193,7 @@ class ParallelFetch(object):
             t.start()
 
     def stop(self):
+        self.stopping = True
         for t in self.threads:
             t.stop()
 
@@ -193,8 +209,8 @@ class ParallelFetch(object):
         counter = 0
         while (num_alive_threads):
             counter += 1
-            if counter % 10 == 0:
-                LOG.debug("Waiting for threads to finish, %s still active" % (num_alive_threads))
+            if self.stopping and counter % 10 == 0:
+                LOG.info("Waiting for threads to finish, %s still active" % (num_alive_threads))
             time.sleep(0.5)
             num_alive_threads = self._running()
 

@@ -27,6 +27,8 @@ import unicodedata
 from GrinderExceptions import GrinderException
 LOG = logging.getLogger("grinder.BaseFetch")
 
+
+
 class BaseFetch(object):
     STATUS_NOOP = 'noop'
     STATUS_DOWNLOADED = 'downloaded'
@@ -115,6 +117,9 @@ class BaseFetch(object):
         try:
             f = open(filePath, "wb")
             curl = pycurl.Curl()
+            #def item_progress_callback(download_total, downloaded, upload_total, uploaded):
+            #    LOG.debug("%s status %s/%s bytes" % (fileName, downloaded, download_total))
+            #curl.setopt(pycurl.PROGRESSFUNCTION, item_progress_callback)
             curl.setopt(curl.VERBOSE,0)
             if type(fetchURL) == types.UnicodeType:
                 #pycurl does not accept unicode strings for a URL, so we need to convert
