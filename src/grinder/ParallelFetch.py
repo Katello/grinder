@@ -242,13 +242,13 @@ class ParallelFetch(object):
         
         LOG.info("ParallelFetch: %s items successfully processed, %s downloaded, %s items had errors" %
             (report.successes, report.downloads, report.errors))
+        r = self.formProgressReport()
+        r.status = "FINISHED"
+        r.num_error = report.errors
+        r.num_success = report.successes
+        r.num_download = report.downloads
+        r.details = self.details
         if self.callback is not None:
-            r = self.formProgressReport()
-            r.status = "FINISHED"
-            r.num_error = report.errors
-            r.num_success = report.successes
-            r.num_download = report.downloads
-            r.details = self.details
             self.callback(r)
         report.last_progress = r
         return report
