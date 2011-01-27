@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.76
+Version: 0.0.77
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Jan 27 2011 John Matthews <jmatthews@redhat.com> 0.0.77-1
+- Changed wording for download step (jmatthews@redhat.com)
+
 * Thu Jan 27 2011 John Matthews <jmatthews@redhat.com> 0.0.76-1
 - Change text for "Downloading Items" step to mention Verifying Existing items
   (jmatthews@redhat.com)
