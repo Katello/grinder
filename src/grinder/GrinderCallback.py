@@ -20,7 +20,7 @@ from logging.handlers import RotatingFileHandler
 
 class ProgressReport(object):
     DownloadMetadata = "Downloading Metadata"
-    DownloadItems = "Downloading Items"
+    DownloadItems = "Download New(or Verify Existing) Items"
     PurgeOrphanedPackages = "Purging Orphaned Packages"
     RemoveOldPackages = "Removing Old Packages"
 
