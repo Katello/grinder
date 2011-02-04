@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.77
+Version: 0.0.78
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Feb 04 2011 John Matthews <jmatthews@redhat.com> 0.0.78-1
+- 670886 - repo sync error need to add more error information on a per "item"
+  basis [yum sync changes] (jmatthews@redhat.com)
+
 * Thu Jan 27 2011 John Matthews <jmatthews@redhat.com> 0.0.77-1
 - Changed wording for download step (jmatthews@redhat.com)
 
