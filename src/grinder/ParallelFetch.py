@@ -18,6 +18,7 @@ import logging
 import threading
 from threading import Thread, Lock
 import traceback
+import sys
 import Queue
 
 from BaseFetch import BaseFetch
@@ -43,6 +44,7 @@ class ParallelFetch(object):
         self.sizeLeft = 0
         self.itemTotal = 0
         self.details = {}
+        self.error_details = []
         self.statusLock = Lock()
         self.syncStatusDict = dict()
         self.syncStatusDict[BaseFetch.STATUS_NOOP] = 0
@@ -113,6 +115,9 @@ class ParallelFetch(object):
         r = self.formProgressReport(step, itemInfo)
         self.callback(r)
 
+    def addErrorDetails(self, itemInfo, errorInfo=None):
+        self.error_details.append((itemInfo, errorInfo))
+
     def formProgressReport(self, step=None, itemInfo=None, status=None):
         itemsLeft = self.itemTotal - (self.syncErrorQ.qsize() + self.syncCompleteQ.qsize())
         r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, itemsLeft)
@@ -127,12 +132,13 @@ class ParallelFetch(object):
         r.num_success = self.syncCompleteQ.qsize()
         r.sync_status = self.syncStatusDict
         r.details = self.details
+        r.error_details = self.error_details
         if step:
             self.step = step
         r.step = self.step
         return r
 
-    def markStatus(self, itemInfo, status):
+    def markStatus(self, itemInfo, status, errorInfo=None):
         LOG.info("%s threads are active" % (self._running()))
         self.statusLock.acquire()
         try:
@@ -140,10 +146,11 @@ class ParallelFetch(object):
                 self.syncStatusDict[status] = self.syncStatusDict[status] + 1
             else:
                 self.syncStatusDict[status] = 1
-            if status != BaseFetch.STATUS_ERROR:
+            if status not in (BaseFetch.STATUS_ERROR, BaseFetch.STATUS_UNAUTHORIZED):
                 self.syncCompleteQ.put(itemInfo)
             else:
                 self.syncErrorQ.put(itemInfo)
+                self.addErrorDetails(itemInfo, {"error_type":status, "error":errorInfo})
             LOG.debug("%s status updated, %s success %s error" % (itemInfo,
                 self.syncCompleteQ.qsize(), self.syncErrorQ.qsize()))
             if itemInfo.has_key("size")  and itemInfo['size'] is not None:
@@ -279,13 +286,18 @@ class WorkerThread(Thread):
             if itemInfo is None:
                 break
             try:
-                status = self.fetcher.fetchItem(itemInfo)
+                status,msg = self.fetcher.fetchItem(itemInfo)
+                self.pFetch.markStatus(itemInfo, status, msg)
             except Exception, e:
                 LOG.error("%s" % (traceback.format_exc()))
                 LOG.error(e)
-                self.pFetch.markStatus(itemInfo, BaseFetch.STATUS_ERROR)
-                break
-            self.pFetch.markStatus(itemInfo, status)
+                errorInfo = {}
+                exctype, value = sys.exc_info()[:2]
+                errorInfo["error_type"] = str(exctype)
+                errorInfo["error"] = str(value)
+                errorInfo["traceback"] = traceback.format_exc().splitlines()
+                self.pFetch.markStatus(itemInfo, BaseFetch.STATUS_ERROR, errorInfo)
+                LOG.debug("Thread ending")
         LOG.debug("Thread ending")
 
 if __name__ == "__main__":

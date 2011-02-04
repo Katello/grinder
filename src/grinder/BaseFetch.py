@@ -112,7 +112,7 @@ class BaseFetch(object):
                 LOG.info("Symlink missing in repo directory. Creating link %s" % repofilepath)
                 if not os.path.islink(repofilepath):
                     os.symlink(filePath, repofilepath)
-            return BaseFetch.STATUS_NOOP
+            return (BaseFetch.STATUS_NOOP,None)
 
         try:
             f = open(filePath, "wb")
@@ -159,7 +159,7 @@ class BaseFetch(object):
             if status == 401:
                 LOG.warn("Unauthorized request from: %s" % (fetchURL))
                 cleanup(filePath)
-                return BaseFetch.STATUS_UNAUTHORIZED
+                return (BaseFetch.STATUS_UNAUTHORIZED, "HTTP status code of %s received for %s" % (status, fetchURL))
             if status != 200:
                 LOG.critical("ERROR: Response = %s fetching %s." % (status, fetchURL))
                 if retryTimes > 0:
@@ -168,7 +168,7 @@ class BaseFetch(object):
                     return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                       checksum , headers, retryTimes, packages_location)
                 cleanup(filePath)
-                return BaseFetch.STATUS_ERROR
+                return (BaseFetch.STATUS_ERROR, "HTTP status code of %s received for %s" % (status, fetchURL))
             if vstatus in [BaseFetch.STATUS_ERROR, BaseFetch.STATUS_SIZE_MISSMATCH, 
                 BaseFetch.STATUS_MD5_MISSMATCH] and retryTimes > 0:
                 #
@@ -185,7 +185,7 @@ class BaseFetch(object):
                     os.unlink(repofilepath)
                 os.symlink(filePath, repofilepath)
             LOG.debug("Successfully Fetched Package - [%s]" % filePath)
-            return vstatus
+            return (vstatus, None)
         except Exception, e:
             tb_info = traceback.format_exc()
             LOG.debug("%s" % (tb_info))
@@ -196,7 +196,7 @@ class BaseFetch(object):
                 return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                   checksum, headers, retryTimes, packages_location)
             cleanup(filePath)
-            return BaseFetch.STATUS_ERROR
+            raise
 
 def cleanup(filepath):
     if os.path.exists(filepath):

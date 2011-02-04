@@ -36,6 +36,8 @@ class ProgressReport(object):
         self.num_success = 0            # Number of Successes
         self.num_download = 0          # Number of actual downloads
         self.details = {}               # Details about specific file types
+        self.error_details = []         # Details about specific errors that were observed
+                                        # List of tuples. Tuple format [0] = item info, [1] = exception details
         self.step = None
 
     def __str__(self):
