@@ -311,16 +311,17 @@ class YumRepoGrinder(object):
         self.fetchPkgs.start()
         report = self.fetchPkgs.waitForFinish()
         endTime = time.time()
-        LOG.info("Processed <%s> packages in [%d] seconds" % (len(self.downloadinfo), \
+        LOG.info("Processed <%s> items in [%d] seconds" % (len(self.downloadinfo), \
                   (endTime - startTime)))
-        LOG.info("Cleaning any orphaned packages..")
-        self.fetchPkgs.processCallback(ProgressReport.PurgeOrphanedPackages)
-        self.purgeOrphanPackages(self.yumFetch.getPackageList(), self.yumFetch.repo_dir)
-        if self.remove_old:
-            LOG.info("Removing old packages to limit to %s" % self.numOldPackages)
-            self.fetchPkgs.processCallback(ProgressReport.RemoveOldPackages)
-            gutils = GrinderUtils()
-            gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
+        if not self.skip.has_key('packages') or self.skip['packages'] != 1:
+            LOG.info("Cleaning any orphaned packages..")
+            self.fetchPkgs.processCallback(ProgressReport.PurgeOrphanedPackages)
+            self.purgeOrphanPackages(self.yumFetch.getPackageList(), self.yumFetch.repo_dir)
+            if self.remove_old:
+                LOG.info("Removing old packages to limit to %s" % self.numOldPackages)
+                self.fetchPkgs.processCallback(ProgressReport.RemoveOldPackages)
+                gutils = GrinderUtils()
+                gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
         return report
 
     def stop(self, block=True):
