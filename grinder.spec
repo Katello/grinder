@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.78
+Version: 0.0.79
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,14 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Feb 07 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.79-1
+- Support for grinder to place the currently processing metadata in a temporary
+  location until the sync completes and then move to final location. This
+  should allow us to keep serving the existing content until the new metadata
+  is ready to serve (pkilambi@redhat.com)
+- 667753 - running repo sync with --no-packages option on a newly created repo
+  fails (jmatthews@redhat.com)
+
 * Fri Feb 04 2011 John Matthews <jmatthews@redhat.com> 0.0.78-1
 - 670886 - repo sync error need to add more error information on a per "item"
   basis [yum sync changes] (jmatthews@redhat.com)
