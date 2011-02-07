@@ -110,7 +110,7 @@ class RepoFetch(BaseFetch):
             seed += 1
 
     def getRepoData(self):
-        local_repo_path = os.path.join(self.repo_dir, "repodata")
+        local_repo_path = "%s/%s" % (self.repo_dir, "repodata.new")
         if not os.path.exists(local_repo_path):
             try:
                 os.makedirs(local_repo_path)
@@ -135,6 +135,22 @@ class RepoFetch(BaseFetch):
 
     def validatePackage(self, fo, pkg, fail):
         return pkg.verifyLocalPkg()
+    
+    def finalizeMetadata(self):
+        local_repo_path = "%s/%s" % (self.repo_dir, "repodata")
+        local_new_path  = "%s/%s" % (self.repo_dir, "repodata.new")
+        if not os.path.exists(local_new_path):
+            LOG.info("No new metadata to finalize.")
+            return
+        try:
+            LOG.info("Finalizing metadata, moving %s to %s" % (local_new_path, local_repo_path))
+            if os.path.exists(local_repo_path):
+                # remove existing metadata before copying
+                shutil.rmtree(local_repo_path)
+            shutil.copytree(local_new_path, local_repo_path)
+            shutil.rmtree(local_new_path)
+        except Exception, e:
+            LOG.error("An error occurred while finalizing metadata:\n%s" % str(e))
 
 class YumRepoGrinder(object):
     """
@@ -310,6 +326,7 @@ class YumRepoGrinder(object):
         self.fetchPkgs.addItemList(self.downloadinfo)
         self.fetchPkgs.start()
         report = self.fetchPkgs.waitForFinish()
+        self.yumFetch.finalizeMetadata()
         endTime = time.time()
         LOG.info("Processed <%s> items in [%d] seconds" % (len(self.downloadinfo), \
                   (endTime - startTime)))
