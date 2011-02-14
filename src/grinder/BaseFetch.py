@@ -72,6 +72,18 @@ class BaseFetch(object):
         LOG.debug("Package [%s] is valid with checksum [%s] and size [%s]" % (fileName, checksum, size))
         return BaseFetch.STATUS_DOWNLOADED
     
+    def makeDirSafe(self, path):
+        try:
+            os.makedirs(path)
+        except OSError, e:
+            # Another thread may have created the dir since we checked,
+            # if that's the case we'll see errno=17, so ignore that exception
+            if e.errno != 17:
+                tb_info = traceback.format_exc()
+                LOG.debug("%s" % (tb_info))
+                LOG.critical(e)
+                raise e
+    
     def fetch(self, fileName, fetchURL, savePath, itemSize=None, hashtype=None, checksum=None, 
              headers=None, retryTimes=2, packages_location=None):
         """
@@ -87,24 +99,15 @@ class BaseFetch(object):
             repofilepath = os.path.join(savePath, fileName)
             basedir = os.path.dirname(repofilepath)
             if basedir and not os.path.exists(basedir):
-                os.makedirs(basedir)
+                self.makeDirSafe(basedir)
         else:
             repofilepath = None
             filePath = os.path.join(savePath, fileName)
         tempDirPath = os.path.dirname(filePath)
         if not os.path.isdir(tempDirPath):
             LOG.info("Creating directory: %s" % tempDirPath)
-            try:
-                os.makedirs(tempDirPath)
-            except OSError, e:
-                # Another thread may have created the dir since we checked,
-                # if that's the case we'll see errno=17, so ignore that exception
-                if e.errno != 17:
-                    tb_info = traceback.format_exc()
-                    LOG.debug("%s" % (tb_info))
-                    LOG.critical(e)
-                    raise e
-                
+            self.makeDirSafe(tempDirPath)
+
         if os.path.exists(filePath) and \
             verifyChecksum(filePath, hashtype, checksum):
             LOG.info("%s exists with correct size and md5sum, no need to fetch." % (filePath))
