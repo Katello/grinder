@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.79
+Version: 0.0.80
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Feb 17 2011 John Matthews <jmatthews@redhat.com> 0.0.80-1
+- Fix for race condition with check dir then makedirs (jmatthew@redhat.com)
+- update README to reflect we sync more than just packages now
+  (jmatthews@redhat.com)
+
 * Mon Feb 07 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.79-1
 - Support for grinder to place the currently processing metadata in a temporary
   location until the sync completes and then move to final location. This
