@@ -80,10 +80,16 @@ class ParallelFetch(object):
                 self.details[item_type]["total_size_bytes"] = item["size"]
             else:
                 self.details[item_type]["total_size_bytes"] += item["size"]
+            # How many bytes are left to fetch of this type
+            if not self.details[item_type].has_key("size_left"):
+                self.details[item_type]["size_left"] = self.details[item_type]["total_size_bytes"]
+            else:
+                self.details[item_type]["size_left"] += item['size']
             # Initialize 'num_success'
             if not self.details[item_type].has_key("num_success"):
                 self.details[item_type]["num_success"] = 0
-
+            if not self.details[item_type].has_key("num_error"):
+                self.details[item_type]["num_error"] = 0
             
     def addItem(self, item):
         if item.has_key("size") and item['size'] is not None:
@@ -158,13 +164,13 @@ class ParallelFetch(object):
                 if itemInfo.has_key("item_type"):
                     item_type = itemInfo["item_type"]
                     if not self.details[item_type].has_key("size_left"):
-                        self.details[item_type]["size_left"] = self.details[item_type]["total_size_bytes"] 
+                        self.details[item_type]["size_left"] = self.details[item_type]["total_size_bytes"] - int(itemInfo['size'])
                     else:
                         self.details[item_type]["size_left"] -= int(itemInfo['size'])
             if itemInfo.has_key("item_type"):
                 item_type = itemInfo["item_type"]
                 if not self.details[item_type].has_key("items_left"):
-                    self.details[item_type]["items_left"] = self.details[item_type]["total_count"]
+                    self.details[item_type]["items_left"] = self.details[item_type]["total_count"] - 1
                 else:
                     self.details[item_type]["items_left"] -= 1
                 if status != BaseFetch.STATUS_ERROR:
@@ -254,6 +260,7 @@ class ParallelFetch(object):
         r.num_error = report.errors
         r.num_success = report.successes
         r.num_download = report.downloads
+        r.items_left = 0 
         r.details = self.details
         if self.callback is not None:
             self.callback(r)
