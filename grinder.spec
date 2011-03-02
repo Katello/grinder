@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.81
+Version: 0.0.82
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Mar 02 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.82-1
+- moving the checksum as the last subdirectory to make package lookups easy
+  (pkilambi@redhat.com)
+
 * Thu Feb 24 2011 John Matthews <jmatthews@redhat.com> 0.0.81-1
 - 678119 - Two fields from repo sync status are not being updated correctly
   (jmatthews@redhat.com)
