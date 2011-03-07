@@ -288,7 +288,7 @@ class YumRepoGrinder(object):
             info['fileName']    = os.path.basename(relpath)
             info['savepath']    = treeinfo_path + '/' + os.path.dirname(relpath)
             (info['checksumtype'], info['checksum']) = hashinfo
-            info['size']        = None
+            info['size']        = 0
             info['pkgpath'] = None
             info['item_type'] = BaseFetch.TREE_FILE
             self.downloadinfo.append(info)

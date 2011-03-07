@@ -74,17 +74,27 @@ class ParallelFetch(object):
             else:
                 self.details[item_type]["total_count"] += 1
             self.details[item_type]["items_left"] = self.details[item_type]["total_count"]
-            # Total size in bytes of this type
-            if not self.details[item_type].has_key("total_size_bytes") or \
-                not self.details[item_type]["total_size_bytes"]:
-                self.details[item_type]["total_size_bytes"] = item["size"]
+            # Note for some items we may not know the item size, example tree_files
+            # in that case we will skip updating the size related fields
+            if item["size"] or item["size"] <= 0:
+                # Total size in bytes of this type
+                if not self.details[item_type].has_key("total_size_bytes") or \
+                    not self.details[item_type]["total_size_bytes"]:
+                    self.details[item_type]["total_size_bytes"] = item["size"]
+                else:
+                    self.details[item_type]["total_size_bytes"] += item["size"]
+                # How many bytes are left to fetch of this type
+                if not self.details[item_type].has_key("size_left"):
+                    self.details[item_type]["size_left"] = self.details[item_type]["total_size_bytes"]
+                else:
+                    self.details[item_type]["size_left"] += item['size']
             else:
-                self.details[item_type]["total_size_bytes"] += item["size"]
-            # How many bytes are left to fetch of this type
-            if not self.details[item_type].has_key("size_left"):
-                self.details[item_type]["size_left"] = self.details[item_type]["total_size_bytes"]
-            else:
-                self.details[item_type]["size_left"] += item['size']
+                if not self.details[item_type].has_key("total_size_bytes") or \
+                    not self.details[item_type]["total_size_bytes"]:
+                    self.details[item_type]["total_size_bytes"] = 0
+                if not self.details[item_type].has_key("size_left") or \
+                    not self.details[item_type]["size_left"]:
+                    self.details[item_type]["size_left"] = 0
             # Initialize 'num_success'
             if not self.details[item_type].has_key("num_success"):
                 self.details[item_type]["num_success"] = 0
@@ -159,7 +169,7 @@ class ParallelFetch(object):
                 self.addErrorDetails(itemInfo, {"error_type":status, "error":errorInfo})
             LOG.debug("%s status updated, %s success %s error" % (itemInfo,
                 self.syncCompleteQ.qsize(), self.syncErrorQ.qsize()))
-            if itemInfo.has_key("size")  and itemInfo['size'] is not None:
+            if itemInfo.has_key("size")  and itemInfo['size'] is not None and itemInfo['size'] >= 0:
                 self.sizeLeft = self.sizeLeft - int(itemInfo['size'])
                 if itemInfo.has_key("item_type"):
                     item_type = itemInfo["item_type"]

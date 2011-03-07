@@ -59,7 +59,7 @@ class BaseFetch(object):
         fileName = os.path.basename(filePath)
         calchecksum = getFileChecksum(hashtype, filename=filePath)
         # validate fetched data
-        if statinfo.st_size != int(size):
+        if statinfo.st_size != int(size) and int(size) > 0:
             LOG.error("%s size mismatch, read: %s bytes, was expecting %s bytes" \
                       % (fileName, statinfo.st_size, size))
             os.remove(filePath)
