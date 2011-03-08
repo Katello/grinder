@@ -32,8 +32,9 @@ def get_relative_path(source_path, dest_path):
     similar_index = 0
     for index in range(0,len(dst_parts)):
         if index < len(src_parts):
-            if dst_parts[index] == src_parts[index]:
-                similar_index += 1
+            if dst_parts[index] != src_parts[index]:
+                break
+            similar_index += 1
     num_ellipses = len(dst_parts) - 1 - similar_index
     rel_path = os.path.join("../"*num_ellipses, *src_parts[similar_index:])
     return rel_path
