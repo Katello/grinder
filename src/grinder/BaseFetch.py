@@ -25,6 +25,7 @@ import types
 import unicodedata
 
 from GrinderExceptions import GrinderException
+import GrinderUtils
 LOG = logging.getLogger("grinder.BaseFetch")
 
 
@@ -112,9 +113,10 @@ class BaseFetch(object):
             verifyChecksum(filePath, hashtype, checksum):
             LOG.info("%s exists with correct size and md5sum, no need to fetch." % (filePath))
             if repofilepath is not None and not os.path.exists(repofilepath):
-                LOG.info("Symlink missing in repo directory. Creating link %s" % repofilepath)
+                relFilePath = GrinderUtils.get_relative_path(filePath, repofilepath)
+                LOG.info("Symlink missing in repo directory. Creating link %s to %s" % (repofilepath, relFilePath))
                 if not os.path.islink(repofilepath):
-                    os.symlink(filePath, repofilepath)
+                    os.symlink(relFilePath, repofilepath)
             return (BaseFetch.STATUS_NOOP,None)
 
         try:
@@ -160,14 +162,14 @@ class BaseFetch(object):
             else:
                 vstatus = BaseFetch.STATUS_SKIP_VALIDATE
             if status == 401:
-                LOG.warn("Unauthorized request from: %s" % (fetchURL))
+                LOG.error("Unauthorized request from: %s" % (fetchURL))
                 cleanup(filePath)
                 return (BaseFetch.STATUS_UNAUTHORIZED, "HTTP status code of %s received for %s" % (status, fetchURL))
             if status != 200:
                 LOG.critical("ERROR: Response = %s fetching %s." % (status, fetchURL))
                 if retryTimes > 0:
                     retryTimes -= 1
-                    LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
+                    LOG.error("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
                     return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                       checksum , headers, retryTimes, packages_location)
                 cleanup(filePath)
@@ -178,24 +180,25 @@ class BaseFetch(object):
                 # Incase of a network glitch or issue with RHN, retry the rpm fetch
                 #
                 retryTimes -= 1
-                LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
+                LOG.error("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
                 cleanup(filePath)
                 return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                   checksum, headers, retryTimes, packages_location)
             if packages_location and os.path.exists(filePath):
-                LOG.info("Create a link in repo directory for the package at %s" % repofilepath)
+                relFilePath = GrinderUtils.get_relative_path(filePath, repofilepath)
+                LOG.info("Create a link in repo directory for the package at %s to %s" % (repofilepath, relFilePath))
                 if os.path.islink(repofilepath):
                     os.unlink(repofilepath)
-                os.symlink(filePath, repofilepath)
+                os.symlink(relFilePath, repofilepath)
             LOG.debug("Successfully Fetched Package - [%s]" % filePath)
             return (vstatus, None)
         except Exception, e:
             tb_info = traceback.format_exc()
             LOG.debug("%s" % (tb_info))
-            LOG.warn("Caught exception<%s> in fetch(%s, %s)" % (e, fileName, fetchURL))
+            LOG.error("Caught exception<%s> in fetch(%s, %s)" % (e, fileName, fetchURL))
             if retryTimes > 0:
                 retryTimes -= 1
-                LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
+                LOG.error("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
                 return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                   checksum, headers, retryTimes, packages_location)
             cleanup(filePath)

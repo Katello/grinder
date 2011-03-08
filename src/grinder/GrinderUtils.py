@@ -23,6 +23,21 @@ import rpmUtils.miscutils
 
 
 LOG = logging.getLogger("grinder.GrinderUtils")
+
+def get_relative_path(source_path, dest_path):
+    rel_path = ""
+    # Need to account for spare '/' which result in "" being in the array
+    src_parts = [x for x in source_path.split("/") if x]
+    dst_parts = [x for x in dest_path.split("/") if x]
+    similar_index = 0
+    for index in range(0,len(dst_parts)):
+        if index < len(src_parts):
+            if dst_parts[index] == src_parts[index]:
+                similar_index += 1
+    num_ellipses = len(dst_parts) - 1 - similar_index
+    rel_path = os.path.join("../"*num_ellipses, *src_parts[similar_index:])
+    return rel_path
+
 class GrinderUtils(object):
 
     def __init__(self):
