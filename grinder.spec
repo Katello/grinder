@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.83
+Version: 0.0.84
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Mar 08 2011 John Matthews <jmatthews@redhat.com> 0.0.84-1
+- 683011 - package symlinks in repos should be relative (jmatthews@redhat.com)
+
 * Mon Mar 07 2011 John Matthews <jmatthews@redhat.com> 0.0.83-1
 - 681304 - repo sync failing with Type error (jmatthews@redhat.com)
 
