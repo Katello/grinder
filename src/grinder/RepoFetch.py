@@ -16,6 +16,8 @@
 # in this software or its documentation.
 #
 import os
+import pycurl
+import random
 import yum
 import time
 import logging
@@ -76,13 +78,20 @@ class RepoFetch(BaseFetch):
         self.repo.sslverify = self.sslverify
 
     def getPackageList(self, newest=False):
-        sack = self.repo.getPackageSack()
-        sack.populate(self.repo, 'metadata', None, 0)
-        if newest:
-            download_list = sack.returnNewestByNameArch()
-        else:
-            download_list = sack.returnPackages()
-        return download_list
+        while True:
+            try:
+                sack = self.repo.getPackageSack()
+                sack.populate(self.repo, 'metadata', None, 0)
+                if newest:
+                    download_list = sack.returnNewestByNameArch()
+                else:
+                    download_list = sack.returnPackages()
+                return download_list
+            except pycurl.error, e:
+                tb_info = traceback.format_exc()
+                LOG.error("%s" % (tb_info))
+                LOG.error(e)
+                time.sleep(random.random()*10)
 
     def getDeltaPackageList(self):
         if not self.deltamd:
@@ -109,6 +118,16 @@ class RepoFetch(BaseFetch):
             self.repo.getPackage(pkg, checkfunc=check)
             seed += 1
 
+    def getRepoXmlFileTypes(self):
+        while True:
+            try:
+                return self.repo.repoXML.fileTypes()
+            except pycurl.error, e:
+                tb_info = traceback.format_exc()
+                LOG.error("%s" % (tb_info))
+                LOG.error(e)
+                time.sleep(random.random()*10)
+
     def getRepoData(self):
         local_repo_path = "%s/%s" % (self.repo_dir, "repodata.new")
         if not os.path.exists(local_repo_path):
@@ -116,7 +135,8 @@ class RepoFetch(BaseFetch):
                 os.makedirs(local_repo_path)
             except IOError, e:
                 LOG.error("Unable to create repo directory %s" % local_repo_path)
-        for ftype in self.repo.repoXML.fileTypes():
+        #for ftype in self.repo.repoXML.fileTypes():
+        for ftype in self.getRepoXmlFileTypes():
             try:
                 if ftype == "primary_db":
                     self.repo.retrieved["primary_db"] = 0
