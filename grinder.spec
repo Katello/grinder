@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.85
+Version: 0.0.86
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Mar 09 2011 John Matthews <jmatthews@redhat.com> 0.0.86-1
+- 680444 - exception during status api call (jmatthews@redhat.com)
+
 * Tue Mar 08 2011 John Matthews <jmatthews@redhat.com> 0.0.85-1
 - fix for getting relative path (jmatthews@redhat.com)
 
