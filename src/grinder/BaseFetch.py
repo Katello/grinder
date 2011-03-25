@@ -16,6 +16,7 @@
 import os
 import httplib
 import urlparse
+import tempfile
 import time
 import pycurl
 import logging
@@ -84,6 +85,9 @@ class BaseFetch(object):
                 LOG.debug("%s" % (tb_info))
                 LOG.critical(e)
                 raise e
+
+    def makeTempDir(self):
+        return tempfile.mkdtemp()
     
     def fetch(self, fileName, fetchURL, savePath, itemSize=None, hashtype=None, checksum=None, 
              headers=None, retryTimes=2, packages_location=None):
@@ -255,6 +259,8 @@ def curlifyHeaders(headers):
     for key,value in headers.items():
         cheaders += key +": "+ str(value) + "\r\n"
     return [cheaders]
+
+
 
 if __name__ == "__main__":
     import GrinderLog

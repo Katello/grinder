@@ -57,7 +57,7 @@ class RepoFetch(BaseFetch):
 
     def setupRepo(self):
         self.repo = yum.yumRepo.YumRepository(self.repo_label)
-        self.repo.basecachedir = self.local_dir
+        self.repo.basecachedir = self.makeTempDir()
         self.repo.cache = 0
         self.repo.metadata_expire = 0
         if self.mirrorlist:
@@ -135,7 +135,6 @@ class RepoFetch(BaseFetch):
                 os.makedirs(local_repo_path)
             except IOError, e:
                 LOG.error("Unable to create repo directory %s" % local_repo_path)
-        #for ftype in self.repo.repoXML.fileTypes():
         for ftype in self.getRepoXmlFileTypes():
             try:
                 if ftype == "primary_db":
@@ -150,12 +149,31 @@ class RepoFetch(BaseFetch):
                 tb_info = traceback.format_exc()
                 LOG.debug("%s" % (tb_info))
                 LOG.error("Unable to Fetch Repo data file %s" % ftype)
-        shutil.copyfile(self.repo_dir + "/repomd.xml", "%s/%s" % (local_repo_path, "repomd.xml"))
+        src = os.path.join(self.repo.basecachedir, self.repo_label, "repomd.xml")
+        dst = os.path.join(local_repo_path, "repomd.xml")
+        LOG.debug("Copy %s to %s" % (src, dst))
+        shutil.copyfile(src, dst)
         LOG.debug("Fetched repo metadata for %s" % self.repo_label)
 
     def validatePackage(self, fo, pkg, fail):
         return pkg.verifyLocalPkg()
     
+    def deleteBaseCacheDir(self):
+        # Delete the temporary directory we are using to store repodata files
+        # for grinders own usage.  This is not the endpoint destination
+        # for sync'd content
+        try:
+            # yum is currently deleting this for us, below check is a precaution
+            if os.path.exists(self.repo.basecachedir) and \
+                    os.path.isdir(self.repo.basecachedir):
+                shutil.rmtree(self.repo.basecachedir)
+            return True
+        except Exception, e:
+            tb_info = traceback.format_exc()
+            LOG.error("%s" % (tb_info))
+            LOG.error(e)
+            return False
+
     def finalizeMetadata(self):
         local_repo_path = "%s/%s" % (self.repo_dir, "repodata")
         local_new_path  = "%s/%s" % (self.repo_dir, "repodata.new")
@@ -171,6 +189,7 @@ class RepoFetch(BaseFetch):
             shutil.rmtree(local_new_path)
         except Exception, e:
             LOG.error("An error occurred while finalizing metadata:\n%s" % str(e))
+        shutil.rmtree(self.repo.basecachedir)
 
 class YumRepoGrinder(object):
     """
@@ -360,6 +379,7 @@ class YumRepoGrinder(object):
                 self.fetchPkgs.processCallback(ProgressReport.RemoveOldPackages)
                 gutils = GrinderUtils()
                 gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
+        self.yumFetch.deleteBaseCacheDir()
         return report
 
     def stop(self, block=True):
