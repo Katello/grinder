@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.88
+Version: 0.0.89
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Mar 25 2011 John Matthews <jmatthews@redhat.com> 0.0.89-1
+- 690157 - Sync'd Repository Structure does not match Feed Repo
+  (jmatthews@redhat.com)
+
 * Fri Mar 18 2011 John Matthews <jmatthew@redhat.com> 0.0.88-1
 - 
 
