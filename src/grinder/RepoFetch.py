@@ -40,10 +40,12 @@ class RepoFetch(BaseFetch):
     """
     def __init__(self, repo_label, repourl, cacert=None, clicert=None, clikey=None, 
                  mirrorlist=None, download_dir='./', proxy_url=None, 
-                 proxy_port=None, proxy_user=None, proxy_pass=None, sslverify=1):
+                 proxy_port=None, proxy_user=None, proxy_pass=None, sslverify=1,
+                 max_speed=None):
         BaseFetch.__init__(self, cacert=cacert, clicert=clicert, clikey=clikey,
                 proxy_url=proxy_url, proxy_port=proxy_port, 
-                proxy_user=proxy_user, proxy_pass=proxy_pass, sslverify=sslverify)
+                proxy_user=proxy_user, proxy_pass=proxy_pass, sslverify=sslverify,
+                max_speed=max_speed)
         self.repo_label = repo_label
         self.repourl = repourl.encode('ascii', 'ignore')
         self.mirrorlist = mirrorlist
@@ -199,7 +201,7 @@ class YumRepoGrinder(object):
                        newest=False, cacert=None, clicert=None, clikey=None, \
                        proxy_url=None, proxy_port=None, proxy_user=None, \
                        proxy_pass=None, sslverify=1, packages_location=None, \
-                       remove_old=False, numOldPackages=2, skip={}):
+                       remove_old=False, numOldPackages=2, skip={}, max_speed=None):
         self.repo_label = repo_label
         self.repo_url = repo_url
         self.mirrors = mirrors
@@ -222,6 +224,7 @@ class YumRepoGrinder(object):
         self.remove_old = remove_old
         self.skip = skip
         self.sslverify  = sslverify
+        self.max_speed = max_speed
 
     def prepareRPMS(self):
         pkglist = self.yumFetch.getPackageList(newest=self.newest)
@@ -342,7 +345,8 @@ class YumRepoGrinder(object):
                             clikey=self.sslclientkey, mirrorlist=self.mirrors, \
                             download_dir=basepath, proxy_url=self.proxy_url, \
                             proxy_port=self.proxy_port, proxy_user=self.proxy_user, \
-                            proxy_pass=self.proxy_pass, sslverify=self.sslverify)
+                            proxy_pass=self.proxy_pass, sslverify=self.sslverify,
+                            max_speed=self.max_speed)
         self.fetchPkgs = ParallelFetch(self.yumFetch, self.numThreads, callback=callback)
         self.yumFetch.setupRepo()
         LOG.info("Fetching repo metadata...")

@@ -46,7 +46,7 @@ class BaseFetch(object):
 
     def __init__(self, cacert=None, clicert=None, clikey=None, 
             proxy_url=None, proxy_port=None, proxy_user=None, 
-            proxy_pass=None, sslverify=1):
+            proxy_pass=None, sslverify=1, max_speed = None):
         self.sslcacert = cacert
         self.sslclientcert = clicert
         self.sslclientkey = clikey
@@ -55,6 +55,7 @@ class BaseFetch(object):
         self.proxy_user = proxy_user
         self.proxy_pass = proxy_pass
         self.sslverify  = sslverify
+        self.max_speed = max_speed
 
     def validateDownload(self, filePath, size, hashtype, checksum, verbose=False):
         statinfo = os.stat(filePath)
@@ -95,6 +96,8 @@ class BaseFetch(object):
         Input:
             itemInfo = dict with keys: 'file_name', 'fetch_url', 'item_size', 'hashtype', 'checksum'
             retryTimes = how many times to retry fetch if an error occurs
+            max_speed = Optional param, limit download bandwidth in KB/sec 
+
         Will return a true/false if item was fetched successfully 
         """
         if packages_location is not None:
@@ -129,6 +132,10 @@ class BaseFetch(object):
             #def item_progress_callback(download_total, downloaded, upload_total, uploaded):
             #    LOG.debug("%s status %s/%s bytes" % (fileName, downloaded, download_total))
             #curl.setopt(pycurl.PROGRESSFUNCTION, item_progress_callback)
+            if self.max_speed:
+                #Convert KB/sec to Bytes/sec for MAC_RECV_SPEED_LARGE
+                limit = self.max_speed*1024
+                curl.setopt(curl.MAX_RECV_SPEED_LARGE, limit)
             curl.setopt(curl.VERBOSE,0)
             if type(fetchURL) == types.UnicodeType:
                 #pycurl does not accept unicode strings for a URL, so we need to convert
