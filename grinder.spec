@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.90
+Version: 0.0.91
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Mar 28 2011 John Matthews <jmatthew@redhat.com> 0.0.91-1
+- Added ability to limit download bandwidth per thread (jmatthew@redhat.com)
+
 * Fri Mar 25 2011 John Matthews <jmatthew@redhat.com> 0.0.90-1
 - 
 
