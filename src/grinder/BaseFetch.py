@@ -177,13 +177,13 @@ class BaseFetch(object):
                 cleanup(filePath)
                 return (BaseFetch.STATUS_UNAUTHORIZED, "HTTP status code of %s received for %s" % (status, fetchURL))
             if status != 200:
-                LOG.critical("ERROR: Response = %s fetching %s." % (status, fetchURL))
                 if retryTimes > 0:
                     retryTimes -= 1
-                    LOG.error("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
+                    LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
                     return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                       checksum , headers, retryTimes, packages_location)
                 cleanup(filePath)
+                LOG.warn("ERROR: Response = %s fetching %s." % (status, fetchURL))
                 return (BaseFetch.STATUS_ERROR, "HTTP status code of %s received for %s" % (status, fetchURL))
             if vstatus in [BaseFetch.STATUS_ERROR, BaseFetch.STATUS_SIZE_MISSMATCH, 
                 BaseFetch.STATUS_MD5_MISSMATCH] and retryTimes > 0:
