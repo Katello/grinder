@@ -209,6 +209,7 @@ class ParallelFetch(object):
         self.itemTotal = self.toSyncQ.qsize()
         if self.callback is not None:
             r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, self.toSyncQ.qsize())
+            r.step = ProgressReport.DownloadItems
             r.status = "STARTED"
             r.details = self.details
             self.callback(r)

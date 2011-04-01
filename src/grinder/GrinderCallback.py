@@ -41,11 +41,15 @@ class ProgressReport(object):
         self.step = None
 
     def __str__(self):
-        s = ""
-        if not self.item_name:
-            s += "Item: %s, Status: %s" % (self.item_name, self.status)
-        s += "%s/%s items remaining, %s/%s size remaining" % (self.items_left,
+        s = "Step: %s, " % (self.step)
+        #if not self.item_name:
+        s += "Item: %s, Status: %s, " % (self.item_name, self.status)
+        s += "%s/%s items remaining, %s/%s size remaining, " % (self.items_left,
                 self.items_total, self.size_left, self.size_total)
+        s += "%s num_error, %s num_success, %s num_download, " % (self.num_error, 
+                self.num_success, self.num_download)
+        s += "details = %s, " % (self.details)
+        s += "error_details = %s, " % (self.error_details)
         return s
 
 
