@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.91
+Version: 0.0.92
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,14 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Apr 01 2011 John Matthews <jmatthews@redhat.com> 0.0.92-1
+- Update ProgressReport to correctly state when Content Download is starting
+  Prior to this change we marked the 'step' of downloading after the first
+  package completed.  Now we mark it when the first package starts to download
+  (jmatthews@redhat.com)
+- Change to log type when a file can't be fetched - motivation was to quiet
+  error statements when .treeinfo can't be found (jmatthews@redhat.com)
+
 * Mon Mar 28 2011 John Matthews <jmatthew@redhat.com> 0.0.91-1
 - Added ability to limit download bandwidth per thread (jmatthew@redhat.com)
 
