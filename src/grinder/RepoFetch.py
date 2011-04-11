@@ -201,7 +201,8 @@ class YumRepoGrinder(object):
                        newest=False, cacert=None, clicert=None, clikey=None, \
                        proxy_url=None, proxy_port=None, proxy_user=None, \
                        proxy_pass=None, sslverify=1, packages_location=None, \
-                       remove_old=False, numOldPackages=2, skip={}, max_speed=None):
+                       remove_old=False, numOldPackages=2, skip={}, max_speed=None, \
+                       purge_orphaned=True):
         self.repo_label = repo_label
         self.repo_url = repo_url
         self.mirrors = mirrors
@@ -225,6 +226,7 @@ class YumRepoGrinder(object):
         self.skip = skip
         self.sslverify  = sslverify
         self.max_speed = max_speed
+        self.purge_orphaned = purge_orphaned
 
     def prepareRPMS(self):
         pkglist = self.yumFetch.getPackageList(newest=self.newest)
@@ -375,9 +377,10 @@ class YumRepoGrinder(object):
         LOG.info("Processed <%s> items in [%d] seconds" % (len(self.downloadinfo), \
                   (endTime - startTime)))
         if not self.skip.has_key('packages') or self.skip['packages'] != 1:
-            LOG.info("Cleaning any orphaned packages..")
-            self.fetchPkgs.processCallback(ProgressReport.PurgeOrphanedPackages)
-            self.purgeOrphanPackages(self.yumFetch.getPackageList(), self.yumFetch.repo_dir)
+            if self.purge_orphaned:
+                LOG.info("Cleaning any orphaned packages..")
+                self.fetchPkgs.processCallback(ProgressReport.PurgeOrphanedPackages)
+                self.purgeOrphanPackages(self.yumFetch.getPackageList(), self.yumFetch.repo_dir)
             if self.remove_old:
                 LOG.info("Removing old packages to limit to %s" % self.numOldPackages)
                 self.fetchPkgs.processCallback(ProgressReport.RemoveOldPackages)
