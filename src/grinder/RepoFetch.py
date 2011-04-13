@@ -23,6 +23,7 @@ import time
 import logging
 import shutil
 import pycurl
+import threading
 import traceback
 import ConfigParser
 
@@ -33,6 +34,8 @@ from GrinderCallback import ProgressReport
 from GrinderUtils import GrinderUtils
 
 LOG = logging.getLogger("grinder.RepoFetch")
+
+GRINDER_YUM_LOCK = threading.RLock()
 
 class RepoFetch(BaseFetch):
     """
@@ -80,21 +83,18 @@ class RepoFetch(BaseFetch):
         self.repo.sslverify = self.sslverify
 
     def getPackageList(self, newest=False):
-        while True:
-            try:
-                sack = self.repo.getPackageSack()
-                sack.populate(self.repo, 'metadata', None, 0)
-                if newest:
-                    download_list = sack.returnNewestByNameArch()
-                else:
-                    download_list = sack.returnPackages()
-                return download_list
-            except pycurl.error, e:
-                tb_info = traceback.format_exc()
-                LOG.error("%s" % (tb_info))
-                LOG.error(e)
-                time.sleep(random.random()*10)
-
+        GRINDER_YUM_LOCK.acquire()
+        try:
+            sack = self.repo.getPackageSack()
+            sack.populate(self.repo, 'metadata', None, 0)
+            if newest:
+                download_list = sack.returnNewestByNameArch()
+            else:
+                download_list = sack.returnPackages()
+            return download_list
+        finally:
+            GRINDER_YUM_LOCK.release()
+            
     def getDeltaPackageList(self):
         if not self.deltamd:
             return []
@@ -121,41 +121,44 @@ class RepoFetch(BaseFetch):
             seed += 1
 
     def getRepoXmlFileTypes(self):
-        while True:
-            try:
-                return self.repo.repoXML.fileTypes()
-            except pycurl.error, e:
-                tb_info = traceback.format_exc()
-                LOG.error("%s" % (tb_info))
-                LOG.error(e)
-                time.sleep(random.random()*10)
+        try:
+            return self.repo.repoXML.fileTypes()
+        except Exception, e:
+            LOG.error("Caught exception when trying to fetch content from [%s]: %s" % (self.repourl, e))
+            raise
 
     def getRepoData(self):
-        local_repo_path = "%s/%s" % (self.repo_dir, "repodata.new")
-        if not os.path.exists(local_repo_path):
-            try:
-                os.makedirs(local_repo_path)
-            except IOError, e:
-                LOG.error("Unable to create repo directory %s" % local_repo_path)
-        for ftype in self.getRepoXmlFileTypes():
-            try:
-                if ftype == "primary_db":
-                    self.repo.retrieved["primary_db"] = 0
-                ftypefile = self.repo.retrieveMD(ftype)
-                basename  = os.path.basename(ftypefile)
-                destfile  = "%s/%s" % (local_repo_path, basename)
-                shutil.copyfile(ftypefile, destfile)
-                if ftype == "prestodelta": 
-                    self.deltamd = destfile 
-            except Exception, e:
-                tb_info = traceback.format_exc()
-                LOG.debug("%s" % (tb_info))
-                LOG.error("Unable to Fetch Repo data file %s" % ftype)
-        src = os.path.join(self.repo.basecachedir, self.repo_label, "repomd.xml")
-        dst = os.path.join(local_repo_path, "repomd.xml")
-        LOG.debug("Copy %s to %s" % (src, dst))
-        shutil.copyfile(src, dst)
-        LOG.debug("Fetched repo metadata for %s" % self.repo_label)
+        GRINDER_YUM_LOCK.acquire()
+        try:
+            local_repo_path = "%s/%s" % (self.repo_dir, "repodata.new")
+            if not os.path.exists(local_repo_path):
+                try:
+                    os.makedirs(local_repo_path)
+                except IOError, e:
+                    LOG.error("Unable to create repo directory %s" % local_repo_path)
+                    raise
+            for ftype in self.getRepoXmlFileTypes():
+                try:
+                    if ftype == "primary_db":
+                        self.repo.retrieved["primary_db"] = 0
+                    ftypefile = self.repo.retrieveMD(ftype)
+                    basename  = os.path.basename(ftypefile)
+                    destfile  = "%s/%s" % (local_repo_path, basename)
+                    shutil.copyfile(ftypefile, destfile)
+                    if ftype == "prestodelta":
+                        self.deltamd = destfile
+                except Exception, e:
+                    tb_info = traceback.format_exc()
+                    LOG.debug("%s" % (tb_info))
+                    LOG.error("Unable to Fetch Repo data file %s" % ftype)
+                    raise
+            src = os.path.join(self.repo.basecachedir, self.repo_label, "repomd.xml")
+            dst = os.path.join(local_repo_path, "repomd.xml")
+            LOG.debug("Copy %s to %s" % (src, dst))
+            shutil.copyfile(src, dst)
+            LOG.debug("Fetched repo metadata for %s" % self.repo_label)
+        finally:
+            GRINDER_YUM_LOCK.release()
 
     def validatePackage(self, fo, pkg, fail):
         return pkg.verifyLocalPkg()
@@ -201,7 +204,7 @@ class YumRepoGrinder(object):
                        newest=False, cacert=None, clicert=None, clikey=None, \
                        proxy_url=None, proxy_port=None, proxy_user=None, \
                        proxy_pass=None, sslverify=1, packages_location=None, \
-                       remove_old=False, numOldPackages=2, skip={}, max_speed=None, \
+                       remove_old=False, numOldPackages=2, skip=None, max_speed=None, \
                        purge_orphaned=True):
         self.repo_label = repo_label
         self.repo_url = repo_url
@@ -224,6 +227,8 @@ class YumRepoGrinder(object):
         self.pkgsavepath = ''
         self.remove_old = remove_old
         self.skip = skip
+        if not self.skip:
+            self.skip = {}
         self.sslverify  = sslverify
         self.max_speed = max_speed
         self.purge_orphaned = purge_orphaned
