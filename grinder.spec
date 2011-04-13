@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.93
+Version: 0.0.94
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Apr 13 2011 John Matthews <jmatthews@redhat.com> 0.0.94-1
+- 695743 - Multiple concurrent calls to util.get_repo_packages() results in
+  Segmentation fault (jmatthews@redhat.com)
+
 * Mon Apr 11 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.93-1
 - Adding ability to make purge orphaned packages optional. From pulp's
   standpoint, since we allow uploads to synced repos, it doesnt make sense to
