@@ -132,7 +132,12 @@ class ParallelFetch(object):
         self.callback(r)
 
     def addErrorDetails(self, itemInfo, errorInfo=None):
-        self.error_details.append((itemInfo, errorInfo))
+        # When we communicate these errors back to pulp
+        # we want each error to be a single json object
+        # so we will combine the 2 dicts
+        for key in errorInfo:
+            itemInfo[key] = errorInfo[key]
+        self.error_details.append(itemInfo)
 
     def formProgressReport(self, step=None, itemInfo=None, status=None):
         itemsLeft = self.itemTotal - (self.syncErrorQ.qsize() + self.syncCompleteQ.qsize())
@@ -166,7 +171,7 @@ class ParallelFetch(object):
                 self.syncCompleteQ.put(itemInfo)
             else:
                 self.syncErrorQ.put(itemInfo)
-                self.addErrorDetails(itemInfo, {"error_type":status, "error":errorInfo})
+                self.addErrorDetails(itemInfo, {"error_type":status, "error":errorInfo, "traceback":""})
             LOG.debug("%s status updated, %s success %s error" % (itemInfo,
                 self.syncCompleteQ.qsize(), self.syncErrorQ.qsize()))
             if itemInfo.has_key("size")  and itemInfo['size'] is not None and itemInfo['size'] >= 0:
