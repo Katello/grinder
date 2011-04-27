@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.95
+Version: 0.0.96
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Apr 27 2011 John Matthews <jmatthews@redhat.com> 0.0.96-1
+- 694578 - Grinder 'numOldPackages' should be improved to fetch less packages.
+  (jmatthews@redhat.com)
+
 * Tue Apr 26 2011 John Matthews <jmatthews@redhat.com> 0.0.95-1
 - 698344 - sync status error details returns array of array of hashes
   (jmatthews@redhat.com)
