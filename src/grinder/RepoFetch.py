@@ -233,8 +233,41 @@ class YumRepoGrinder(object):
         self.max_speed = max_speed
         self.purge_orphaned = purge_orphaned
 
+    def _prune_package_list(self, pkglist, numold):
+        """
+        pkglist: list of packages as returned from yum's package sack
+        numold: number of old versions of package to keep
+        """
+        rpms = {}
+        # Format data for sorting
+        for pkg in pkglist:
+            pkg_key = "%s.%s" % (pkg.name, pkg.arch)
+            if not rpms.has_key(pkg_key):
+                rpms[pkg_key] = []
+            item = {}
+            for key in ["name", "release", "epoch", "version", "arch"]:
+                item[key] = getattr(pkg, key)
+            item["pkg"] = pkg
+            rpms[pkg_key].append(item)
+        grinderUtils = GrinderUtils()
+        grinderUtils.numOldPkgsKeep = numold
+        rpms = grinderUtils.sortListOfRPMS(rpms)
+        # Prune data
+        for key in rpms:
+            values = rpms[key]
+            if len(values) > numold:
+                rpms[key] = rpms[key][:numold+1]
+        # Flatten data
+        pkglist = []
+        for key in rpms:
+            pkgs = [item["pkg"] for item in rpms[key]]
+            pkglist.extend(pkgs)
+        return pkglist
+
     def prepareRPMS(self):
         pkglist = self.yumFetch.getPackageList(newest=self.newest)
+        if self.remove_old and not self.newest:
+            pkglist = self._prune_package_list(pkglist, self.numOldPackages)
         for pkg in pkglist:
             info = {}
             #urljoin doesnt like epoch in rpm name so using string concat

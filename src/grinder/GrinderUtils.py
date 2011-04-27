@@ -73,6 +73,14 @@ class GrinderUtils(object):
             rpms[key].append(info)
         return rpms
 
+    def sortListOfRPMS(self, rpms):
+        for key in rpms:
+            rpms[key].sort(lambda a, b: 
+                    rpmUtils.miscutils.compareEVR(
+                        (a["epoch"], a["version"], a["release"]), 
+                        (b["epoch"], b["version"], b["release"])), reverse=True)
+        return rpms
+
     def getSortedListOfSyncedRPMs(self, path):
         """
          Returns a dictionary with key of 'name.arch' which has values sorted in descending order
@@ -81,13 +89,7 @@ class GrinderUtils(object):
           [{"name", "version", "release", "epoch", "arch", "filename"}]
         """
         rpms = self.getListOfSyncedRPMs(path)
-        for key in rpms:
-            rpms[key].sort(lambda a, b: 
-                    rpmUtils.miscutils.compareEVR(
-                        (a["epoch"], a["version"], a["release"]), 
-                        (b["epoch"], b["version"], b["release"])), reverse=True)
-        return rpms
-
+        return self.sortListOfRPMS(rpms)
 
     def runRemoveOldPackages(self, path, numOld=None):
         """
