@@ -17,6 +17,7 @@ import time
 import logging
 import threading
 from threading import Thread, Lock
+import time
 import traceback
 import sys
 import Queue
@@ -61,6 +62,7 @@ class ParallelFetch(object):
         for i in range(self.numThreads):
             wt = WorkerThread(self, fetcher)
             self.threads.append(wt)
+        self.startTime = time.time()
 
     def _update_totals(self, item):
         if item.has_key("item_type"):
@@ -251,8 +253,8 @@ class ParallelFetch(object):
          errorList is a list of all items which couldn't be synced
         """
         self._waitForThreads()
-
         LOG.info("All threads have finished.")
+        self.endTime = time.time()
         successList = []
         while not self.syncCompleteQ.empty():
             p = self.syncCompleteQ.get_nowait()
@@ -271,6 +273,10 @@ class ParallelFetch(object):
         
         LOG.info("ParallelFetch: %s items successfully processed, %s downloaded, %s items had errors" %
             (report.successes, report.downloads, report.errors))
+        for details_type in self.details:
+            LOG.info("Transferred [%s] bytes of [%s]" %
+                     (self.details[details_type]["total_size_bytes"], details_type))
+        LOG.info("Transferred [%s] total bytes in %s seconds" % (self.sizeTotal, (self.endTime - self.startTime)))
         r = self.formProgressReport()
         r.status = "FINISHED"
         r.num_error = report.errors
