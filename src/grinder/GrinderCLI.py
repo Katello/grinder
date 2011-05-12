@@ -206,11 +206,11 @@ class RepoDriver(CliDriver):
                           help="Limit bandwidth in KB/sec per thread", default=None)
         self.parser.add_option('-U', "--url", dest="url",
                           help="URL to the repository whose content to fetch")
-        self.parser.add_option("--cacert", dest="cacert",
+        self.parser.add_option("--cacert", dest="cacert", default=None,
                           help="Path location to CA Certificate.")
-        self.parser.add_option("--cert", dest="clicert",
+        self.parser.add_option("--cert", dest="clicert", default=None,
                           help="Path location to Client SSl Certificate.")
-        self.parser.add_option("--key", dest="clikey",
+        self.parser.add_option("--key", dest="clikey", default=None,
                           help="Path location to Client Certificate Key.")
         self.parser.add_option("--nosslverify", action="store_true", dest="nosslverify",
                           help="disable ssl verify of server cert")
@@ -250,8 +250,7 @@ class RepoDriver(CliDriver):
         limit = None
         if self.options.limit:
             limit = int(self.options.limit)
-        if self.options.cacert and self.options.clicert and self.options.clikey:
-            self.yfetch = YumRepoGrinder(self.options.label, self.options.url, \
+        self.yfetch = YumRepoGrinder(self.options.label, self.options.url, \
                                 self.parallel, cacert=self.options.cacert, \
                                 clicert=self.options.clicert, clikey=self.options.clikey, \
                                 proxy_url=self.options.proxy_url, 
@@ -259,13 +258,6 @@ class RepoDriver(CliDriver):
                                 proxy_user=self.options.proxy_user, \
                                 proxy_pass=self.options.proxy_pass,
                                 sslverify=sslverify, max_speed=limit)
-        else:
-            self.yfetch = YumRepoGrinder(self.options.label, self.options.url, \
-                                self.parallel, proxy_url=self.options.proxy_url, \
-                                proxy_port = self.options.proxy_port, \
-                                proxy_user=self.options.proxy_user, \
-                                proxy_pass=self.options.proxy_pass, sslverify=sslverify,
-                                max_speed=limit)
         if self.options.basepath:
             self.yfetch.fetchYumRepo(self.options.basepath)
         else:
