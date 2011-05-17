@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.97
+Version: 0.0.98
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue May 17 2011 John Matthews <jmatthew@redhat.com> 0.0.98-1
+- Adjust ssl cert usage so we can specify --cacert without a key/cert
+  (jmatthews@redhat.com)
+
 * Tue May 10 2011 John Matthews <jmatthews@redhat.com> 0.0.97-1
 - Added log output to show total bytes transferred and time spent
   (jmatthews@redhat.com)
