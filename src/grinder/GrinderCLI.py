@@ -24,6 +24,7 @@ from optparse import OptionParser
 from RepoFetch import YumRepoGrinder
 from RHNSync import RHNSync
 from GrinderExceptions import *
+from FileFetch import FileGrinder
 
 LOG = logging.getLogger("grinder.GrinderCLI")
 
@@ -195,7 +196,7 @@ class RepoDriver(CliDriver):
     parallel = 5
     def __init__(self):
         usage = "usage: %prog yum [OPTIONS]"
-        shortdesc = "Fetches content from a yum Repository."
+        shortdesc = "Fetches content from a yum source."
         desc = "yum"
         CliDriver.__init__(self, "yum", usage, shortdesc, desc)
         #GrinderLog.setup(self.debug)
@@ -266,12 +267,87 @@ class RepoDriver(CliDriver):
     def stop(self):
         self.yfetch.stop()
 
+class FileDriver(CliDriver):
+    parallel = 5
+    def __init__(self):
+        usage = "usage: %prog file [OPTIONS]"
+        shortdesc = "Fetches content from a file source."
+        desc = "file"
+        CliDriver.__init__(self, "file", usage, shortdesc, desc)
+        #GrinderLog.setup(self.debug)
+
+        self.parser.add_option("--label", dest="label",
+                          help="Label for the content fetched from repository URL")
+        self.parser.add_option("--limit", dest="limit",
+                          help="Limit bandwidth in KB/sec per thread", default=None)
+        self.parser.add_option('-U', "--url", dest="url",
+                          help="URL to the repository whose content to fetch")
+        self.parser.add_option("--cacert", dest="cacert", default=None,
+                          help="Path location to CA Certificate.")
+        self.parser.add_option("--cert", dest="clicert", default=None,
+                          help="Path location to Client SSl Certificate.")
+        self.parser.add_option("--key", dest="clikey", default=None,
+                          help="Path location to Client Certificate Key.")
+        self.parser.add_option("--nosslverify", action="store_true", dest="nosslverify",
+                          help="disable ssl verify of server cert")
+        self.parser.add_option('-P', "--parallel", dest="parallel",
+                          help="Thread count to fetch the bits in parallel. Defaults to 5")
+        self.parser.add_option('-b', '--basepath', dest="basepath",
+                          help="Directory path to store the fetched content.Defaults to current working directory")
+        self.parser.add_option('--proxy_url', dest="proxy_url",
+                          help="proxy url, example 'http://172.31.1.1'", default=None)
+        self.parser.add_option('--proxy_port', dest="proxy_port",
+                          help="proxy port, default is 3128", default='3128')
+        self.parser.add_option('--proxy_user', dest="proxy_user",
+                          help="proxy username, if auth is required", default=None)
+        self.parser.add_option('--proxy_pass', dest="proxy_pass",
+                          help="proxy password, if auth is required", default=None)
+
+    def _validate_options(self):
+        if not self.options.label:
+            print("repo label is required. Try --help.")
+            sys.exit(-1)
+
+        if not self.options.url:
+            print("No Url specified to fetch content. Try --help")
+            sys.exit(-1)
+
+        if self.options.parallel:
+            self.parallel = self.options.parallel
+
+    def _do_command(self):
+        """
+        Executes the command.
+        """
+        self._validate_options()
+        sslverify=1
+        if self.options.nosslverify:
+            sslverify=0
+        limit = None
+        if self.options.limit:
+            limit = int(self.options.limit)
+        self.file_fetch = FileGrinder(self.options.label, self.options.url, \
+                                self.parallel, cacert=self.options.cacert, \
+                                clicert=self.options.clicert, clikey=self.options.clikey, \
+                                proxy_url=self.options.proxy_url,
+                                proxy_port=self.options.proxy_port, \
+                                proxy_user=self.options.proxy_user, \
+                                proxy_pass=self.options.proxy_pass,
+                                sslverify=sslverify, max_speed=limit)
+        if self.options.basepath:
+            self.file_fetch.fetch(self.options.basepath)
+        else:
+            self.file_fetch.fetch()
+
+    def stop(self):
+        self.file_fetch.stop()
+
 # this is similar to how rho does parsing
 class CLI:
     def __init__(self):
 
         self.cli_commands = {}
-        for clazz in [ RepoDriver, RHNDriver]:
+        for clazz in [ RepoDriver, RHNDriver, FileDriver]:
             cmd = clazz()
             # ignore the base class
             if cmd.name != "cli":
