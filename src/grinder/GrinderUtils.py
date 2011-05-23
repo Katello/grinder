@@ -13,9 +13,9 @@
 # granted to use or replicate Red Hat trademarks that are incorporated
 # in this software or its documentation.
 #
+import csv
 import os
 import logging
-import sys
 import glob
 import rpm
 import rpmUtils
@@ -38,6 +38,18 @@ def get_relative_path(source_path, dest_path):
     num_ellipses = len(dst_parts) - 1 - similar_index
     rel_path = os.path.join("../"*num_ellipses, *src_parts[similar_index:])
     return rel_path
+
+def parseCSV(filepath):
+    in_file  = open(filepath, "rb")
+    reader = csv.reader(in_file)
+    lines = []
+    for line in reader:
+        if not len(line):
+            continue
+        line = [l.strip() for l in line]
+        lines.append(line)
+    in_file.close()
+    return lines
 
 class GrinderUtils(object):
 

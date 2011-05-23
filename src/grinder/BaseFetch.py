@@ -43,6 +43,7 @@ class BaseFetch(object):
     RPM = 'rpm'
     DELTA_RPM = 'delta_rpm'
     TREE_FILE = 'tree_file'
+    FILE      = 'file'
 
     def __init__(self, cacert=None, clicert=None, clikey=None, 
             proxy_url=None, proxy_port=None, proxy_user=None, 
