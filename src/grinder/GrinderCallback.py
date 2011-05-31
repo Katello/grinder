@@ -23,13 +23,14 @@ class ProgressReport(object):
     RemoveOldPackages = "Removing Old Packages"
 
     
-    def __init__(self, sizeTotal, sizeLeft, itemTotal, itemLeft, itemName="", status=""):
+    def __init__(self, sizeTotal, sizeLeft, itemTotal, itemLeft, itemName="", status="", itemType=""):
         self.items_total = itemTotal    # Total number of items
         self.items_left = itemLeft      # Number of items left to process
         self.size_total = sizeTotal     # Total number of bytes 
         self.size_left = sizeLeft       # Bytes left to process
         self.item_name = itemName       # Name of last item worked on
         self.status = status            # Status Message
+        self.item_type = itemType       # Type of item fetched
         self.num_error = 0              # Number of Errors
         self.num_success = 0            # Number of Successes
         self.num_download = 0          # Number of actual downloads
@@ -41,7 +42,7 @@ class ProgressReport(object):
     def __str__(self):
         s = "Step: %s, " % (self.step)
         #if not self.item_name:
-        s += "Item: %s, Status: %s, " % (self.item_name, self.status)
+        s += "Item<%s>: %s, Status: %s, " % (self.item_type, self.item_name, self.status)
         s += "%s/%s items remaining, %s/%s size remaining, " % (self.items_left,
                 self.items_total, self.size_left, self.size_total)
         s += "%s num_error, %s num_success, %s num_download, " % (self.num_error, 

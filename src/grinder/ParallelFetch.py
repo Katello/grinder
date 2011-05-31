@@ -146,6 +146,8 @@ class ParallelFetch(object):
         if itemInfo:
             if itemInfo.has_key("fileName"):
                 r.item_name = itemInfo["fileName"]
+            if itemInfo.has_key("item_type"):
+                r.item_type = itemInfo["item_type"]
         r.status = None
         if status:
             r.status = status
