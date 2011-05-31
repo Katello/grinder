@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.99
+Version: 0.0.100
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue May 31 2011 John Matthews <jmatthews@redhat.com> 0.0.100-1
+- Added info about item type/name to progress callback details
+  (jmatthews@redhat.com)
+- re-license with more appropriate GPLv2 or later text (mmccune@redhat.com)
+
 * Mon May 23 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.99-1
 - Adding file sync to grinder CLI (pkilambi@redhat.com)
 - File Sync support: * File based sync driver which parses the MANIFEST and
