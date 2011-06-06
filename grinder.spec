@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.100
+Version: 0.0.101
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Jun 06 2011 John Matthews <jmatthew@redhat.com> 0.0.101-1
+- Remove requirement that all 3, cacert, cert, key must be specified at same
+  time. (jmatthew@redhat.com)
+
 * Tue May 31 2011 John Matthews <jmatthews@redhat.com> 0.0.100-1
 - Added info about item type/name to progress callback details
   (jmatthews@redhat.com)
