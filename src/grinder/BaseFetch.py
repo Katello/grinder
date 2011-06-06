@@ -130,7 +130,7 @@ class BaseFetch(object):
             curl = pycurl.Curl()
             #def item_progress_callback(download_total, downloaded, upload_total, uploaded):
             #    LOG.debug("%s status %s/%s bytes" % (fileName, downloaded, download_total))
-            #curl.setopt(pycurl.PROGRESSFUNCTION, item_progress_callback)
+            #curl.setopt(curl.PROGRESSFUNCTION, item_progress_callback)
             if self.max_speed:
                 #Convert KB/sec to Bytes/sec for MAC_RECV_SPEED_LARGE
                 limit = self.max_speed*1024
@@ -140,9 +140,11 @@ class BaseFetch(object):
                 #pycurl does not accept unicode strings for a URL, so we need to convert
                 fetchURL = unicodedata.normalize('NFKD', fetchURL).encode('ascii','ignore')
             curl.setopt(curl.URL, fetchURL)
-            if self.sslcacert and self.sslclientcert and self.sslclientkey:
+            if self.sslcacert:
                 curl.setopt(curl.CAINFO, self.sslcacert)
+            if self.sslclientcert:
                 curl.setopt(curl.SSLCERT, self.sslclientcert)
+            if self.sslclientkey:
                 curl.setopt(curl.SSLKEY, self.sslclientkey)
             if not self.sslverify:
                 curl.setopt(curl.SSL_VERIFYPEER, 0)
