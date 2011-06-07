@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.102
+Version: 0.0.103
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Jun 07 2011 John Matthews <jmatthew@redhat.com> 0.0.103-1
+- 
+
 * Tue Jun 07 2011 John Matthews <jmatthews@redhat.com> 0.0.102-1
 - 710455 - Grinder cannot sync a Pulp protected repo (jmatthews@redhat.com)
 
