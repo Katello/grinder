@@ -21,6 +21,7 @@ import time
 import logging
 import shutil
 import pycurl
+import tempfile
 import threading
 import traceback
 import ConfigParser
@@ -29,7 +30,7 @@ from PrestoParser import PrestoParser
 from ParallelFetch import ParallelFetch
 from BaseFetch import BaseFetch
 from GrinderCallback import ProgressReport
-from GrinderUtils import GrinderUtils
+from GrinderUtils import GrinderUtils, splitPEM
 
 LOG = logging.getLogger("grinder.RepoFetch")
 
@@ -214,6 +215,8 @@ class YumRepoGrinder(object):
         self.sslcacert = cacert
         self.sslclientcert = clicert
         self.sslclientkey = clikey
+        self.temp_ssl_client_cert = None
+        self.temp_ssl_client_key = None
         self.proxy_url = proxy_url
         self.proxy_port = proxy_port
         self.proxy_user = proxy_user
@@ -231,6 +234,13 @@ class YumRepoGrinder(object):
         self.max_speed = max_speed
         self.purge_orphaned = purge_orphaned
 
+    def __deleteTempCerts(self):
+        # Goal is to delete temporary cert files we generate if a PEM cert was used
+        if self.temp_ssl_client_cert:
+            os.unlink(self.temp_ssl_client_cert)
+        if self.temp_ssl_client_key:
+            os.unlink(self.temp_ssl_client_key)
+            
     def _prune_package_list(self, pkglist, numold):
         """
         pkglist: list of packages as returned from yum's package sack
@@ -373,10 +383,56 @@ class YumRepoGrinder(object):
             info['item_type'] = BaseFetch.TREE_FILE
             self.downloadinfo.append(info)
         LOG.info("%s Tree files have been marked to be fetched" % len(tree_info))
-            
+
+    def convertCert(self):
+        try:
+            # If only a ssl client cert is passed in, attempt to split it out
+            if self.sslclientcert and not self.sslclientkey:
+                data = open(self.sslclientcert).read()
+                key, cert = splitPEM(data)
+                if cert and key:
+                    temp_cert_file = None
+                    temp_key_file = None
+                    try:
+                        # We found a cert and a key, so assuming this was a PEM format
+                        temp_cert_file, self.temp_ssl_client_cert  = tempfile.mkstemp(prefix="temp_ssl_cert")
+                        temp_key_file, self.temp_ssl_client_key = tempfile.mkstemp(prefix="temp_ssl_key")
+                        # Write out the cert/key to separate files
+                        # Need to write out to a file, since curl expects a filename and doesn't work with a string
+                        os.write(temp_cert_file, cert)
+                        os.write(temp_key_file, key)
+                        LOG.debug("Converted PEM <%s> to Cert <%s> Key <%s>" % \
+                                  (self.sslclientcert, self.temp_ssl_client_cert, self.temp_ssl_client_key))
+                    finally:
+                        if temp_cert_file:
+                            os.close(temp_cert_file)
+                        if temp_key_file:
+                            os.close(temp_key_file)
+                    self.sslclientkey = self.temp_ssl_client_key
+                    self.sslclientcert = self.temp_ssl_client_cert
+                    LOG.debug("sslclientcert = <%s>, sslclientkey = <%s>" % (self.sslclientcert, self.sslclientkey))
+        except Exception, e:
+            LOG.error(e)
+            LOG.error(traceback.format_exc())
+            try:
+                if self.temp_ssl_client_cert:
+                    os.unlink(self.temp_ssl_client_cert)
+                    self.temp_ssl_client_cert = None
+                if self.temp_ssl_client_key:
+                    os.unlink(self.temp_ssl_client_key)
+                    self.temp_ssl_client_key = None
+            except:
+                pass
+            raise
+
+
 
     def fetchYumRepo(self, basepath="./", callback=None):
         LOG.info("fetchYumRepo() basepath = %s" % (basepath))
+        # Check if certs need to be converted
+        # BZ 711329 - During cds sync goferd on all cds nodes crashes very often
+        # RHEL-6 is seeing a problem with libnsspem, intermittent crashes when we use a PEM cert.
+        self.convertCert()
         startTime = time.time()
         self.yumFetch = RepoFetch(self.repo_label, repourl=self.repo_url, \
                             cacert=self.sslcacert, clicert=self.sslclientcert, \
@@ -423,12 +479,15 @@ class YumRepoGrinder(object):
                 gutils = GrinderUtils()
                 gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
         self.yumFetch.deleteBaseCacheDir()
+        self.__deleteTempCerts()
         return report
 
     def stop(self, block=True):
+        LOG.info("Stopping")
         if self.fetchPkgs:
             self.fetchPkgs.stop()
             if block:
+                LOG.info("Block is <%s> so waiting" % (block))
                 self.fetchPkgs._waitForThreads()
             
     def purgeOrphanPackages(self, downloadlist, repo_dir):

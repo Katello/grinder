@@ -162,7 +162,7 @@ class ParallelFetch(object):
         return r
 
     def markStatus(self, itemInfo, status, errorInfo=None):
-        LOG.info("%s threads are active" % (self._running()))
+        LOG.info("%s threads are active. %s items left to be fetched" % (self._running(), (self.toSyncQ.qsize() + self._running())))
         self.statusLock.acquire()
         try:
             if status in self.syncStatusDict:
@@ -224,9 +224,11 @@ class ParallelFetch(object):
             t.start()
 
     def stop(self):
+        LOG.info("Grinder stopping")
         self.stopping = True
         for t in self.threads:
             t.stop()
+            LOG.info("Told thread <%s> to stop" % (t))
 
     def _running(self):
         working = 0

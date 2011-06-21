@@ -15,6 +15,7 @@ import csv
 import os
 import logging
 import glob
+import re
 import rpm
 import rpmUtils
 import rpmUtils.miscutils
@@ -48,6 +49,45 @@ def parseCSV(filepath):
         lines.append(line)
     in_file.close()
     return lines
+
+def splitPEM(pem_data):
+    """
+    @type pem_data: str
+    @param pem_data: PEM encoded certificate string
+    @return (key,crt)
+    @rtype: tuple
+    """
+    key = getKeyFromPEM(pem_data)
+    cert = getCertFromPEM(pem_data)
+    return (key,cert)
+
+def getKeyFromPEM(pem_data):
+    """
+    @type pem_data: str
+    @param pem_data: PEM encoded certificate string
+    @rtype: str
+    @return key
+    """
+    key_regex = re.compile(r'([\-]{5}BEGIN( RSA| DSA)? PRIVATE KEY[\-]{5}.*[\-]{5}END( RSA| DSA)? PRIVATE KEY[\-]{5})',
+                           re.MULTILINE|re.S)
+    result = key_regex.search(pem_data)
+    if result:
+        return result.group(0)
+    return None
+
+def getCertFromPEM(pem_data):
+    """
+    @type pem_data: str
+    @param pem_data: PEM encoded certificate string
+    @rtype: str
+    @return cert
+    """
+    cert_regex = re.compile(r'(-{5}BEGIN CERTIFICATE-{5}.*-{5}END CERTIFICATE-{5})',
+                            re.MULTILINE|re.S)
+    result = cert_regex.search(pem_data)
+    if result:
+        return result.group(0)
+    return None
 
 class GrinderUtils(object):
 
@@ -120,5 +160,3 @@ class GrinderUtils(object):
                     fname = values[index]['filename']
                     LOG.info("Removing: %s" % (fname))
                     os.remove(fname)
-
-
