@@ -432,7 +432,9 @@ class YumRepoGrinder(object):
         # Check if certs need to be converted
         # BZ 711329 - During cds sync goferd on all cds nodes crashes very often
         # RHEL-6 is seeing a problem with libnsspem, intermittent crashes when we use a PEM cert.
-        self.convertCert()
+        # self.convertCert()
+        # self.convertCert() is probably not needed, issue is being explored
+        # plan to resolve is to break pycurl usage to subprocess to avoid NSS multithreading bug
         startTime = time.time()
         self.yumFetch = RepoFetch(self.repo_label, repourl=self.repo_url, \
                             cacert=self.sslcacert, clicert=self.sslclientcert, \
@@ -479,7 +481,7 @@ class YumRepoGrinder(object):
                 gutils = GrinderUtils()
                 gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
         self.yumFetch.deleteBaseCacheDir()
-        self.__deleteTempCerts()
+        #self.__deleteTempCerts()
         return report
 
     def stop(self, block=True):
