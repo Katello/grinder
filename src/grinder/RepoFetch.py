@@ -196,8 +196,12 @@ class RepoFetch(BaseFetch):
         shutil.rmtree(self.repo.basecachedir)
         
     def __getstate__(self):
+        """
+        Get the object state for pickling.
+        The (repo) attribute cannot be pickled.
+        """
         state = self.__dict__.copy()
-        state['repo'] = None
+        state.pop('repo', None)
         return state
 
 

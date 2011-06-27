@@ -18,7 +18,7 @@ import atexit
 import cPickle as pickle
 import traceback as tb
 from subprocess import Popen, PIPE
-
+    
 
 class Method:
     """
@@ -39,15 +39,15 @@ class Method:
         self.name = name
         self.object = object
     
-    def __call__(self, *args, **keywords):
+    def __call__(self, *args, **kwargs):
         """
         Method invocation using the active object.
         @param args: The argument list.
         @type args: list
-        @param keywords: The keywords argument dict.
-        @type keywords: dict
+        @param kwargs: The kwargs argument dict.
+        @type kwargs: dict
         """
-        return self.object(self, *args, **keywords)
+        return self.object(self, *args, **kwargs)
     
 
 class ActiveObject:
@@ -71,7 +71,7 @@ class ActiveObject:
         self.__child = None
         self.__spawn()
         
-    def __call(self, method, *args, **keywords):
+    def __call(self, method, *args, **kwargs):
         """
         Method invocation.
         The active object, method name and arguments are picked and
@@ -83,15 +83,16 @@ class ActiveObject:
         @type method: str
         @param args: The argument list.
         @type args: list
-        @param keywords: The keywords argument dict.
-        @type keywords: dict
+        @param kwargs: The kwargs argument dict.
+        @type kwargs: dict
         """
         p = self.__child
-        call = (self.object, method, args, keywords)
+        call = (self.object, method, args, kwargs)
         pickle.dump(call, p.stdin)
         p.stdin.flush()
-        code, retval = pickle.load(p.stdout)
+        code, retval, state = pickle.load(p.stdout)
         if code == 0:
+            setstate(self.object, state)
             return retval
         else:
             raise Exception(retval)
@@ -115,7 +116,7 @@ class ActiveObject:
             self.__child.wait()
             self.__child = None
     
-    def __call__(self, method, *args, **keywords):
+    def __call__(self, method, *args, **kwargs):
         """
         Method invocation.
         An IOError indictes a broken pipe(s) between the parent and
@@ -123,13 +124,13 @@ class ActiveObject:
         For robustness, we respawn the child and try again.
         @param args: The argument list.
         @type args: list
-        @param keywords: The keywords argument dict.
-        @type keywords: dict
+        @param kwargs: The kwargs argument dict.
+        @type kwargs: dict
         """
         retry = 3
         while True:
             try:
-                return self.__call(method.name, *args, **keywords)
+                return self.__call(method.name, *args, **kwargs)
             except IOError, e:
                 if retry:
                     self.__kill()
@@ -157,24 +158,44 @@ class ActiveObject:
 def process():
     """
     Reads and processes RMI requests.
-     Input: (object, method, *args, **keywords)
-    Output: (status, retval)
+     Input: (object, method, *args, **kwargs)
+    Output: (status, retval, state)
         status (0=return value, 1=exception).
         retval (returned value | exception )
     """
+    code = 0
+    state = {}
     try:
         call = pickle.load(sys.stdin)
-        method = getattr(call[0], call[1])
+        object = call[0]
+        method = getattr(object, call[1])
         args = call[2]
-        keywords = call[3]
-        retval = method(*args, **keywords)
-        pickle.dump((0, retval), sys.stdout)
-        sys.stdout.flush()
+        kwargs = call[3]
+        retval = method(*args, **kwargs)
+        state = getstate(object)
     except:
+        code = 1
         info = sys.exc_info()
-        exval = '\n'.join(tb.format_exception(*info))
-        pickle.dump((1, exval), sys.stdout)
-        sys.stdout.flush()
+        retval = '\n'.join(tb.format_exception(*info))
+    result = (code, retval, state)
+    pickle.dump(result, sys.stdout)
+    sys.stdout.flush()
+    
+def getstate(object):
+    M = '__getstate__'
+    if hasattr(object, M):
+        m = getattr(object, M)
+        return m()
+    else:
+        return object.__dict__
+    
+def setstate(object, state):
+    M = '__setstate__'
+    if hasattr(object, M):
+        m = getattr(object, M)
+        m(state)
+    else:
+        object.__dict__.update(state)
 
 def main():
     while True:
