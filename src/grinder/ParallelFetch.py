@@ -22,6 +22,7 @@ import Queue
 
 from BaseFetch import BaseFetch
 from GrinderCallback import ProgressReport
+from activeobject import ActiveObject
 
 LOG = logging.getLogger("grinder.ParallelFetch")
 
@@ -300,7 +301,7 @@ class WorkerThread(Thread):
         """
         Thread.__init__(self)
         self.pFetch = pFetch
-        self.fetcher = fetcher
+        self.fetcher = ActiveObject(fetcher)
         self._stop = threading.Event()
 
     def stop(self):
@@ -329,6 +330,7 @@ class WorkerThread(Thread):
                 errorInfo["traceback"] = traceback.format_exc().splitlines()
                 self.pFetch.markStatus(itemInfo, BaseFetch.STATUS_ERROR, errorInfo)
                 LOG.debug("Thread ending")
+        del self.fetcher
         LOG.debug("Thread ending")
 
 if __name__ == "__main__":

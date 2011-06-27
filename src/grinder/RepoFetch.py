@@ -194,6 +194,12 @@ class RepoFetch(BaseFetch):
         except Exception, e:
             LOG.error("An error occurred while finalizing metadata:\n%s" % str(e))
         shutil.rmtree(self.repo.basecachedir)
+        
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['repo'] = None
+        return state
+
 
 class YumRepoGrinder(object):
     """
