@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.103
+Version: 0.0.104
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,15 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Jun 30 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.104-1
+- Tunnel logging in child back to parent in activeobject. (jortel@redhat.com)
+- Add state back-synchronization in ActiveObject. (jortel@redhat.com)
+- Wrap parallel fetch in ActiveObject. (jortel@redhat.com)
+- Disable 'split of PEM' certs, issue is a multithreading bug with NSS, split
+  of cert doesn't impact it (jmatthews@redhat.com)
+- 711329 - frequent crash syncing protected repos, added split of PEM to
+  separate certs (jmatthews@redhat.com)
+
 * Tue Jun 07 2011 John Matthews <jmatthew@redhat.com> 0.0.103-1
 - 
 
