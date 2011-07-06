@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.104
+Version: 0.0.105
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Jul 06 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.105-1
+- 712521 - If remoteurl is set as part of package object in primary use that
+  for download else use relativepath with feed (pkilambi@redhat.com)
+
 * Thu Jun 30 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.104-1
 - Tunnel logging in child back to parent in activeobject. (jortel@redhat.com)
 - Add state back-synchronization in ActiveObject. (jortel@redhat.com)
