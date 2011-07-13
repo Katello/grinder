@@ -25,12 +25,16 @@ Protocol:
    reply = (code, retval, state)
 """
 
+import os
 import sys
+import errno
 import atexit
 import logging
 import cPickle as pickle
 import traceback as tb
 from subprocess import Popen, PIPE
+from threading import RLock
+from signal import SIGTERM
 
 
 class Method:
@@ -51,7 +55,13 @@ class Method:
         """
         self.name = name
         self.object = object
-    
+
+    def abort(self):
+        """
+        Abort (kill) the active object child process.
+        """
+        self.object._ActiveObject__kill()
+
     def __call__(self, *args, **kwargs):
         """
         Method invocation using the active object.
@@ -71,6 +81,8 @@ class ActiveObject:
     @type object: object
     @ivar __child: The child process.
     @type __child: Process
+    @ivar __mutex: Mutex to ensure serial RMI.
+    @type __mutex: RLock
     """
 
     def __init__(self, object):
@@ -82,11 +94,13 @@ class ActiveObject:
         self.object = object
         atexit.register(self.__kill)
         self.__child = None
+        self.__mutex = RLock()
         self.__spawn()
         
-    def __call(self, method, *args, **kwargs):
+    def __rmi(self, method, args, kwargs):
         """
-        Method invocation.
+<<<<<<< HEAD
+        Remote Method invocation.
         The active object, method name and arguments are pickled and
         sent to the child on the stdin pipe.  Then, the result is read
         on the child stdout pipe.  See: Protocol.
@@ -137,21 +151,42 @@ class ActiveObject:
             stdin=PIPE,
             stdout=PIPE)
         
+    def __respawn(self):
+        """
+        Respawn the child process.
+        """
+        self.__kill()
+        self.__spawn()
+
     def __kill(self):
         """
         Kill the child process.
+        Does not use Popen.kill() for python 2.4 compat.
         """
         if self.__child:
-            self.__child.kill()
-            self.__child.wait()
+            pid = self.__child.pid
             self.__child = None
-    
-    def __call__(self, method, *args, **kwargs):
+            kill(pid)
+
+    def __lock(self):
+        """
+        Lock the object.
+        """
+        self.__mutex.acquire()
+
+    def __unlock(self):
+        """
+        Unlock the object.
+        """
+        self.__mutex.release()
+
+    def __call(self, method, args, kwargs):
         """
         Method invocation.
         An IOError indictes a broken pipe(s) between the parent and
         child process.  This usually indicates that the child has terminated.
-        For robustness, we respawn the child and try again.
+        For robustness, we respawn the child and try again.  An EOFError and a
+        __child = None, indicates the child was killed through the parent __kill().
         @param args: The argument list.
         @type args: list
         @param kwargs: The kwargs argument dict.
@@ -160,15 +195,34 @@ class ActiveObject:
         retry = 3
         while True:
             try:
-                return self.__call(method.name, *args, **kwargs)
+                return self.__rmi(method.name, args, kwargs)
+            except EOFError, e:
+                if not self.__child:
+                    break # aborted
             except IOError, e:
                 if retry:
-                    self.__kill()
-                    self.__spawn()
+                    self.__respawn()
                     retry -= 1
                 else:
                     raise e
     
+    def __call__(self, method, *args, **kwargs):
+        """
+        Method invocation.
+        Mutexed to ensure serial access to the child.
+        @param args: The argument list.
+        @type args: list
+        @param kwargs: The kwargs argument dict.
+        @type kwargs: dict
+        """
+        self.__lock()
+        try:
+            if not self.__child:
+                self.__spawn()
+            return self.__call(method, args, kwargs)
+        finally:
+            self.__unlock()
+
     def __getattr__(self, name):
         """
         @return: A method stub.
@@ -331,6 +385,14 @@ def setstate(object, state):
 def trace():
     info = sys.exc_info()
     return '\n'.join(tb.format_exception(*info))
+
+def kill(pid, sig=SIGTERM):
+    try:
+        os.kill(pid, sig)
+        os.waitpid(pid, os.WNOHANG)
+    except OSError, e:
+        if e.errno != errno.ESRCH:
+            raise e
 
 def main():
     logging.getLogger = Logger
