@@ -23,7 +23,7 @@ import hashlib
 import types
 import unicodedata
 from grinder.GrinderExceptions import GrinderException
-from grinder.GrinderUtils import GrinderUtils
+from grinder import GrinderUtils
 
 LOG = logging.getLogger("grinder.BaseFetch")
 
