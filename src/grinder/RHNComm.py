@@ -17,10 +17,11 @@ import httplib
 import urllib
 import xmlrpclib
 import urlparse
+from grinder.GrinderExceptions import GetRequestException
+
 
 LOG = logging.getLogger("grinder.RHNComm")
 
-from GrinderExceptions import GetRequestException
 
 class RHNComm(object):
     """

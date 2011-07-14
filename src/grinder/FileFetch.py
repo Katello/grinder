@@ -16,11 +16,10 @@
 import os
 import time
 import logging
-
-from BaseFetch import BaseFetch
-from GrinderCallback import ProgressReport
-from GrinderUtils import parseCSV
-from ParallelFetch import ParallelFetch
+from grinder.BaseFetch import BaseFetch
+from grinder.GrinderCallback import ProgressReport
+from grinder.GrinderUtils import parseCSV
+from grinder.ParallelFetch import ParallelFetch
 
 LOG = logging.getLogger("grinder.FileFetch")
 

@@ -22,11 +22,10 @@ import traceback
 import hashlib
 import types
 import unicodedata
+from grinder.GrinderExceptions import GrinderException
+from grinder.GrinderUtils import GrinderUtils
 
-from GrinderExceptions import GrinderException
-import GrinderUtils
 LOG = logging.getLogger("grinder.BaseFetch")
-
 
 
 class BaseFetch(object):
@@ -271,7 +270,7 @@ def curlifyHeaders(headers):
 
 
 if __name__ == "__main__":
-    import GrinderLog
+    from grinder import GrinderLog
     GrinderLog.setup(True)
     systemId = open("/etc/sysconfig/rhn/systemid").read()
     baseURL = "http://satellite.rhn.redhat.com"

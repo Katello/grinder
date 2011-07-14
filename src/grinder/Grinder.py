@@ -28,20 +28,18 @@ except:
     import md5
 import logging
 import signal
-from ParallelFetch import ParallelFetch
-from KickstartFetch import KickstartFetch
-
 from optparse import Option, OptionParser
 from xmlrpclib import Fault
-
-from rhn_api import RhnApi
-from rhn_api import getRhnApi
-from rhn_transport import RHNTransport
-from ParallelFetch import ParallelFetch
-from PackageFetch import PackageFetch
-from GrinderExceptions import *
-from SatDumpClient import SatDumpClient
-from RHNComm import RHNComm
+from grinder.ParallelFetch import ParallelFetch
+from grinder.KickstartFetch import KickstartFetch
+from grinder.rhn_api import RhnApi
+from grinder.rhn_api import getRhnApi
+from grinder.rhn_transport import RHNTransport
+from grinder.ParallelFetch import ParallelFetch
+from grinder.PackageFetch import PackageFetch
+from grinder.GrinderExceptions import *
+from grinder.SatDumpClient import SatDumpClient
+from grinder.RHNComm import RHNComm
 
 GRINDER_LOG_FILENAME = "./log-grinder.out"
 LOG = logging.getLogger("grinder")

@@ -14,15 +14,14 @@
 import time
 import logging
 import threading
-from threading import Thread, Lock
 import time
 import traceback
 import sys
 import Queue
-
-from BaseFetch import BaseFetch
-from GrinderCallback import ProgressReport
-from activeobject import ActiveObject
+from threading import Thread, Lock
+from grinder.BaseFetch import BaseFetch
+from grinder.GrinderCallback import ProgressReport
+from grinder.activeobject import ActiveObject
 
 LOG = logging.getLogger("grinder.ParallelFetch")
 
@@ -334,7 +333,7 @@ class WorkerThread(Thread):
         LOG.debug("Thread ending")
 
 if __name__ == "__main__":
-    import GrinderLog
+    from grinder import GrinderLog
     GrinderLog.setup(True)
     # This a very basic test just to feel out the flow of the threads 
     # pulling items from a shared Queue and exiting cleanly

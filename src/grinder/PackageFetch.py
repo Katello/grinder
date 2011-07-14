@@ -12,9 +12,9 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 import logging
+from grinder.BaseFetch import BaseFetch
+from grinder.RHNComm import RHNComm
 
-from BaseFetch import BaseFetch
-from RHNComm import RHNComm
 LOG = logging.getLogger("grinder.PackageFetch")
 
 
@@ -58,7 +58,7 @@ class PackageFetch(BaseFetch):
         return status
 
 if __name__ == "__main__":
-    import GrinderLog
+    from grinder import GrinderLog
     GrinderLog.setup(True)
     systemId = open("/etc/sysconfig/rhn/systemid").read()
     baseURL = "http://satellite.rhn.redhat.com"

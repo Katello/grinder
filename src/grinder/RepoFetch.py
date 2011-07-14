@@ -25,12 +25,11 @@ import tempfile
 import threading
 import traceback
 import ConfigParser
-
-from PrestoParser import PrestoParser
-from ParallelFetch import ParallelFetch
-from BaseFetch import BaseFetch
-from GrinderCallback import ProgressReport
-from GrinderUtils import GrinderUtils, splitPEM
+from grinder.PrestoParser import PrestoParser
+from grinder.ParallelFetch import ParallelFetch
+from grinder.BaseFetch import BaseFetch
+from grinder.GrinderCallback import ProgressReport
+from grinder.GrinderUtils import GrinderUtils, splitPEM
 
 LOG = logging.getLogger("grinder.RepoFetch")
 

@@ -12,11 +12,10 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 import logging
+from grinder.BaseFetch import BaseFetch
+from grinder.RHNComm import RHNComm
 
-from BaseFetch import BaseFetch
-from RHNComm import RHNComm
 LOG = logging.getLogger("grinder.KickstartFetch")
-
 
 
 class KickstartFetch(BaseFetch):

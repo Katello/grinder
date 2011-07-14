@@ -17,12 +17,12 @@ import signal
 import socket
 import traceback
 import logging
-import GrinderLog
 from optparse import OptionParser
-from RepoFetch import YumRepoGrinder
-from RHNSync import RHNSync
-from GrinderExceptions import *
-from FileFetch import FileGrinder
+from grinder import GrinderLog
+from grinder.RepoFetch import YumRepoGrinder
+from grinder.RHNSync import RHNSync
+from grinder.GrinderExceptions import *
+from grinder.FileFetch import FileGrinder
 
 LOG = logging.getLogger("grinder.GrinderCLI")
 

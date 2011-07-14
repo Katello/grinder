@@ -146,7 +146,7 @@ class ActiveObject:
         Spawn the child process.
         """
         self.__child = Popen(
-            (sys.executable, '-m', __name__),
+            (sys.executable, __file__),
             close_fds=True,
             stdin=PIPE,
             stdout=PIPE)

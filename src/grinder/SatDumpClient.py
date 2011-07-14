@@ -15,10 +15,11 @@ import os
 from rhn_api import RhnApi
 import rpmUtils
 import logging
-
-from rhn_transport import RHNTransport
+from grinder.rhn_transport import RHNTransport
 
 LOG = logging.getLogger("grinder.SatDumpClient")
+
+
 class SatDumpClient(object):
     def __init__(self, url, verbose=False, transport=None):
         self.baseURL = url
