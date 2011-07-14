@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.105
+Version: 0.0.106
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Jul 14 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.106-1
+- python 2.4 compat: Package qualify imports; Launch activeobject child using
+  __file__. (jortel@redhat.com)
+- python 2.4 compat; better abort support. (jortel@redhat.com)
+- typo in comment (jmatthews@redhat.com)
+
 * Wed Jul 06 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.105-1
 - 712521 - If remoteurl is set as part of package object in primary use that
   for download else use relativepath with feed (pkilambi@redhat.com)
