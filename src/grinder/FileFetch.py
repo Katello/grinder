@@ -95,7 +95,11 @@ class FileGrinder(object):
             info['checksumtype'] = 'sha256'
             info['checksum'] = hash
             info['size']        = int(fileinfo['size'])
-            info['pkgpath'] = None
+            if self.filepath:
+                info['pkgpath']  = "%s/%s/%s/%s/" % (self.filepath, os.path.basename(fileinfo['filename'])[:3], \
+                                        os.path.basename(fileinfo['filename']), hash)
+            else:
+                info['pkgpath'] = None
             info['item_type'] = BaseFetch.FILE
             self.downloadinfo.append(info)
         LOG.info("%s files have been marked to be fetched" % len(file_info))
