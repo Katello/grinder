@@ -87,8 +87,9 @@ class FileGrinder(object):
                 }
         self.fileFetch.fetchItem(info)
         file_info = {}
-        if os.path.exists(file_manifest):
-            file_info = parseManifest(os.path.join(file_path, file_manifest))
+        file_manifest_path = os.path.join(file_path, file_manifest)
+        if os.path.exists(file_manifest_path):
+            file_info = parseManifest(file_manifest_path)
         else:
             LOG.info("File Metadata Not Found at url %s" % self.repo_url)
         for hash, fileinfo in file_info.items():
