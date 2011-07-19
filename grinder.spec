@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.107
+Version: 0.0.108
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Jul 19 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.108-1
+- fix metadata path (pkilambi@redhat.com)
+- moving the parse metadata call to utils so pulp can reuse it
+  (pkilambi@redhat.com)
+- fixing central location file path (pkilambi@redhat.com)
+
 * Thu Jul 14 2011 Jeff Ortel <jortel@redhat.com> 0.0.107-1
 - Fix GrinderUtils import. (jortel@redhat.com)
 
