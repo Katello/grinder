@@ -50,6 +50,19 @@ def parseCSV(filepath):
     in_file.close()
     return lines
 
+def parseManifest(manifest_file_path):
+    filelist = parseCSV(manifest_file_path)
+    file_info = {}
+    for finfo in filelist:
+        if isinstance(finfo, list) and len(finfo) == 3:
+            #default to sha256
+            filename, checksum, size = finfo
+            file_info[checksum] = dict(filename=filename, size=size)
+        else:
+            LOG.error("Invalid csv line [%s]; skipping..")
+            continue
+    return file_info
+
 def splitPEM(pem_data):
     """
     @type pem_data: str

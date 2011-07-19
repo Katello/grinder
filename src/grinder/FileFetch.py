@@ -18,7 +18,7 @@ import time
 import logging
 from grinder.BaseFetch import BaseFetch
 from grinder.GrinderCallback import ProgressReport
-from grinder.GrinderUtils import parseCSV
+from grinder.GrinderUtils import parseManifest
 from grinder.ParallelFetch import ParallelFetch
 
 LOG = logging.getLogger("grinder.FileFetch")
@@ -86,7 +86,11 @@ class FileGrinder(object):
                 'pkgpath'       : None,
                 }
         self.fileFetch.fetchItem(info)
-        file_info = self._parse_manifest(os.path.join(file_path, file_manifest))
+        file_info = {}
+        if os.path.exists(file_manifest):
+            file_info = parseManifest(os.path.join(file_path, file_manifest))
+        else:
+            LOG.info("File Metadata Not Found at url %s" % self.repo_url)
         for hash, fileinfo in file_info.items():
             info = {}
             info['downloadurl'] = self.repo_url + '/' + fileinfo['filename']
@@ -103,23 +107,6 @@ class FileGrinder(object):
             info['item_type'] = BaseFetch.FILE
             self.downloadinfo.append(info)
         LOG.info("%s files have been marked to be fetched" % len(file_info))
-
-    def _parse_manifest(self, manifest_file_path):
-        if not os.path.exists(manifest_file_path):
-            LOG.info("File Metadata Not Found at url %s" % self.repo_url)
-            return {}
-        filelist = parseCSV(manifest_file_path)
-        file_info = {}
-        for finfo in filelist:
-            if isinstance(finfo, list) and len(finfo) == 3:
-                #default to sha256
-                filename, checksum, size = finfo
-                file_info[checksum] = dict(filename=filename, size=size)
-            else:
-                LOG.error("Invalid csv line [%s]; skipping..")
-                continue
-        return file_info
-
     
     def fetch(self,basepath="./", callback=None):
         LOG.info("fetch basepath = %s" % (basepath))
