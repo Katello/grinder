@@ -99,7 +99,6 @@ class ActiveObject:
         
     def __rmi(self, method, args, kwargs):
         """
-<<<<<<< HEAD
         Remote Method invocation.
         The active object, method name and arguments are pickled and
         sent to the child on the stdin pipe.  Then, the result is read
