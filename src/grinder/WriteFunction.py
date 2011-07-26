@@ -49,6 +49,7 @@ class WriteFunction(object):
         self.chunk_read += len(chunk)
         if self.size and self.size == self.offset:
             # "File already exists with right size
+            #  include checksum compare
             return
         if self.offset <= self.chunk_read:
             self.fp.seek(self.offset)
@@ -63,16 +64,3 @@ class WriteFunction(object):
         self.fp.close()
         self.offset = 0
         self.chunk_read = 0
-
-if __name__ == "__main__":
-    wf = WriteFunction("/tmp/test.iso", 3244032)
-    curl = pycurl.Curl()
-    curl.setopt(curl.URL, "http://repos.fedorapeople.org/repos/pulp/pulp/demo_repos/test_file_repo/test3.iso")
-    print "OFFSET", wf.offset
-    curl.setopt(pycurl.RESUME_FROM, wf.offset)
-    curl.setopt(curl.BUFFERSIZE, 10240)
-    curl.setopt(curl.WRITEFUNCTION, wf.callback)
-    curl.perform()
-    wf.cleanup()
-    print os.stat("/tmp/test.iso").st_size
-    assert(3244032 == os.stat("/tmp/test.iso").st_size)
