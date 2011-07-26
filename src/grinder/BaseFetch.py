@@ -24,7 +24,7 @@ import types
 import unicodedata
 from grinder.GrinderExceptions import GrinderException
 from grinder import GrinderUtils
-
+from WriteFunction import WriteFunction 
 LOG = logging.getLogger("grinder.BaseFetch")
 
 
@@ -160,13 +160,24 @@ class BaseFetch(object):
                         raise GrinderException("Proxy username is defined, but no password was specified")
                     curl.setopt(pycurl.PROXYAUTH, pycurl.HTTPAUTH_BASIC)
                     curl.setopt(pycurl.PROXYUSERPWD, "%s:%s" % (self.proxy_user, self.proxy_pass))
-            curl.setopt(curl.WRITEFUNCTION, f.write)
+            # callback logic to save and resume bits
+            tmp_write_file = get_temp_file_name(filePath)
+            if itemSize is not None:
+                itemSize = int(itemSize)
+            wf = WriteFunction(tmp_write_file, itemSize)
+            if wf.offset > 0:
+                # setup file resume
+                LOG.info("A partial download file already exists; prepare to resume download.")
+                curl.setopt(pycurl.RESUME_FROM, wf.offset)
+            curl.setopt(curl.WRITEFUNCTION, wf.callback)
             curl.setopt(curl.FOLLOWLOCATION, 1)
             LOG.info("Fetching %s bytes: %s from %s" % (itemSize or "Unknown", fileName, fetchURL))
             curl.perform()
             status = curl.getinfo(curl.HTTP_CODE)
             curl.close()
-            f.close()
+            wf.cleanup()
+            # download complete rename the .part file
+            os.rename(tmp_write_file, filePath)
             # validate the fetched bits
             if itemSize is not None and hashtype is not None and checksum is not None:
                 vstatus = self.validateDownload(filePath, int(itemSize), hashtype, checksum)
@@ -214,6 +225,9 @@ class BaseFetch(object):
                                   checksum, headers, retryTimes, packages_location)
             cleanup(filePath)
             raise
+
+def get_temp_file_name(file_name):
+    return "%s.%s" % (file_name, "part")
 
 def cleanup(filepath):
     if os.path.exists(filepath):
