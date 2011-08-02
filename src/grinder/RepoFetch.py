@@ -350,8 +350,9 @@ class YumRepoGrinder(object):
         try:
             treecfg = open(os.path.join(treeinfo_path, tree_manifest))
             cfgparser.readfp(treecfg)
-        except:
+        except Exception, e:
             LOG.info("Unable to read the tree info config.")
+            LOG.info(e)
             return
 
         tree_info = {} 
