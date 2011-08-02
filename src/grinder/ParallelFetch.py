@@ -277,8 +277,8 @@ class ParallelFetch(object):
             (report.successes, report.downloads, report.errors))
         for details_type in self.details:
             LOG.info("Transferred [%s] bytes of [%s]" %
-                     (self.details[details_type]["total_size_bytes"], details_type))
-        LOG.info("Transferred [%s] total bytes in %s seconds" % (self.sizeTotal, (self.endTime - self.startTime)))
+                     (self.details[details_type]["total_size_bytes"] - self.details[details_type]["size_left"], details_type))
+        LOG.info("Transferred [%s] total bytes in %s seconds" % (self.sizeTotal - self.sizeLeft, (self.endTime - self.startTime)))
         r = self.formProgressReport()
         r.status = "FINISHED"
         r.num_error = report.errors
@@ -302,9 +302,21 @@ class WorkerThread(Thread):
         self.pFetch = pFetch
         self.fetcher = ActiveObject(fetcher)
         self._stop = threading.Event()
+        self.fetcher_lock = Lock()
 
     def stop(self):
         self._stop.set()
+        LOG.info("stop() invoked")
+        self.fetcher_lock.acquire()
+        try:
+            try:
+                if hasattr(self, "fetcher"):
+                    self.fetcher.fetchItem.abort()
+            except Exception, e:
+                LOG.error("%s" % (traceback.format_exc()))
+        finally:
+            self.fetcher_lock.release()
+        LOG.info("stop() completed")
 
     def run(self):
         LOG.debug("Run has started")
@@ -317,8 +329,10 @@ class WorkerThread(Thread):
             if itemInfo is None:
                 break
             try:
-                status,msg = self.fetcher.fetchItem(itemInfo)
-                self.pFetch.markStatus(itemInfo, status, msg)
+                result = self.fetcher.fetchItem(itemInfo)
+                if result:
+                    status, msg = result
+                    self.pFetch.markStatus(itemInfo, status, msg)
             except Exception, e:
                 LOG.error("%s" % (traceback.format_exc()))
                 LOG.error(e)
@@ -328,9 +342,23 @@ class WorkerThread(Thread):
                 errorInfo["error"] = str(value)
                 errorInfo["traceback"] = traceback.format_exc().splitlines()
                 self.pFetch.markStatus(itemInfo, BaseFetch.STATUS_ERROR, errorInfo)
-                LOG.debug("Thread ending")
-        del self.fetcher
-        LOG.debug("Thread ending")
+                
+        LOG.info("WorkerThread deleting ActiveObject")
+        self.fetcher_lock.acquire()
+        try:
+            try:
+                #Note: We want to explicitly kill the child activeobject
+                # so will use abort() on activeobject's Method class
+                self.fetcher.dummy_method.abort()
+                # We were seeing the invocation of __del__() on activeobject
+                # being delayed, hence child processes weren't dying when they should.
+                # therefore we added the explicit abort()
+                del self.fetcher
+            except Exception, e:
+                LOG.error("%s" % (traceback.format_exc()))
+        finally:
+            self.fetcher_lock.release()
+        LOG.info("Thread ending")
 
 if __name__ == "__main__":
     from grinder import GrinderLog
