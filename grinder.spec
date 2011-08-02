@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.108
+Version: 0.0.109
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,16 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Aug 02 2011 John Matthews <jmatthews@redhat.com> 0.0.109-1
+- Stop will now abort an activeobject method invocation and child processes
+  will be killed (jmatthews@redhat.com)
+- Log exception if we can't parse .treeinfo (jmatthews@redhat.com)
+- adding unit test to validate write function (pkilambi@redhat.com)
+- adding copyright header (pkilambi@redhat.com)
+- Support to store and resume downloads in grinder. New Callback write function
+  to track offsets and write files (pkilambi@redhat.com)
+- Fix docstring. (jortel@redhat.com)
+
 * Tue Jul 19 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.108-1
 - fix metadata path (pkilambi@redhat.com)
 - moving the parse metadata call to utils so pulp can reuse it
