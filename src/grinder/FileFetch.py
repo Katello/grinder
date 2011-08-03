@@ -72,7 +72,7 @@ class FileGrinder(object):
         self.fileFetch = None
 
     def prepareFiles(self):
-        file_manifest = "MANIFEST"
+        file_manifest = "PULP-MANIFEST"
         file_url = self.fileFetch.url + '/' + file_manifest
         file_name   = file_manifest
         file_path   = self.fileFetch.repo_dir
