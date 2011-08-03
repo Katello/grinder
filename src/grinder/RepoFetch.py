@@ -14,13 +14,10 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 import os
-import pycurl
-import random
 import yum
 import time
 import logging
 import shutil
-import pycurl
 import tempfile
 import threading
 import traceback
@@ -57,6 +54,10 @@ class RepoFetch(BaseFetch):
         self.proxy_user = proxy_user
         self.proxy_pass = proxy_pass
         self.sslverify  = sslverify
+        self.stopped = False
+
+    def stop(self, state=True):
+        self.stopped = state
 
     def setupRepo(self):
         self.repo = yum.yumRepo.YumRepository(self.repo_label)
@@ -136,10 +137,15 @@ class RepoFetch(BaseFetch):
                     LOG.error("Unable to create repo directory %s" % local_repo_path)
                     raise
             for ftype in self.getRepoXmlFileTypes():
+                if self.stopped:
+                    break
                 try:
                     if ftype == "primary_db":
                         self.repo.retrieved["primary_db"] = 0
+                    time_a = time.time()
                     ftypefile = self.repo.retrieveMD(ftype)
+                    time_b = time.time()
+                    LOG.debug("self.repo.retrieveMD(%s) took %s seconds" % (ftype, (time_b-time_a)))
                     basename  = os.path.basename(ftypefile)
                     destfile  = "%s/%s" % (local_repo_path, basename)
                     shutil.copyfile(ftypefile, destfile)
@@ -221,6 +227,7 @@ class YumRepoGrinder(object):
         self.fetchPkgs = None
         self.downloadinfo = []
         self.yumFetch = None
+        self.fetchPkgs = None
         self.sslcacert = cacert
         self.sslclientcert = clicert
         self.sslclientkey = clikey
@@ -242,6 +249,7 @@ class YumRepoGrinder(object):
         self.sslverify  = sslverify
         self.max_speed = max_speed
         self.purge_orphaned = purge_orphaned
+        self.stopped = False
 
     def __deleteTempCerts(self):
         # Goal is to delete temporary cert files we generate if a PEM cert was used
@@ -438,12 +446,6 @@ class YumRepoGrinder(object):
 
     def fetchYumRepo(self, basepath="./", callback=None):
         LOG.info("fetchYumRepo() basepath = %s" % (basepath))
-        # Check if certs need to be converted
-        # BZ 711329 - During cds sync goferd on all cds nodes crashes very often
-        # RHEL-6 is seeing a problem with libnsspem, intermittent crashes when we use a PEM cert.
-        # self.convertCert()
-        # self.convertCert() is probably not needed, issue is being explored
-        # plan to resolve is to break pycurl usage to subprocess to avoid NSS multithreading bug
         startTime = time.time()
         self.yumFetch = RepoFetch(self.repo_label, repourl=self.repo_url, \
                             cacert=self.sslcacert, clicert=self.sslclientcert, \
@@ -458,6 +460,8 @@ class YumRepoGrinder(object):
         # first fetch the metadata
         self.fetchPkgs.processCallback(ProgressReport.DownloadMetadata)
         self.yumFetch.getRepoData()
+        if self.stopped:
+            return None
         LOG.info("Determining downloadable Content bits...")
         if not self.skip.has_key('packages') or self.skip['packages'] != 1:
             # get rpms to fetch
@@ -490,11 +494,13 @@ class YumRepoGrinder(object):
                 gutils = GrinderUtils()
                 gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
         self.yumFetch.deleteBaseCacheDir()
-        #self.__deleteTempCerts()
         return report
 
     def stop(self, block=True):
         LOG.info("Stopping")
+        self.stopped = True
+        if self.yumFetch:
+            self.yumFetch.stop()
         if self.fetchPkgs:
             self.fetchPkgs.stop()
             if block:
