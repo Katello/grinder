@@ -17,7 +17,7 @@ Requires:      createrepo, python >= 2.4
 Requires:      PyYAML
 Requires:      python-pycurl
 Requires:      python-hashlib
-%if 0%{?el6}
+%if 0%{?rhel} == 6
 # RHEL-6, 
 # Require updated nss/curl for BZ: https://bugzilla.redhat.com/show_bug.cgi?id=710455
 Requires: nss >= 3.12.9
