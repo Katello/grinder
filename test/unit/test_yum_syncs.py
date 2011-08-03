@@ -22,14 +22,15 @@ import os
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 
+from threading import Thread
 srcdir = os.path.abspath(os.path.dirname(__file__)) + "/../../src/"
 sys.path.insert(0, srcdir)
 
-from grinder import GrinderLog
 from grinder import RepoFetch
-
+from grinder.GrinderCallback import ProgressReport
 
 class TestYumSync(unittest.TestCase):
 
@@ -77,3 +78,63 @@ class TestYumSync(unittest.TestCase):
             self.assertEquals(len(synced_rpms), num_old+1)
         finally:
             shutil.rmtree(temp_dir)
+
+    def test_stop_sync(self):
+        global progress
+        progress = None
+        def progress_callback(report):
+            print "progress_callback invoked with <%s>" % (report)
+            global progress
+            progress = report
+
+        class SyncThread(Thread):
+            def __init__(self, callback):
+                Thread.__init__(self)
+                self.test_url = "http://repos.fedorapeople.org/repos/pulp/pulp/demo_repos/test_bandwidth_repo/"
+                self.num_threads = 2
+                self.max_speed = 1 # 1 KB/sec
+                self.callback = callback
+                self.temp_dir = tempfile.mkdtemp()
+                self.yum_fetch = RepoFetch.YumRepoGrinder(self.temp_dir, self.test_url, self.num_threads,
+                                                          max_speed=self.max_speed)
+            def run(self):
+                try:
+                    self.yum_fetch.fetchYumRepo(callback=self.callback)
+                finally:
+                    shutil.rmtree(self.temp_dir)
+
+            def stop(self, block=False):
+                self.yum_fetch.stop(block=block)
+
+        sync_thread = SyncThread(progress_callback)
+        print "Starting Sync"
+        sync_thread.start()
+        # Wait until we are downloading packages
+        counter = 0
+        while True:
+            if hasattr(progress, "step"):
+                if progress.step == ProgressReport.DownloadItems:
+                    break
+            if counter > 30:
+                break
+            counter = counter + 1
+            time.sleep(1)
+        print "Now downloading"
+        # Now send stop and time how long for us to respond
+        start = time.time()
+        sync_thread.stop()
+        counter = 0
+        while True:
+            if hasattr(progress, "step"):
+                if progress.step != ProgressReport.DownloadItems:
+                    break
+                if counter > 30:
+                    print "Progress is reporting step: %s" % (progress.step)
+                    print "Took more than 30 seconds to stop, test failed"
+                    self.assertTrue(False)
+                counter = counter + 1
+                time.sleep(1)
+        end = time.time()
+        print "Stop took: %s seconds" % (end-start)
+        self.assertTrue(end-start < 30)
+

@@ -208,7 +208,7 @@ class YumRepoGrinder(object):
     """
       Driver module to initiate the repo fetching
     """
-    def __init__(self, repo_label, repo_url, parallel=50, mirrors=None, \
+    def __init__(self, repo_label, repo_url, parallel=10, mirrors=None, \
                        newest=False, cacert=None, clicert=None, clikey=None, \
                        proxy_url=None, proxy_port=None, proxy_user=None, \
                        proxy_pass=None, sslverify=1, packages_location=None, \
