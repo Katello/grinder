@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.109
+Version: 0.0.110
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,13 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Aug 05 2011 John Matthews <jmatthews@redhat.com> 0.0.110-1
+- renamed file manifest to match cdn (pkilambi@redhat.com)
+- getRepoData now checks if stop has been called before fetching next metadata
+  file (jmatthews@redhat.com)
+- 695607 - Fix RHEL macro. (jortel@redhat.com)
+- Added test for immediate stop of downloading (jmatthews@redhat.com)
+
 * Tue Aug 02 2011 John Matthews <jmatthews@redhat.com> 0.0.109-1
 - Stop will now abort an activeobject method invocation and child processes
   will be killed (jmatthews@redhat.com)
