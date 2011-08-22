@@ -19,6 +19,8 @@ Protocol:
          retval = raised exception
      2 = Logging Request
          retval = log-record
+     3 = Parent Method (back) Invocation
+         (child->parent)
  Record:
    call  = (object, method, *args, **kwargs)
    log   = (logger, level, msg, args)
@@ -30,11 +32,27 @@ import sys
 import errno
 import atexit
 import logging
+import inspect
 import cPickle as pickle
 import traceback as tb
 from subprocess import Popen, PIPE
 from threading import RLock
 from signal import SIGTERM
+
+
+# codes
+RETURN = 0
+EXCEPTION = 1
+LOG = 2
+PMETHOD = 3
+
+
+# decorator
+# indicates the method is only run
+# in the parent process.
+def parent(fn):
+    fn.pmethod = 1
+    return fn
 
 
 class Method:
@@ -85,7 +103,7 @@ class ActiveObject:
     @type __mutex: RLock
     """
 
-    def __init__(self, object):
+    def __init__(self, object, *pmethods):
         """
         @param object: A I{real} object whos methods are invoked
             in the child process.
@@ -93,8 +111,10 @@ class ActiveObject:
         """
         self.object = object
         atexit.register(self.__kill)
+        self.__pmethods = list(pmethods)
         self.__child = None
         self.__mutex = RLock()
+        self.__findpmethods()
         self.__spawn()
         
     def __rmi(self, method, args, kwargs):
@@ -111,35 +131,61 @@ class ActiveObject:
         @type kwargs: dict
         """
         p = self.__child
-        call = (self.object, method, args, kwargs)
+        call = ((self.object, self.__pmethods), method, args, kwargs)
         pickle.dump(call, p.stdin)
         p.stdin.flush()
         while True:
-            code, retval, state = pickle.load(p.stdout)
-            if code == 0:
+            packet = pickle.load(p.stdout)
+            code = packet[0]
+            if code == RETURN:
+                retval = packet[1]
+                state = packet[2]
                 setstate(self.object, state)
                 return retval
-            if code == 1:
-                raise Exception(retval)
-            if code == 2:
-                self.__logchild(*retval)
+            if code == EXCEPTION:
+                ex = packet[1]
+                raise Exception(ex)
+            if code == LOG:
+                lr = packet[1]
+                self.__logchild(*lr)
+                continue
+            if code == PMETHOD:
+                call = packet[1]
+                self.__pmethod(*call)
+                continue
                 
-    def __logchild(self, name, level, msg, args):
+    def __logchild(self, name, level, fmt, args):
         """
         Perform child logging request
         @param name: The logger name.
         @type name: str
         @param level: The logging level.
         @type level: str
-        @param msg: The log message
-        @type msg: str
+        @param fmt: The log message
+        @type fmt: str
         @param args: The argument list
         @type args: list
         """
         log = logging.getLogger(name)
         method = getattr(log, level)
-        method(msg, *args)
-    
+        method(fmt, *args)
+        
+    def __pmethod(self, method, args, kwargs):
+        """
+        Invoke a parent (back) method.
+        This is a method invoked on the parent from the object in
+        the child.  Mainly supports callbacks.
+        @param method: A method name.
+        @type method: str
+        @param args: The method arglist.
+        @type args: list
+        @type kwargs: The keyword arguments.
+        @type kwargs: dict
+        @return: None
+        """
+        method = getattr(self.object, method)
+        method(*args, **kwargs)
+
     def __spawn(self):
         """
         Spawn the child process.
@@ -166,6 +212,20 @@ class ActiveObject:
             pid = self.__child.pid
             self.__child = None
             kill(pid)
+            
+    def __findpmethods(self):
+        """
+        Find pmethods.
+        Inspect self for @parent decorated methods and
+        append the method names.
+        @return: self
+        @rtype: L{ActiveObject}
+        """
+        for name, method in inspect.getmembers(self, inspect.ismethod):
+            fn = method.im_func
+            if getattr(fn, 'pmethod', 0):
+                self.__pmethods.append(name)
+        return self
 
     def __lock(self):
         """
@@ -238,6 +298,29 @@ class ActiveObject:
         self.__kill()
         
         
+class ParentMethod:
+    """
+    A method that is invoked in the parent process.
+    @ivar name: The method name.
+    @type name: str
+    """
+    
+    def __init__(self, name):
+        """
+        @param name: The method name.
+        @type name: str
+        """
+        self.name = name
+    
+    def __call__(self, *args, **kwargs):
+        """
+        Send the PMETHOD record to the parent process.
+        """
+        call = (self.name, args, kwargs)
+        pmethod = (3, call)
+        pickle.dump(pmethod, sys.stdout)
+    
+    
 class Logger:
     """
     The remote logging proxy.
@@ -330,7 +413,7 @@ class Logger:
                   self.name, 
                   msg,
                   args)
-            pickle.dump((2, lr, {}), sys.stdout)
+            pickle.dump((LOG, lr, {}), sys.stdout)
             sys.stdout.flush()
             
     def __getattr__(self, name):
@@ -348,18 +431,19 @@ def process():
     Output: (code, retval, state)
     See: Protocol.
     """
-    code = 0
+    code = RETURN
     state = {}
     try:
         call = pickle.load(sys.stdin)
-        object = call[0]
+        object, pmethods = call[0]
+        setpmethods(object, pmethods)
         method = getattr(object, call[1])
         args = call[2]
         kwargs = call[3]
         retval = method(*args, **kwargs)
         state = getstate(object)
     except:
-        code = 1
+        code = EXCEPTION
         retval = trace()
     result = (code, retval, state)
     pickle.dump(result, sys.stdout)
@@ -371,7 +455,12 @@ def getstate(object):
         method = getattr(object, key)
         return method()
     else:
-        return object.__dict__
+        d = {}
+        for k,v in object.__dict__.items():
+            if isinstance(v, ParentMethod):
+                continue
+            d[k] = v
+        return d
     
 def setstate(object, state):
     key = '__setstate__'
@@ -392,6 +481,11 @@ def kill(pid, sig=SIGTERM):
     except OSError, e:
         if e.errno != errno.ESRCH:
             raise e
+
+def setpmethods(object, names):
+    for name in names:
+        pmethod = ParentMethod(name)
+        setattr(object, name, pmethod)
 
 def main():
     logging.getLogger = Logger
