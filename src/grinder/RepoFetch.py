@@ -455,46 +455,50 @@ class YumRepoGrinder(object):
                             proxy_pass=self.proxy_pass, sslverify=self.sslverify,
                             max_speed=self.max_speed)
         self.fetchPkgs = ParallelFetch(self.yumFetch, self.numThreads, callback=callback)
-        self.yumFetch.setupRepo()
-        LOG.info("Fetching repo metadata...")
-        # first fetch the metadata
-        self.fetchPkgs.processCallback(ProgressReport.DownloadMetadata)
-        self.yumFetch.getRepoData()
-        if self.stopped:
-            return None
-        LOG.info("Determining downloadable Content bits...")
-        if not self.skip.has_key('packages') or self.skip['packages'] != 1:
-            # get rpms to fetch
-            self.prepareRPMS()
-            # get drpms to fetch
-            self.prepareDRPMS()
-        else:
-            LOG.info("Skipping packages preparation from sync process")
-        if not self.skip.has_key('distribution') or self.skip['distribution'] != 1:
-            # get Trees to fetch
-            self.prepareTrees()
-        else:
-            LOG.info("Skipping distribution preparation from sync process")
-        # prepare for download
-        self.fetchPkgs.addItemList(self.downloadinfo)
-        self.fetchPkgs.start()
-        report = self.fetchPkgs.waitForFinish()
-        self.yumFetch.finalizeMetadata()
-        endTime = time.time()
-        LOG.info("Processed <%s> items in [%d] seconds" % (len(self.downloadinfo), \
+        try:
+            self.yumFetch.setupRepo()
+            LOG.info("Fetching repo metadata...")
+            # first fetch the metadata
+            self.fetchPkgs.processCallback(ProgressReport.DownloadMetadata)
+            self.yumFetch.getRepoData()
+            if self.stopped:
+                return None
+            LOG.info("Determining downloadable Content bits...")
+            if not self.skip.has_key('packages') or self.skip['packages'] != 1:
+                # get rpms to fetch
+                self.prepareRPMS()
+                # get drpms to fetch
+                self.prepareDRPMS()
+            else:
+                LOG.info("Skipping packages preparation from sync process")
+            if not self.skip.has_key('distribution') or self.skip['distribution'] != 1:
+                # get Trees to fetch
+                self.prepareTrees()
+            else:
+                LOG.info("Skipping distribution preparation from sync process")
+            # prepare for download
+            self.fetchPkgs.addItemList(self.downloadinfo)
+            self.fetchPkgs.start()
+            report = self.fetchPkgs.waitForFinish()
+            self.yumFetch.finalizeMetadata()
+            endTime = time.time()
+            LOG.info("Processed <%s> items in [%d] seconds" % (len(self.downloadinfo), \
                   (endTime - startTime)))
-        if not self.skip.has_key('packages') or self.skip['packages'] != 1:
-            if self.purge_orphaned:
-                LOG.info("Cleaning any orphaned packages..")
-                self.fetchPkgs.processCallback(ProgressReport.PurgeOrphanedPackages)
-                self.purgeOrphanPackages(self.yumFetch.getPackageList(), self.yumFetch.repo_dir)
-            if self.remove_old:
-                LOG.info("Removing old packages to limit to %s" % self.numOldPackages)
-                self.fetchPkgs.processCallback(ProgressReport.RemoveOldPackages)
-                gutils = GrinderUtils()
-                gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
-        self.yumFetch.deleteBaseCacheDir()
-        return report
+            if not self.skip.has_key('packages') or self.skip['packages'] != 1:
+                if self.purge_orphaned:
+                    LOG.info("Cleaning any orphaned packages..")
+                    self.fetchPkgs.processCallback(ProgressReport.PurgeOrphanedPackages)
+                    self.purgeOrphanPackages(self.yumFetch.getPackageList(), self.yumFetch.repo_dir)
+                if self.remove_old:
+                    LOG.info("Removing old packages to limit to %s" % self.numOldPackages)
+                    self.fetchPkgs.processCallback(ProgressReport.RemoveOldPackages)
+                    gutils = GrinderUtils()
+                    gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
+            self.yumFetch.deleteBaseCacheDir()
+            return report
+        except:
+            self.fetchPkgs.stop()
+            raise
 
     def stop(self, block=True):
         LOG.info("Stopping")
