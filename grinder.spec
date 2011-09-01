@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.110
+Version: 0.0.111
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Sep 01 2011 John Matthews <jmatthews@redhat.com> 0.0.111-1
+- Explicit stop of ParallelFetch if an exception happens fetchYumRepo
+  (jmatthews@redhat.com)
+- Add support for callbacks in ActiveObject. (jortel@redhat.com)
+
 * Fri Aug 05 2011 John Matthews <jmatthews@redhat.com> 0.0.110-1
 - renamed file manifest to match cdn (pkilambi@redhat.com)
 - getRepoData now checks if stop has been called before fetching next metadata
