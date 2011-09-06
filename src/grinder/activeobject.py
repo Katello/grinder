@@ -205,13 +205,16 @@ class ActiveObject:
 
     def __kill(self):
         """
-        Kill the child process.
+        Kill the child process and close pipes.
         Does not use Popen.kill() for python 2.4 compat.
         """
-        if self.__child:
-            pid = self.__child.pid
-            self.__child = None
-            kill(pid)
+        if not self.__child:
+            return
+        p = self.__child
+        self.__child = None
+        kill(p.pid)
+        p.stdin.close()
+        p.stdout.close()        
             
     def __findpmethods(self):
         """
