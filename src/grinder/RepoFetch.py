@@ -44,6 +44,7 @@ class RepoFetch(BaseFetch):
                 proxy_url=proxy_url, proxy_port=proxy_port, 
                 proxy_user=proxy_user, proxy_pass=proxy_pass, sslverify=sslverify,
                 max_speed=max_speed)
+        self.repo = None
         self.repo_label = repo_label
         self.repourl = repourl.encode('ascii', 'ignore')
         self.mirrorlist = mirrorlist
@@ -80,6 +81,11 @@ class RepoFetch(BaseFetch):
         self.repo.sslclientcert = self.sslclientcert
         self.repo.sslclientkey = self.sslclientkey
         self.repo.sslverify = self.sslverify
+        
+    def closeRepo(self):
+        if self.repo is not None:
+            self.repo.close()
+            self.repo = None
 
     def getPackageList(self, newest=False):
         GRINDER_YUM_LOCK.acquire()
@@ -496,9 +502,9 @@ class YumRepoGrinder(object):
                     gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
             self.yumFetch.deleteBaseCacheDir()
             return report
-        except:
+        finally:
             self.fetchPkgs.stop()
-            raise
+            self.yumFetch.closeRepo()
 
     def stop(self, block=True):
         LOG.info("Stopping")
@@ -532,6 +538,6 @@ class YumRepoGrinder(object):
                 
 
 if __name__ == "__main__":
-    yfetch = YumRepoGrinder("testrepo", "http://download.fedora.redhat.com/pub/fedora/linux/releases/13/Fedora/i386/os/", 
+    yfetch = YumRepoGrinder("testrepo", "http://download.fedora.redhat.com/pub/fedora/linux/releases/13/Fedora/i386/os/",
                             10)
     yfetch.fetchYumRepo()
