@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.112
+Version: 0.0.113
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Sep 13 2011 Jeff Ortel <jortel@redhat.com>
+- 737531 - Close YumRepository object when finished with it.
+  (jortel@redhat.com)
+
 * Tue Sep 06 2011 Jeff Ortel <jortel@redhat.com> 0.0.112-1
 - Fix pipe leak in activeobject. The leak was introduced when activeobject
   changed to be python 2.4 compat by killing the child process manually instead
