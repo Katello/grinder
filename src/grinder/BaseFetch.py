@@ -176,8 +176,10 @@ class BaseFetch(object):
             status = curl.getinfo(curl.HTTP_CODE)
             curl.close()
             wf.cleanup()
-            # download complete rename the .part file
-            os.rename(tmp_write_file, filePath)
+            # this tmp file could be closed by other concurrent processes
+            if os.path.exists(tmp_write_file):
+                # download complete rename the .part file
+                os.rename(tmp_write_file, filePath)
             # validate the fetched bits
             if itemSize is not None and hashtype is not None and checksum is not None:
                 vstatus = self.validateDownload(filePath, int(itemSize), hashtype, checksum)
