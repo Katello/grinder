@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.114
+Version: 0.0.115
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Sep 15 2011 John Matthews <jmatthews@redhat.com> 0.0.115-1
+- Allow checksum and size check on existing files to be optional
+  (jmatthews@redhat.com)
+
 * Wed Sep 14 2011 James Slagle <jslagle@redhat.com> 0.0.114-1
 -  738306 - part file should now only try to rename if file isnt already closed
   by other concurrent processes (pkilambi@redhat.com)
