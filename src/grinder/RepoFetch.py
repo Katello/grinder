@@ -39,11 +39,11 @@ class RepoFetch(BaseFetch):
     def __init__(self, repo_label, repourl, cacert=None, clicert=None, clikey=None, 
                  mirrorlist=None, download_dir='./', proxy_url=None, 
                  proxy_port=None, proxy_user=None, proxy_pass=None, sslverify=1,
-                 max_speed=None):
+                 max_speed=None, verify_options=None):
         BaseFetch.__init__(self, cacert=cacert, clicert=clicert, clikey=clikey,
                 proxy_url=proxy_url, proxy_port=proxy_port, 
                 proxy_user=proxy_user, proxy_pass=proxy_pass, sslverify=sslverify,
-                max_speed=max_speed)
+                max_speed=max_speed, verify_options=verify_options)
         self.repo = None
         self.repo_label = repo_label
         self.repourl = repourl.encode('ascii', 'ignore')
@@ -113,7 +113,8 @@ class RepoFetch(BaseFetch):
                           itemSize=info['size'], 
                           hashtype=info['checksumtype'], 
                           checksum=info['checksum'],
-                          packages_location=info['pkgpath'] or None)
+                          packages_location=info['pkgpath'] or None,
+                          verify_options=self.verify_options)
 
     def fetchAll(self):
         plist = self.getPackageList()
@@ -450,7 +451,7 @@ class YumRepoGrinder(object):
 
 
 
-    def fetchYumRepo(self, basepath="./", callback=None):
+    def fetchYumRepo(self, basepath="./", callback=None, verify_options=None):
         LOG.info("fetchYumRepo() basepath = %s" % (basepath))
         startTime = time.time()
         self.yumFetch = RepoFetch(self.repo_label, repourl=self.repo_url, \
@@ -459,7 +460,8 @@ class YumRepoGrinder(object):
                             download_dir=basepath, proxy_url=self.proxy_url, \
                             proxy_port=self.proxy_port, proxy_user=self.proxy_user, \
                             proxy_pass=self.proxy_pass, sslverify=self.sslverify,
-                            max_speed=self.max_speed)
+                            max_speed=self.max_speed,
+                            verify_options=verify_options)
         self.fetchPkgs = ParallelFetch(self.yumFetch, self.numThreads, callback=callback)
         try:
             self.yumFetch.setupRepo()

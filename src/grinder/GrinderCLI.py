@@ -225,6 +225,10 @@ class RepoDriver(CliDriver):
                           help="proxy username, if auth is required", default=None)
         self.parser.add_option('--proxy_pass', dest="proxy_pass",
                           help="proxy password, if auth is required", default=None)
+        self.parser.add_option('--skip_verify_size', action="store_true",
+                          help="skip verify size of existing packages")
+        self.parser.add_option('--skip_verify_checksum', action="store_true",
+                          help="skip verify checksum of existing packages")
 
     def _validate_options(self):
         if not self.options.label:
@@ -249,6 +253,11 @@ class RepoDriver(CliDriver):
         limit = None
         if self.options.limit:
             limit = int(self.options.limit)
+        verify_options={}
+        if self.options.skip_verify_size:
+            verify_options["size"] = False
+        if self.options.skip_verify_checksum:
+            verify_options["checksum"] = False
         self.yfetch = YumRepoGrinder(self.options.label, self.options.url, \
                                 self.parallel, cacert=self.options.cacert, \
                                 clicert=self.options.clicert, clikey=self.options.clikey, \
@@ -258,9 +267,9 @@ class RepoDriver(CliDriver):
                                 proxy_pass=self.options.proxy_pass,
                                 sslverify=sslverify, max_speed=limit)
         if self.options.basepath:
-            self.yfetch.fetchYumRepo(self.options.basepath)
+            self.yfetch.fetchYumRepo(self.options.basepath, verify_options=verify_options)
         else:
-            self.yfetch.fetchYumRepo()
+            self.yfetch.fetchYumRepo(verify_options=verify_options)
 
     def stop(self):
         self.yfetch.stop()
@@ -300,6 +309,10 @@ class FileDriver(CliDriver):
                           help="proxy username, if auth is required", default=None)
         self.parser.add_option('--proxy_pass', dest="proxy_pass",
                           help="proxy password, if auth is required", default=None)
+        self.parser.add_option('--skip_verify_size', action="store_true",
+                          help="skip verify size of existing packages")
+        self.parser.add_option('--skip_verify_checksum', action="store_true",
+                          help="skip verify checksum of existing packages")
 
     def _validate_options(self):
         if not self.options.label:
@@ -324,6 +337,12 @@ class FileDriver(CliDriver):
         limit = None
         if self.options.limit:
             limit = int(self.options.limit)
+
+        verify_options={}
+        if self.options.skip_verify_size:
+            verify_options["size"] = False
+        if self.options.skip_verify_checksum:
+            verify_options["checksum"] = False
         self.file_fetch = FileGrinder(self.options.label, self.options.url, \
                                 self.parallel, cacert=self.options.cacert, \
                                 clicert=self.options.clicert, clikey=self.options.clikey, \

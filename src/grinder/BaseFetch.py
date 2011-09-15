@@ -44,7 +44,8 @@ class BaseFetch(object):
 
     def __init__(self, cacert=None, clicert=None, clikey=None, 
             proxy_url=None, proxy_port=None, proxy_user=None, 
-            proxy_pass=None, sslverify=1, max_speed = None):
+            proxy_pass=None, sslverify=1, max_speed = None,
+            verify_options = None):
         self.sslcacert = cacert
         self.sslclientcert = clicert
         self.sslclientkey = clikey
@@ -54,12 +55,26 @@ class BaseFetch(object):
         self.proxy_pass = proxy_pass
         self.sslverify  = sslverify
         self.max_speed = max_speed
+        self.verify_options = verify_options
 
-    def validateDownload(self, filePath, size, hashtype, checksum, verbose=False):
-        statinfo = os.stat(filePath)
+    def validateDownload(self, filePath, size, hashtype, checksum):
+        """
+        @param filePath path to file
+        @type filePath str
+
+        @param size expected size of file
+        @type size int
+
+        @param hashtype type of checksum of file
+        @type hashtype
+
+        @param checksum value of file
+        @type checksum
+        """
         fileName = os.path.basename(filePath)
         calchecksum = getFileChecksum(hashtype, filename=filePath)
         # validate fetched data
+        statinfo = os.stat(filePath)
         if statinfo.st_size != int(size) and int(size) > 0:
             LOG.error("%s size mismatch, read: %s bytes, was expecting %s bytes" \
                       % (fileName, statinfo.st_size, size))
@@ -89,14 +104,40 @@ class BaseFetch(object):
         return tempfile.mkdtemp()
     
     def fetch(self, fileName, fetchURL, savePath, itemSize=None, hashtype=None, checksum=None, 
-             headers=None, retryTimes=2, packages_location=None):
+             headers=None, retryTimes=2, packages_location=None, verify_options=None):
         """
-        Input:
-            itemInfo = dict with keys: 'file_name', 'fetch_url', 'item_size', 'hashtype', 'checksum'
-            retryTimes = how many times to retry fetch if an error occurs
-            max_speed = Optional param, limit download bandwidth in KB/sec 
+        @param fileName file name
+        @type fileName str
 
-        Will return a true/false if item was fetched successfully 
+        @param fetchURL url
+        @type fetchURL str
+
+        @param savePath path to save file
+        @type savePath str
+
+        @param itemSize expected size of file
+        @type itemSize str (will be cast to int)
+
+        @param hashtype type of checksum
+        @type hashtype str
+
+        @param checksum value of file
+        @type checksum str
+
+        @param headers optional data to include in headers
+        @type headers dict{str, str}
+
+        @param retryTimes number of times to retry if a problem occurs
+        @type retryTimes int
+
+        @param packages_location path where packages get stored
+        @type packages_location str
+
+        @param verify_options optional parameter to limit the verify operations run on existing files
+        @type verify_options dict{option=value}, where option is one of "size", "checksum" and value is True/False
+
+        @return true/false if item was fetched successfully
+        @rtype bool
         """
         if packages_location is not None:
             # this option is to store packages in a central location
@@ -115,8 +156,8 @@ class BaseFetch(object):
             self.makeDirSafe(tempDirPath)
 
         if os.path.exists(filePath) and \
-            verifyChecksum(filePath, hashtype, checksum):
-            LOG.info("%s exists with correct size and md5sum, no need to fetch." % (filePath))
+            verifyExisting(filePath, itemSize, hashtype, checksum, verify_options):
+            LOG.debug("%s exists with expected information, no need to fetch." % (filePath))
             if repofilepath is not None and not os.path.exists(repofilepath):
                 relFilePath = GrinderUtils.get_relative_path(filePath, repofilepath)
                 LOG.info("Symlink missing in repo directory. Creating link %s to %s" % (repofilepath, relFilePath))
@@ -135,6 +176,10 @@ class BaseFetch(object):
                 limit = self.max_speed*1024
                 curl.setopt(curl.MAX_RECV_SPEED_LARGE, limit)
             curl.setopt(curl.VERBOSE,0)
+            # When using multiple threads you should set the CURLOPT_NOSIGNAL option to 1 for all handles
+            # May impact DNS timeouts
+            curl.setopt(curl.NOSIGNAL, 1)
+            
             if type(fetchURL) == types.UnicodeType:
                 #pycurl does not accept unicode strings for a URL, so we need to convert
                 fetchURL = unicodedata.normalize('NFKD', fetchURL).encode('ascii','ignore')
@@ -268,13 +313,38 @@ def getFileChecksum(hashtype, filename=None, fd=None, file=None, buffer_size=Non
         f.close()
     return m.hexdigest()
 
-def verifyChecksum(filePath, hashtype, checksum):
-    if hashtype is None or checksum is None:
-        #Nothing to perform
-        return False
-    if getFileChecksum(hashtype, filename=filePath) == checksum:
-        return True
-    return False
+def verifyExisting(filePath, expectedSize, hashtype, checksum, options=None):
+    """
+    @param filePath file path of an existing file
+    @type filePath str
+
+    @param hashtype checksum type
+    @type hashtype str
+
+    @param checksum value
+    @type checksum str
+
+    @param options Optional dictionary of validation steps, expects boolean for values: size, checksum
+    @type options dict{str, str}
+    """
+    size_check = True
+    checksum_check = True
+    if options and isinstance(options, dict):
+        if options.has_key("size"):
+            size_check = options["size"]
+        if options.has_key("checksum"):
+            checksum_check = options["checksum"]
+
+    if size_check and expectedSize:
+        statinfo = os.stat(filePath)
+        if statinfo.st_size != int(expectedSize) and int(expectedSize) > 0:
+            return False
+
+    if checksum_check and hashtype and checksum:
+        if getFileChecksum(hashtype, filename=filePath) != checksum:
+            return False
+        
+    return True
 
 def curlifyHeaders(headers):
     # pycurl drops empty header. Combining headers
