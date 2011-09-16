@@ -25,6 +25,7 @@ import unicodedata
 from grinder.GrinderExceptions import GrinderException
 from grinder import GrinderUtils
 from WriteFunction import WriteFunction 
+from grinder.GrinderLock import GrinderLock
 LOG = logging.getLogger("grinder.BaseFetch")
 
 
@@ -165,8 +166,31 @@ class BaseFetch(object):
                     os.symlink(relFilePath, repofilepath)
             return (BaseFetch.STATUS_NOOP,None)
 
+        # Acquire a write lock so no other process duplicates the effort
+        grinder_write_locker = GrinderLock(filePath + '.lock')
+        existing_lock_pid = grinder_write_locker.readlock()
+        new_pid = os.getpid()
+        if existing_lock_pid and int(existing_lock_pid) != new_pid and grinder_write_locker.isvalid():
+            # If there is an existing write pid
+            # and if the pid is not same as the current pid
+            # and pid is valid there is another process alive
+            # and handling this, exit here.
+            LOG.debug("another process is already handling this path [%s] and is alive; no need to process this again " % filePath)
+            return (BaseFetch.STATUS_NOOP,None)
+        # this means either there is no pid or a pid matching current pid exists(retry case),
+        # verify lock and either skip or re-acquire it
         try:
-            f = open(filePath, "wb")
+            grinder_write_locker.acquire()
+            existing_lock_pid = grinder_write_locker.readlock()
+        except:
+            LOG.debug("lock acquired skipping")
+            return (BaseFetch.STATUS_NOOP,None)
+        if not existing_lock_pid or existing_lock_pid != str(os.getpid()):
+            # This means, either we still dont have a lock and hence not safe to proceed or
+            # the acquired lock doesnt match current pid, return and let the next process handle it
+            return (BaseFetch.STATUS_NOOP,None)
+        try:
+            #f = open(filePath, "wb")
             curl = pycurl.Curl()
             #def item_progress_callback(download_total, downloaded, upload_total, uploaded):
             #    LOG.debug("%s status %s/%s bytes" % (fileName, downloaded, download_total))
@@ -232,14 +256,16 @@ class BaseFetch(object):
                 vstatus = BaseFetch.STATUS_SKIP_VALIDATE
             if status == 401:
                 LOG.error("Unauthorized request from: %s" % (fetchURL))
+                grinder_write_locker.release()
                 cleanup(filePath)
                 return (BaseFetch.STATUS_UNAUTHORIZED, "HTTP status code of %s received for %s" % (status, fetchURL))
             if status != 200:
                 if retryTimes > 0:
                     retryTimes -= 1
                     LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
-                    return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
+                    return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype,
                                       checksum , headers, retryTimes, packages_location)
+                grinder_write_locker.release()
                 cleanup(filePath)
                 LOG.warn("ERROR: Response = %s fetching %s." % (status, fetchURL))
                 return (BaseFetch.STATUS_ERROR, "HTTP status code of %s received for %s" % (status, fetchURL))
@@ -259,6 +285,7 @@ class BaseFetch(object):
                 if os.path.islink(repofilepath):
                     os.unlink(repofilepath)
                 os.symlink(relFilePath, repofilepath)
+            grinder_write_locker.release()
             LOG.debug("Successfully Fetched Package - [%s]" % filePath)
             return (vstatus, None)
         except Exception, e:
@@ -267,9 +294,11 @@ class BaseFetch(object):
             LOG.error("Caught exception<%s> in fetch(%s, %s)" % (e, fileName, fetchURL))
             if retryTimes > 0:
                 retryTimes -= 1
+                #grinder_write_locker.release()
                 LOG.error("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
                 return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                   checksum, headers, retryTimes, packages_location)
+            grinder_write_locker.release()
             cleanup(filePath)
             raise
 
