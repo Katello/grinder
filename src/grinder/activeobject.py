@@ -30,7 +30,6 @@ Protocol:
 import os
 import sys
 import errno
-import atexit
 import logging
 import inspect
 import cPickle as pickle
@@ -110,7 +109,6 @@ class ActiveObject:
         @type object: object
         """
         self.object = object
-        atexit.register(self.__kill)
         self.__pmethods = list(pmethods)
         self.__child = None
         self.__mutex = RLock()
@@ -207,6 +205,8 @@ class ActiveObject:
         """
         Kill the child process and close pipes.
         Does not use Popen.kill() for python 2.4 compat.
+        Need to call Popen.wait() so Popen object is not placed in
+        the subprocess._active in Popen.__del__().
         """
         if not self.__child:
             return
@@ -214,7 +214,8 @@ class ActiveObject:
         self.__child = None
         kill(p.pid)
         p.stdin.close()
-        p.stdout.close()        
+        p.stdout.close()
+        p.wait()
             
     def __findpmethods(self):
         """
@@ -480,7 +481,6 @@ def trace():
 def kill(pid, sig=SIGTERM):
     try:
         os.kill(pid, sig)
-        os.waitpid(pid, os.WNOHANG)
     except OSError, e:
         if e.errno != errno.ESRCH:
             raise e
