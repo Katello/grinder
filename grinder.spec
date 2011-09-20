@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.116
+Version: 0.0.117
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Sep 20 2011 James Slagle <jslagle@redhat.com> 0.0.117-1
+- patch activeobject memory leaks. use Popen.wait() to prevent Popen object's
+  from being added to subprocess._active. remove atexit usage.  Don't think it
+  was doing anything except preventing the activeobject from being garbage
+  collected. (jortel@redhat.com)
+
 * Fri Sep 16 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.116-1
 - Adding a write lock when base fetch tries to download and write bits to the
   same location on the filesystem. (pkilambi@redhat.com)
