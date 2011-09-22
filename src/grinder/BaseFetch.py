@@ -263,6 +263,7 @@ class BaseFetch(object):
                 if retryTimes > 0:
                     retryTimes -= 1
                     LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
+                    cleanup(filePath)
                     return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype,
                                       checksum , headers, retryTimes, packages_location)
                 grinder_write_locker.release()
