@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.118
+Version: 0.0.119
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Oct 11 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.119-1
+- fixing the manifest to match cdn (pkilambi@redhat.com)
+
 * Thu Sep 22 2011 James Slagle <jslagle@redhat.com> 0.0.118-1
 - grinder doesnt clean up before retrying a 404'ed request, this causes the
   files with unknown size to pass the verify test as we ned up validating just
