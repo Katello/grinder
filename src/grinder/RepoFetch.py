@@ -502,10 +502,10 @@ class YumRepoGrinder(object):
                     self.fetchPkgs.processCallback(ProgressReport.RemoveOldPackages)
                     gutils = GrinderUtils()
                     gutils.runRemoveOldPackages(self.pkgsavepath, self.numOldPackages)
-            self.yumFetch.deleteBaseCacheDir()
             return report
         finally:
             self.fetchPkgs.stop()
+            self.yumFetch.deleteBaseCacheDir()
             self.yumFetch.closeRepo()
 
     def stop(self, block=True):
