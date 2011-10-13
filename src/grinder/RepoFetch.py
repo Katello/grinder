@@ -227,7 +227,7 @@ class YumRepoGrinder(object):
                        proxy_url=None, proxy_port=None, proxy_user=None, \
                        proxy_pass=None, sslverify=1, packages_location=None, \
                        remove_old=False, numOldPackages=2, skip=None, max_speed=None, \
-                       purge_orphaned=True):
+                       purge_orphaned=True, distro_location=None):
         self.repo_label = repo_label
         self.repo_url = repo_url
         self.mirrors = mirrors
@@ -258,6 +258,7 @@ class YumRepoGrinder(object):
         self.max_speed = max_speed
         self.purge_orphaned = purge_orphaned
         self.stopped = False
+        self.distropath = distro_location
 
     def __deleteTempCerts(self):
         # Goal is to delete temporary cert files we generate if a PEM cert was used
@@ -384,7 +385,21 @@ class YumRepoGrinder(object):
             LOG.info("Unable to read the tree info config.")
             LOG.info(e)
             return
-
+        arch = variant = version = family = None
+        if cfgparser.has_section('general'):
+            arch = None
+            if cfgparser.has_option('general', 'arch'):
+                arch = cfgparser.get('general', 'arch')
+            variant = None
+            if cfgparser.has_option('general', 'variant'):
+                variant = cfgparser.get('general', 'variant')
+            version = None
+            if cfgparser.has_option('general', 'version'):
+                version = cfgparser.get('general', 'version')
+            family = None
+            if cfgparser.has_option('general', 'family'):
+                family = cfgparser.get('general', 'family')
+        ks_label = "ks-%s-%s-%s-%s" % (family, variant, version, arch)
         tree_info = {}
         if cfgparser.has_section('checksums'):
             # This should give us all the kernel/image files
@@ -393,9 +408,6 @@ class YumRepoGrinder(object):
                 tree_info[opt_fn] = (csum_type, csum)
         else:
             #No checksum section, look manually for images
-            arch = None
-            if cfgparser.has_section('general'):
-                arch = cfgparser.get('general', 'arch')
             if cfgparser.has_section('images-%s' % arch):
                 try:
                     imgs = 'images-%s' % arch
@@ -419,9 +431,20 @@ class YumRepoGrinder(object):
             (info['checksumtype'], info['checksum']) = hashinfo
             info['size']        = 0
             info['pkgpath'] = None
+            if self.distropath:
+                info['pkgpath'] = "%s/%s" % (self.distropath, ks_label)
             info['item_type'] = BaseFetch.TREE_FILE
             self.downloadinfo.append(info)
         LOG.info("%s Tree files have been marked to be fetched" % len(tree_info))
+        # write the treeinfo file to distro location for reuse
+        tree_repo_location = os.path.join(treeinfo_path, tree_manifest)
+        if self.distropath and os.path.exists(tree_repo_location) and not os.path.islink(tree_repo_location) :
+            tree_distro_location = os.path.join(info['pkgpath'], tree_manifest)
+            if not os.path.exists(info['pkgpath']):
+                os.makedirs(info['pkgpath'])
+            shutil.move(tree_repo_location, tree_distro_location)
+            LOG.info("creating symlink from [%s] to [%s]" % (tree_distro_location, tree_repo_location))
+            os.symlink(tree_distro_location, tree_repo_location)
 
     def convertCert(self):
         try:
