@@ -55,8 +55,10 @@ class GrinderLock(object):
         """
         try:
             if hasattr(self, 'lockfd'):
-                fcntl.flock(self.lockfd, fcntl.LOCK_UN)
-                os.close(self.lockfd)
+                try:
+                    fcntl.flock(self.lockfd, fcntl.LOCK_UN)
+                finally:
+                    os.close(self.lockfd)
             if os.path.exists(self.lockfile):
                 os.unlink(self.lockfile)
         except Exception,e:
@@ -69,10 +71,12 @@ class GrinderLock(object):
         if not os.path.exists(self.lockfile):
             return None
         try:
-            fd = open(self.lockfile)
-            pid = fd.read().rstrip()
-            fd.close()
-            return pid
+            try:
+                fd = open(self.lockfile)
+                pid = fd.read().rstrip()
+                return pid
+            finally:
+                fd.close()
         except:
             return None
 
