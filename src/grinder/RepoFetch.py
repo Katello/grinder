@@ -31,6 +31,7 @@ from grinder.GrinderUtils import GrinderUtils, splitPEM
 LOG = logging.getLogger("grinder.RepoFetch")
 
 GRINDER_YUM_LOCK = threading.RLock()
+TREE_INFO_LOCK = threading.RLock()
 
 class RepoFetch(BaseFetch):
     """
@@ -336,11 +337,25 @@ class YumRepoGrinder(object):
             info['item_type'] = BaseFetch.DELTA_RPM
             self.downloadinfo.append(info)
         LOG.info("%s delta rpms have been marked to be fetched" % len(deltarpms))
-        
+
     def prepareTrees(self):
+        # Below is a problem we saw with protected syncs, resulting from NSS not being thread safe
+        # https://bugzilla.redhat.com/show_bug.cgi?id=737614
+        # Bug 737614 - glibc backtrace during repo sync
+        # NSS is not thread safe, we are seeing a "double free" error after looping
+        # several hundred grinder syncs.
+        # Need to restrict pycurl/NSS transfers to one per process
+        # Alternative solution is to move the pycurl fetch to ActiveObject
+        TREE_INFO_LOCK.acquire()
+        try:
+            return self.__prepareTrees()
+        finally:
+            TREE_INFO_LOCK.release()
+
+    def __prepareTrees(self):
         LOG.info("Preparing to fetch any available trees..")
         # In certain cases, treeinfo is not a hidden file. Try if one fails..
-        for treeinfo in ['.treeinfo', 'treeinfo']: 
+        for treeinfo in ['.treeinfo', 'treeinfo']:
             tree_manifest = treeinfo
             treeinfo_url = self.yumFetch.repourl + '/' + tree_manifest
             treeinfo_name   = tree_manifest
@@ -370,7 +385,7 @@ class YumRepoGrinder(object):
             LOG.info(e)
             return
 
-        tree_info = {} 
+        tree_info = {}
         if cfgparser.has_section('checksums'):
             # This should give us all the kernel/image files
             for opt_fn in cfgparser.options('checksums'):
@@ -380,7 +395,7 @@ class YumRepoGrinder(object):
             #No checksum section, look manually for images
             arch = None
             if cfgparser.has_section('general'):
-                arch = cfgparser.get('general', 'arch')   
+                arch = cfgparser.get('general', 'arch')
             if cfgparser.has_section('images-%s' % arch):
                 try:
                     imgs = 'images-%s' % arch
@@ -532,11 +547,12 @@ class YumRepoGrinder(object):
             pkg_path = os.path.dirname(pkg.relativepath)
             self.pkgsavepath = repo_dir + '/' + pkg_path
             dpkgs.append(rpmName)
-        for ppkg in os.listdir(self.pkgsavepath):
-            if not ppkg.endswith('.rpm'):
-                continue
-            if ppkg not in dpkgs:
-                os.remove(os.path.join(self.pkgsavepath, ppkg))
+        if os.path.exists(self.pkgsavepath):
+            for ppkg in os.listdir(self.pkgsavepath):
+                if not ppkg.endswith('.rpm'):
+                    continue
+                if ppkg not in dpkgs:
+                    os.remove(os.path.join(self.pkgsavepath, ppkg))
                 
 
 if __name__ == "__main__":
