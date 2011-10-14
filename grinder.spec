@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.120
+Version: 0.0.121
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,15 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Oct 14 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.121-1
+- Add options to pass in optional central distribution location to store
+  distros in a separate area and symlink to repos directory. Also adding a
+  distribution label as a combination string with params from treeinfo. Pulp
+  will use this to store distributions centrally. (pkilambi@redhat.com)
+- Partial change for cleaning up grinderlock file descriptors
+  (jmatthews@redhat.com)
+- 737614 - glibc backtrace during repo sync (jmatthews@redhat.com)
+
 * Tue Oct 11 2011 James Slagle <jslagle@redhat.com> 0.0.120-1
 - 742351 - always clean up the yum cache (tmp) directory. (jortel@redhat.com)
 
