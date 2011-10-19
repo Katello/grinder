@@ -45,7 +45,7 @@ class WriteFunction(object):
         @param chunk: data chunk buffer to write or append to a file object
         @type chunk: str
         """
-        LOG.debug("processing chunk %s" % len(chunk))
+        #LOG.debug("processing chunk %s" % len(chunk))
         self.chunk_read += len(chunk)
         if self.size and self.size == self.offset:
             # "File already exists with right size
@@ -54,7 +54,7 @@ class WriteFunction(object):
         if self.offset <= self.chunk_read:
             self.fp.seek(self.offset)
         self.fp.write(chunk)
-        LOG.debug("Total chunk size read %s" % self.chunk_read)
+        #LOG.debug("Total chunk size read %s" % self.chunk_read)
 
     def get_offset(self):
         self.offset = os.stat(self.wfile).st_size

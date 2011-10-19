@@ -63,21 +63,22 @@ class TestYumSync(unittest.TestCase):
         test_url = "http://jmatthews.fedorapeople.org/repo_multiple_versions/"
         num_old = 4
         temp_label = "temp_number_old_packages"
-        yum_fetch = RepoFetch.YumRepoGrinder(temp_label, test_url, 5, newest=False, 
+        yum_fetch = RepoFetch.YumRepoGrinder(temp_label, test_url, parallel=5, newest=False, 
                 remove_old=True, numOldPackages=num_old)
+        self.assertEquals(yum_fetch.numOldPackages, num_old)
         temp_dir = tempfile.mkdtemp()
         try:
             sync_report = yum_fetch.fetchYumRepo(temp_dir)
             self.assertEquals(sync_report.errors, 0)
             self.assertTrue(sync_report.successes > 0)
             synced_rpms = glob.glob("%s/%s/*.rpm" % (temp_dir, temp_label))
-            # Verify we downloaded only what was needed, i.e. we didn't
-            # download more older rpms than asked for.
-            self.assertEquals(len(synced_rpms), sync_report.successes)
-            # Verify # of rpms in synced dir is latest plus num_old
-            self.assertEquals(len(synced_rpms), num_old+1)
         finally:
             shutil.rmtree(temp_dir)
+        # Verify we downloaded only what was needed, i.e. we didn't
+        # download more older rpms than asked for.
+        self.assertEquals(len(synced_rpms), sync_report.successes)
+        # Verify # of rpms in synced dir is latest plus num_old
+        self.assertEquals(len(synced_rpms), num_old+1)
 
     def test_stop_sync(self):
         global progress
