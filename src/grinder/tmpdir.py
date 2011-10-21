@@ -67,14 +67,17 @@ class TmpDir:
         @return: True if pid is valid.
         @rtype: bool
         """
+        valid = True
         try:
             os.kill(pid, 0)
-            return True
         except OSError, e:
             if e.errno == errno.ESRCH:
-                return False
+                valid = False
+            elif e.errno == errno.EPERM:
+                pass
             else:
                 raise
+        return valid
     
     @classmethod
     def rmdir(cls, path):
