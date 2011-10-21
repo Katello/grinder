@@ -197,7 +197,6 @@ class YumMetadataObj(object):
             pkglist = self._prune_package_list(pkglist, numOldPackages)
         for pkg in pkglist:
             info = {}
-            LOG.error("pkg = %s" % (pkg))
             #urljoin doesnt like epoch in rpm name so using string concat
             info['fileName'] = pkg.name + "-" + pkg.version + "-" + \
                                 pkg.release + "." + pkg.arch + ".rpm"
