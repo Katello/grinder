@@ -58,6 +58,20 @@ class TestYumSync(unittest.TestCase):
             self.assertEquals(len(synced_rpms), sync_report.successes)
         finally:
             shutil.rmtree(temp_dir)
+    
+    def test_empty_repo_sync(self):
+        test_url = "http://jmatthews.fedorapeople.org/empty_repo/"
+        temp_label = "test_empty_repo_sync"
+        yum_fetch = RepoFetch.YumRepoGrinder(temp_label, test_url, 5)
+        temp_dir = tempfile.mkdtemp()
+        try:
+            sync_report = yum_fetch.fetchYumRepo(temp_dir)
+            self.assertEquals(sync_report.errors, 0)
+            self.assertEquals(sync_report.successes, 0)
+            synced_rpms = glob.glob("%s/%s/*.rpm" % (temp_dir, temp_label))
+            self.assertEquals(len(synced_rpms), sync_report.successes)
+        finally:
+            shutil.rmtree(temp_dir)
 
     def test_sync_number_old_packages(self):
         test_url = "http://jmatthews.fedorapeople.org/repo_multiple_versions/"
