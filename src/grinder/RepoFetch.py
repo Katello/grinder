@@ -27,6 +27,7 @@ from grinder.ParallelFetch import ParallelFetch
 from grinder.BaseFetch import BaseFetch
 from grinder.GrinderCallback import ProgressReport
 from grinder.GrinderUtils import GrinderUtils, splitPEM
+from grinder.tmpdir import TmpDir
 
 LOG = logging.getLogger("grinder.RepoFetch")
 
@@ -61,9 +62,9 @@ class RepoFetch(BaseFetch):
     def stop(self, state=True):
         self.stopped = state
 
-    def setupRepo(self):
+    def setupRepo(self, tmpdir):
         self.repo = yum.yumRepo.YumRepository(self.repo_label)
-        self.repo.basecachedir = self.makeTempDir()
+        self.repo.basecachedir = tmpdir
         self.repo.cache = 0
         self.repo.metadata_expire = 0
         if self.mirrorlist:
@@ -174,22 +175,6 @@ class RepoFetch(BaseFetch):
 
     def validatePackage(self, fo, pkg, fail):
         return pkg.verifyLocalPkg()
-    
-    def deleteBaseCacheDir(self):
-        # Delete the temporary directory we are using to store repodata files
-        # for grinders own usage.  This is not the endpoint destination
-        # for sync'd content
-        try:
-            # yum is currently deleting this for us, below check is a precaution
-            if os.path.exists(self.repo.basecachedir) and \
-                    os.path.isdir(self.repo.basecachedir):
-                shutil.rmtree(self.repo.basecachedir)
-            return True
-        except Exception, e:
-            tb_info = traceback.format_exc()
-            LOG.error("%s" % (tb_info))
-            LOG.error(e)
-            return False
 
     def finalizeMetadata(self):
         local_repo_path = "%s/%s" % (self.repo_dir, "repodata")
@@ -206,7 +191,6 @@ class RepoFetch(BaseFetch):
             shutil.rmtree(local_new_path)
         except Exception, e:
             LOG.error("An error occurred while finalizing metadata:\n%s" % str(e))
-        shutil.rmtree(self.repo.basecachedir)
         
     def __getstate__(self):
         """
@@ -500,9 +484,12 @@ class YumRepoGrinder(object):
                             proxy_pass=self.proxy_pass, sslverify=self.sslverify,
                             max_speed=self.max_speed,
                             verify_options=verify_options)
+        TmpDir.clean()
+        tmpdir = TmpDir()
+        tmpdir.create(self.repo_label)
         self.fetchPkgs = ParallelFetch(self.yumFetch, self.numThreads, callback=callback)
         try:
-            self.yumFetch.setupRepo()
+            self.yumFetch.setupRepo(tmpdir.path())
             LOG.info("Fetching repo metadata...")
             # first fetch the metadata
             self.fetchPkgs.processCallback(ProgressReport.DownloadMetadata)
@@ -543,7 +530,7 @@ class YumRepoGrinder(object):
             return report
         finally:
             self.fetchPkgs.stop()
-            self.yumFetch.deleteBaseCacheDir()
+            tmpdir.delete()
             self.yumFetch.closeRepo()
 
     def stop(self, block=True):
