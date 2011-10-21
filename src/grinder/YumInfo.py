@@ -197,6 +197,7 @@ class YumMetadataObj(object):
             pkglist = self._prune_package_list(pkglist, numOldPackages)
         for pkg in pkglist:
             info = {}
+            LOG.error("pkg = %s" % (pkg))
             #urljoin doesnt like epoch in rpm name so using string concat
             info['fileName'] = pkg.name + "-" + pkg.version + "-" + \
                                 pkg.release + "." + pkg.arch + ".rpm"
@@ -260,9 +261,7 @@ class YumMetadataObj(object):
             rpms[pkg_key].append(item)
         grinderUtils = GrinderUtils()
         grinderUtils.numOldPkgsKeep = numold
-        LOG.info("Original rpms = <%s>" % (rpms))
         rpms = grinderUtils.sortListOfRPMS(rpms)
-        LOG.info("After rpms = <%s>" % (rpms))
         # Prune data
         for key in rpms:
             values = rpms[key]
