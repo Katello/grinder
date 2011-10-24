@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.121
+Version: 0.0.122
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,16 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Oct 24 2011 John Matthews <jmatthews@redhat.com> 0.0.122-1
+- Remove debugging log statement (jmatthews@redhat.com)
+- Update to handle an empty repo (jmatthews@redhat.com)
+- Add unit test for removal of existing old packages (jmatthews@redhat.com)
+- 737523 - Move yum logic to ActiveObject to hide memory leak
+  (jmatthews@redhat.com)
+- Fix TmpDir.clean() Operation not permitted. (jortel@redhat.com)
+- Add self cleaning TmpDir and use instead of tempfile.mkdtemp().
+  (jortel@redhat.com)
+
 * Fri Oct 14 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.121-1
 - Add options to pass in optional central distribution location to store
   distros in a separate area and symlink to repos directory. Also adding a
