@@ -37,12 +37,9 @@ class SyncReport:
 class ParallelFetch(object):
     def __init__(self, fetcher, numThreads=3, callback=None):
         self.fetcher = fetcher
+        self.tracker = fetcher.tracker
         self.numThreads = numThreads
         self.callback = callback
-        self.sizeTotal = 0
-        self.sizeLeft = 0
-        self.itemTotal = 0
-        self.details = {}
         self.error_details = []
         self.statusLock = Lock()
         self.syncStatusDict = dict()
@@ -62,50 +59,10 @@ class ParallelFetch(object):
             self.threads.append(wt)
         self.startTime = time.time()
 
-    def _update_totals(self, item):
-        if item.has_key("item_type"):
-            item_type = item["item_type"]
-            if not self.details.has_key(item_type):
-                self.details[item_type] = {}
-            # How many items of this type
-            if not self.details[item_type].has_key("total_count") or \
-                not self.details[item_type]["total_count"]:
-                self.details[item_type]["total_count"] = 1
-            else:
-                self.details[item_type]["total_count"] += 1
-            self.details[item_type]["items_left"] = self.details[item_type]["total_count"]
-            # Note for some items we may not know the item size, example tree_files
-            # in that case we will skip updating the size related fields
-            if item["size"] or item["size"] <= 0:
-                # Total size in bytes of this type
-                if not self.details[item_type].has_key("total_size_bytes") or \
-                    not self.details[item_type]["total_size_bytes"]:
-                    self.details[item_type]["total_size_bytes"] = item["size"]
-                else:
-                    self.details[item_type]["total_size_bytes"] += item["size"]
-                # How many bytes are left to fetch of this type
-                if not self.details[item_type].has_key("size_left"):
-                    self.details[item_type]["size_left"] = self.details[item_type]["total_size_bytes"]
-                else:
-                    self.details[item_type]["size_left"] += item['size']
-            else:
-                if not self.details[item_type].has_key("total_size_bytes") or \
-                    not self.details[item_type]["total_size_bytes"]:
-                    self.details[item_type]["total_size_bytes"] = 0
-                if not self.details[item_type].has_key("size_left") or \
-                    not self.details[item_type]["size_left"]:
-                    self.details[item_type]["size_left"] = 0
-            # Initialize 'num_success'
-            if not self.details[item_type].has_key("num_success"):
-                self.details[item_type]["num_success"] = 0
-            if not self.details[item_type].has_key("num_error"):
-                self.details[item_type]["num_error"] = 0
-            
     def addItem(self, item):
-        if item.has_key("size") and item['size'] is not None:
-            self.sizeTotal = self.sizeTotal + int(item['size'])
-        self._update_totals(item)
         self.toSyncQ.put(item)
+        if item.has_key("item_type") and item.has_key("downloadurl") and item.has_key("size"):
+            self.tracker.add_item(item["downloadurl"], item['size'], item["item_type"])
 
     def addItemList(self, items):
         for p in items:
@@ -140,8 +97,10 @@ class ParallelFetch(object):
         self.error_details.append(itemInfo)
 
     def formProgressReport(self, step=None, itemInfo=None, status=None):
+        progress = self.tracker.get_progress()
+
         itemsLeft = self.itemTotal - (self.syncErrorQ.qsize() + self.syncCompleteQ.qsize())
-        r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, itemsLeft)
+        r = ProgressReport(progress["total_size_bytes"], progress["remaining_bytes"], self.itemTotal, itemsLeft)
         r.item_name = None
         if itemInfo:
             if itemInfo.has_key("fileName"):
@@ -154,7 +113,7 @@ class ParallelFetch(object):
         r.num_error = self.syncErrorQ.qsize()
         r.num_success = self.syncCompleteQ.qsize()
         r.sync_status = self.syncStatusDict
-        r.details = self.details
+        r.details = progress["type_info"]
         r.error_details = self.error_details
         if step:
             self.step = step
@@ -176,32 +135,15 @@ class ParallelFetch(object):
                 self.addErrorDetails(itemInfo, {"error_type":status, "error":errorInfo, "traceback":""})
             LOG.debug("%s status updated, %s success %s error" % (itemInfo,
                 self.syncCompleteQ.qsize(), self.syncErrorQ.qsize()))
-            if itemInfo.has_key("size")  and itemInfo['size'] is not None and itemInfo['size'] >= 0:
-                self.sizeLeft = self.sizeLeft - int(itemInfo['size'])
-                if itemInfo.has_key("item_type"):
-                    item_type = itemInfo["item_type"]
-                    if not self.details[item_type].has_key("size_left"):
-                        self.details[item_type]["size_left"] = self.details[item_type]["total_size_bytes"] - int(itemInfo['size'])
-                    else:
-                        self.details[item_type]["size_left"] -= int(itemInfo['size'])
-            if itemInfo.has_key("item_type"):
-                item_type = itemInfo["item_type"]
-                if not self.details[item_type].has_key("items_left"):
-                    self.details[item_type]["items_left"] = self.details[item_type]["total_count"] - 1
-                else:
-                    self.details[item_type]["items_left"] -= 1
-                if status != BaseFetch.STATUS_ERROR:
-                    # Mark success for item
-                    if not self.details[item_type].has_key("num_success"):
-                        self.details[item_type]["num_success"] = 1
-                    else:
-                        self.details[item_type]["num_success"] += 1
-                else:
-                    # Mark failure
-                    if not self.details[item_type].has_key("num_error"):
-                        self.details[item_type]["num_error"] = 1
-                    else:
-                        self.details[item_type]["num_error"] += 1
+            if itemInfo.has_key("downloadurl"):
+                fetchURL = itemInfo["downloadurl"]
+                success = True
+                if status in (BaseFetch.STATUS_ERROR, BaseFetch.STATUS_UNAUTHORIZED):
+                    success = False
+                LOG.info("Calling item_complete(%s,%s)" % (fetchURL, success))
+                self.tracker.item_complete(fetchURL, success)
+            else:
+                LOG.info("Skipping item_complete for %s" % (itemInfo))
             if self.callback is not None:
                 r = self.formProgressReport(ProgressReport.DownloadItems, itemInfo, status)
                 self.callback(r)
@@ -212,13 +154,13 @@ class ParallelFetch(object):
         # Assumption is all adds to toSyncQ have been completed at this point
         # We will grab the size of the items for total number of items to sync
         # before we kick off the threads to start fetching
-        self.sizeLeft = self.sizeTotal
+        progress = self.tracker.get_progress()
         self.itemTotal = self.toSyncQ.qsize()
         if self.callback is not None:
-            r = ProgressReport(self.sizeTotal, self.sizeLeft, self.itemTotal, self.toSyncQ.qsize())
+            r = ProgressReport(progress["total_size_bytes"], progress["remaining_bytes"], self.itemTotal, self.toSyncQ.qsize())
             r.step = ProgressReport.DownloadItems
             r.status = "STARTED"
-            r.details = self.details
+            r.details = progress["type_info"]
             self.callback(r)
         for t in self.threads:
             t.start()
@@ -275,17 +217,20 @@ class ParallelFetch(object):
         
         LOG.info("ParallelFetch: %s items successfully processed, %s downloaded, %s items had errors" %
             (report.successes, report.downloads, report.errors))
-        for details_type in self.details:
+        progress = self.tracker.get_progress()
+        LOG.info("progress = <%s>" % (progress))
+        for item_type in progress["type_info"]:
+            type_info = progress["type_info"][item_type]
             LOG.info("Transferred [%s] bytes of [%s]" %
-                     (self.details[details_type]["total_size_bytes"] - self.details[details_type]["size_left"], details_type))
-        LOG.info("Transferred [%s] total bytes in %s seconds" % (self.sizeTotal - self.sizeLeft, (self.endTime - self.startTime)))
+                     (type_info["total_size_bytes"] - type_info["size_left"], item_type))
+        LOG.info("Transferred [%s] total bytes in %s seconds" % (progress["total_size_bytes"] - progress["remaining_bytes"], (self.endTime - self.startTime)))
         r = self.formProgressReport()
         r.status = "FINISHED"
         r.num_error = report.errors
         r.num_success = report.successes
         r.num_download = report.downloads
         r.items_left = 0 
-        r.details = self.details
+        r.details = progress["type_info"]
         if self.callback is not None:
             self.callback(r)
         report.last_progress = r
@@ -342,7 +287,7 @@ class WorkerThread(Thread):
                 errorInfo["error"] = str(value)
                 errorInfo["traceback"] = traceback.format_exc().splitlines()
                 self.pFetch.markStatus(itemInfo, BaseFetch.STATUS_ERROR, errorInfo)
-                
+
         LOG.info("WorkerThread deleting ActiveObject")
         self.fetcher_lock.acquire()
         try:

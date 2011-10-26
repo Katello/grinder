@@ -12,8 +12,6 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 import os
-import httplib
-import urlparse
 import time
 import pycurl
 import logging
@@ -22,9 +20,11 @@ import hashlib
 import types
 import unicodedata
 from grinder.GrinderExceptions import GrinderException
+from grinder.ProgressTracker import ProgressTracker
 from grinder import GrinderUtils
 from WriteFunction import WriteFunction 
 from grinder.GrinderLock import GrinderLock
+
 LOG = logging.getLogger("grinder.BaseFetch")
 
 
@@ -45,7 +45,7 @@ class BaseFetch(object):
     def __init__(self, cacert=None, clicert=None, clikey=None, 
             proxy_url=None, proxy_port=None, proxy_user=None, 
             proxy_pass=None, sslverify=1, max_speed = None,
-            verify_options = None):
+            verify_options = None, tracker = None):
         self.sslcacert = cacert
         self.sslclientcert = clicert
         self.sslclientkey = clikey
@@ -56,6 +56,9 @@ class BaseFetch(object):
         self.sslverify  = sslverify
         self.max_speed = max_speed
         self.verify_options = verify_options
+        if not tracker:
+            tracker = ProgressTracker()
+        self.tracker = tracker
 
     def validateDownload(self, filePath, size, hashtype, checksum):
         """
@@ -99,7 +102,13 @@ class BaseFetch(object):
                 LOG.debug("%s" % (tb_info))
                 LOG.critical(e)
                 raise e
-    
+
+    def update_bytes_transferred(self, fetchURL, download_total, downloaded):
+        # Intended to be invoked on parent, not in ActiveObject Child
+        if hasattr(self, "tracker"):
+            LOG.debug("self=<%s>, fetchURL = %s, download_total = %s, downloaded = %s" % (self, fetchURL, download_total, downloaded))
+            self.tracker.update_progress_download(fetchURL, download_total, downloaded)
+
     def fetch(self, fileName, fetchURL, savePath, itemSize=None, hashtype=None, checksum=None, 
              headers=None, retryTimes=2, packages_location=None, verify_options=None):
         """
@@ -188,9 +197,11 @@ class BaseFetch(object):
         try:
             #f = open(filePath, "wb")
             curl = pycurl.Curl()
-            #def item_progress_callback(download_total, downloaded, upload_total, uploaded):
-            #    LOG.debug("%s status %s/%s bytes" % (fileName, downloaded, download_total))
-            #curl.setopt(curl.PROGRESSFUNCTION, item_progress_callback)
+            def item_progress_callback(download_total, downloaded, upload_total, uploaded):
+                LOG.debug("%s status %s/%s bytes" % (fileName, downloaded, download_total))
+                self.update_bytes_transferred(fetchURL, download_total, downloaded)
+            curl.setopt(curl.NOPROGRESS, False)
+            curl.setopt(curl.PROGRESSFUNCTION, item_progress_callback)
             if self.max_speed:
                 #Convert KB/sec to Bytes/sec for MAC_RECV_SPEED_LARGE
                 limit = self.max_speed*1024
@@ -298,6 +309,15 @@ class BaseFetch(object):
             grinder_write_locker.release()
             cleanup(filePath)
             raise
+
+    def __getstate__(self):
+        """
+        Get the object state for pickling.
+        The (tracker) attribute cannot be pickled.
+        """
+        state = self.__dict__.copy()
+        state.pop('tracker', None)
+        return state
 
 def get_temp_file_name(file_name):
     return "%s.%s" % (file_name, "part")
