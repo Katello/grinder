@@ -101,10 +101,9 @@ class ActiveObject:
         @type object: object
         """
         self.object = object
-        self.__pmethods = list(pmethods)
+        self.__pmethods = pmethods
         self.__child = None
         self.__mutex = RLock()
-        self.__findpmethods()
         self.__spawn()
         
     def __rmi(self, method, args, kwargs):
@@ -208,20 +207,6 @@ class ActiveObject:
         p.stdin.close()
         p.stdout.close()
         p.wait()
-            
-    def __findpmethods(self):
-        """
-        Find pmethods.
-        Inspect self for @parent decorated methods and
-        append the method names.
-        @return: self
-        @rtype: L{ActiveObject}
-        """
-        for name, method in inspect.getmembers(self, inspect.ismethod):
-            fn = method.im_func
-            if getattr(fn, 'pmethod', 0):
-                self.__pmethods.append(name)
-        return self
 
     def __lock(self):
         """
