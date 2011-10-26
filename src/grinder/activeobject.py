@@ -46,14 +46,6 @@ LOG = 2
 PMETHOD = 3
 
 
-# decorator
-# indicates the method is only run
-# in the parent process.
-def parent(fn):
-    fn.pmethod = 1
-    return fn
-
-
 class Method:
     """
     Remote method stub.
@@ -188,11 +180,11 @@ class ActiveObject:
         """
         Spawn the child process.
         """
-        self.__child = Popen(
-            (sys.executable, __file__),
-            close_fds=True,
-            stdin=PIPE,
-            stdout=PIPE)
+        args = [
+            sys.executable,
+            __file__,]
+        args.extend(sys.path)
+        self.__child = Popen(args, close_fds=True, stdin=PIPE, stdout=PIPE)
         
     def __respawn(self):
         """
@@ -490,7 +482,14 @@ def setpmethods(object, names):
         pmethod = ParentMethod(name)
         setattr(object, name, pmethod)
 
+def addpath(path):
+    for p in path:
+        if p in sys.path:
+            continue
+        sys.path.append(p)
+
 def main():
+    addpath(sys.argv[1:])
     logging.getLogger = Logger
     while True:
         process()
