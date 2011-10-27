@@ -24,16 +24,18 @@ class ProgressTracker(object):
     """
     Responsible for tracking progress information for all download objects
     Tracks total size versus amount downloaded
+    includes information on item types, rpm, delta_rpm, tree_file
     """
 
-    def __init__(self):
-        self.lock = threading.Lock()
+    def __init__(self, callback=None):
+        self.lock = threading.RLock()
         self.items = {}
         self.total_size_bytes = 0
         self.remaining_bytes = self.total_size_bytes
         self.total_num_items = 0
         self.remaining_num_items = 0
         self.type_info = {}
+        self.callback = None
 
     def get_progress(self):
         self.lock.acquire()
@@ -62,6 +64,7 @@ class ProgressTracker(object):
         self.lock.acquire()
         try:
             if size < 0:
+                LOG.error("%s size = %s, setting to 0 instead" % (fetchURL, size))
                 size = 0
             # Total Information for all Items
             self.total_size_bytes += size
@@ -90,7 +93,7 @@ class ProgressTracker(object):
             # Note: If fetchURL already existed it is overwritten
             self.items[fetchURL] = {}
             self.items[fetchURL]["total_size_bytes"] = size
-            self.items[fetchURL]["remaining_bytes"] = self.items[fetchURL]["total_size_bytes"]
+            self.items[fetchURL]["remaining_bytes"] = size
             self.items[fetchURL]["item_type"] = item_type
         finally:
             self.lock.release()
@@ -131,36 +134,10 @@ class ProgressTracker(object):
 
             del self.items[fetchURL]
             self.remaining_num_items -= 1
-            #if itemInfo.has_key("size")  and itemInfo['size'] is not None and itemInfo['size'] >= 0:
-            #    self.sizeLeft = self.sizeLeft - int(itemInfo['size'])
-            #    if itemInfo.has_key("item_type"):
-            #        item_type = itemInfo["item_type"]
-            #        if not self.details[item_type].has_key("size_left"):
-            #            self.details[item_type]["size_left"] = self.details[item_type]["total_size_bytes"] - int(itemInfo['size'])
-            #        else:
-            #            self.details[item_type]["size_left"] -= int(itemInfo['size'])
-            #if itemInfo.has_key("item_type"):
-            #    item_type = itemInfo["item_type"]
-            #    if not self.details[item_type].has_key("items_left"):
-            #        self.details[item_type]["items_left"] = self.details[item_type]["total_count"] - 1
-            #    else:
-            #        self.details[item_type]["items_left"] -= 1
-            #    if status != BaseFetch.STATUS_ERROR:
-            #        # Mark success for item
-            #        if not self.details[item_type].has_key("num_success"):
-            #            self.details[item_type]["num_success"] = 1
-            #        else:
-            #            self.details[item_type]["num_success"] += 1
-            #    else:
-            #        # Mark failure
-            #        if not self.details[item_type].has_key("num_error"):
-            #            self.details[item_type]["num_error"] = 1
-            #        else:
-            #            self.details[item_type]["num_error"] += 1
         finally:
             self.lock.release()
 
-    def update_progress_downloaded(self, fetchURL, download_total, downloaded):
+    def update_progress_download(self, fetchURL, download_total, downloaded):
         """
         @param fetchURL url of the item, must be unique against all known items being downloaded
         @type fetchURL: str
@@ -172,26 +149,33 @@ class ProgressTracker(object):
         @type downloaded: int
         """
         # This method is used to note progress made while a specific item is being downloaded
-        # Example, it can note that 100kb of a file has been downloaded.  
-        # The other piece of the progress reporting is when the item completes, which is handled with item_complete
+        # Example, it can note that 100kb of a file has been downloaded of a 1GB file
         self.lock.acquire()
         try:
             if not self.items.has_key(fetchURL):
                 return
-            item_type = self.items[fetchURL]["item_type"]
-            prev_remaining_bytes = self.items[fetchURL]["remaining_bytes"]
-            delta_bytes = prev_remaining_bytes - (downloaded_total - downloaded)
-            if delta_bytes < 0:
-                LOG.error("Transferred negative bytes <%s> for: %s download_total=<%s>, downloaded=<%s>" % \
-                        (delta_bytes, fetchURL, download_total, downloaded))
+            # Note curl will invoke this method initially with download_total=0 and downloaded=0, ignore that invokation
+            if download_total == 0 or downloaded == 0:
                 return
-
-            self.items[fetchURL]["remaining_bytes"] = downloaded_total - downloaded
-            # Adjust cumulative remaining bytes for all items
-            self.remaining_bytes -= delta_bytes
-
-            # Adjust remaining bytes for all of this type of item
-            self.type_info[item_type]["remaining_bytes"] -= delta_bytes
+            prev_remaining_bytes = self.items[fetchURL]["remaining_bytes"]
+            remaining_bytes = download_total - downloaded
+            delta_bytes = prev_remaining_bytes - remaining_bytes
+            if delta_bytes < 0:
+                LOG.error("Negative delta_bytes <%s>. download_total=<%s>, downloaded=<%s>, prev_remaining_bytes=<%s>, remaining_bytes=<%s>, %s" % \
+                        (delta_bytes, download_total, downloaded, prev_remaining_bytes, remaining_bytes, fetchURL))
+                return
+            else:
+                self.items[fetchURL]["remaining_bytes"] = remaining_bytes
+                # Adjust cumulative remaining bytes for all items
+                self.remaining_bytes -= delta_bytes
+                # Adjust remaining bytes for all of this type of item
+                item_type = self.items[fetchURL]["item_type"]
+                self.type_info[item_type]["size_left"] -= delta_bytes
         finally:
             self.lock.release()
+
+        if self.callback:
+            progress = self.get_progress()
+            self.callback(progress)
+
 

@@ -106,7 +106,7 @@ class BaseFetch(object):
     def update_bytes_transferred(self, fetchURL, download_total, downloaded):
         # Intended to be invoked on parent, not in ActiveObject Child
         if hasattr(self, "tracker"):
-            LOG.debug("self=<%s>, fetchURL = %s, download_total = %s, downloaded = %s" % (self, fetchURL, download_total, downloaded))
+            #LOG.debug("self=<%s>, fetchURL = %s, download_total = %s, downloaded = %s" % (self, fetchURL, download_total, downloaded))
             self.tracker.update_progress_download(fetchURL, download_total, downloaded)
 
     def fetch(self, fileName, fetchURL, savePath, itemSize=None, hashtype=None, checksum=None, 

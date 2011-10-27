@@ -11,7 +11,6 @@
 # have received a copy of GPLv2 along with this software; if not, see
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
-import time
 import logging
 import threading
 import time
@@ -38,10 +37,12 @@ class ParallelFetch(object):
     def __init__(self, fetcher, numThreads=3, callback=None):
         self.fetcher = fetcher
         self.tracker = fetcher.tracker
+        self.tracker.callback = self.incremental_progress_update
         self.numThreads = numThreads
         self.callback = callback
         self.error_details = []
         self.statusLock = Lock()
+        self.itemTotal = 0
         self.syncStatusDict = dict()
         self.syncStatusDict[BaseFetch.STATUS_NOOP] = 0
         self.syncStatusDict[BaseFetch.STATUS_DOWNLOADED] = 0
@@ -82,6 +83,18 @@ class ParallelFetch(object):
             self.statusLock.release()
         return item
 
+    def incremental_progress_update(self, progress):
+        """
+        @param progress: from ProgressTracker.get_progress, example:
+           {"total_size_bytes":"", "remaining_bytes":"", "total_num_items":"", "remaining_num_items":"", "type_info":{}}
+           example of 'type_info' 'type_info':{"rpm":{"total_size_bytes":"", "size_left":"", "total_count":"",
+                                                "items_left":"", "num_success":"", "num_error":""}}
+        @type progress: dict
+        """
+        r = self.formProgressReport(progress=progress)
+        if self.callback:
+            self.callback(r)
+
     def processCallback(self, step, itemInfo=None):
         if not self.callback:
             return
@@ -96,8 +109,9 @@ class ParallelFetch(object):
             itemInfo[key] = errorInfo[key]
         self.error_details.append(itemInfo)
 
-    def formProgressReport(self, step=None, itemInfo=None, status=None):
-        progress = self.tracker.get_progress()
+    def formProgressReport(self, step=None, itemInfo=None, status=None, progress=None):
+        if not progress:
+            progress = self.tracker.get_progress()
 
         itemsLeft = self.itemTotal - (self.syncErrorQ.qsize() + self.syncCompleteQ.qsize())
         r = ProgressReport(progress["total_size_bytes"], progress["remaining_bytes"], self.itemTotal, itemsLeft)
@@ -140,7 +154,7 @@ class ParallelFetch(object):
                 success = True
                 if status in (BaseFetch.STATUS_ERROR, BaseFetch.STATUS_UNAUTHORIZED):
                     success = False
-                LOG.info("Calling item_complete(%s,%s)" % (fetchURL, success))
+                LOG.debug("Calling item_complete(%s,%s)" % (fetchURL, success))
                 self.tracker.item_complete(fetchURL, success)
             else:
                 LOG.info("Skipping item_complete for %s" % (itemInfo))
@@ -218,7 +232,6 @@ class ParallelFetch(object):
         LOG.info("ParallelFetch: %s items successfully processed, %s downloaded, %s items had errors" %
             (report.successes, report.downloads, report.errors))
         progress = self.tracker.get_progress()
-        LOG.info("progress = <%s>" % (progress))
         for item_type in progress["type_info"]:
             type_info = progress["type_info"][item_type]
             LOG.info("Transferred [%s] bytes of [%s]" %
@@ -245,6 +258,7 @@ class WorkerThread(Thread):
         """
         Thread.__init__(self)
         self.pFetch = pFetch
+        #self.fetcher = ActiveObject(fetcher, "update_bytes_transferred")
         self.fetcher = ActiveObject(fetcher)
         self._stop = threading.Event()
         self.fetcher_lock = Lock()
