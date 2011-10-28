@@ -229,7 +229,7 @@ class YumMetadataObj(object):
             info = {}
             relativepath = dpkg.deltas.values()[0].filename
             info['fileName'] = dpkg.deltas.values()[0].filename
-            info['downloadurl'] = self.yumInfo.repo_url + '/' + relativepath
+            info['downloadurl'] = self.repo_url + '/' + relativepath
             info['savepath'] = self.repo_dir
             info['checksumtype'] = dpkg.deltas.values()[0].checksum_type
             info['checksum'] = dpkg.deltas.values()[0].checksum
