@@ -91,7 +91,7 @@ class ParallelFetch(object):
                                                 "items_left":"", "num_success":"", "num_error":""}}
         @type progress: dict
         """
-        r = self.formProgressReport(progress=progress)
+        r = self.formProgressReport(step=ProgressReport.DownloadItems, progress=progress)
         if self.callback:
             self.callback(r)
 
@@ -170,6 +170,7 @@ class ParallelFetch(object):
         # before we kick off the threads to start fetching
         progress = self.tracker.get_progress()
         self.itemTotal = self.toSyncQ.qsize()
+        LOG.info("%s items are marked to be fetched" % (self.itemTotal))
         if self.callback is not None:
             r = ProgressReport(progress["total_size_bytes"], progress["remaining_bytes"], self.itemTotal, self.toSyncQ.qsize())
             r.step = ProgressReport.DownloadItems
@@ -258,8 +259,7 @@ class WorkerThread(Thread):
         """
         Thread.__init__(self)
         self.pFetch = pFetch
-        #self.fetcher = ActiveObject(fetcher, "update_bytes_transferred")
-        self.fetcher = ActiveObject(fetcher)
+        self.fetcher = ActiveObject(fetcher, "update_bytes_transferred")
         self._stop = threading.Event()
         self.fetcher_lock = Lock()
 
