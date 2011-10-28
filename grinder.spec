@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.122
+Version: 0.0.123
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,18 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Oct 28 2011 John Matthews <jmatthews@redhat.com> 0.0.123-1
+- Enabling download progress per item (jmatthews@redhat.com)
+- purge ParentMethod from __getstate__() result as well. (jortel@redhat.com)
+- fix for traceback caused due to incorrect downloadurl construct
+  (pkilambi@redhat.com)
+- Fixed issue with update_progress resetting remaining_bytes to 0 incorrectly
+  and added tests for ProgressTracker (jmatthews@redhat.com)
+- WorkInProgress, reworking Sync Progress so we can accept incremental updates
+  as an item is downloading (jmatthews@redhat.com)
+- activeobject: remove support for 'parent' decorator. (jortel@redhat.com)
+- Add support of Objects not in default python path. (jortel@redhat.com)
+
 * Mon Oct 24 2011 John Matthews <jmatthews@redhat.com> 0.0.122-1
 - Remove debugging log statement (jmatthews@redhat.com)
 - Update to handle an empty repo (jmatthews@redhat.com)
