@@ -434,14 +434,16 @@ def getstate(object):
     key = '__getstate__'
     if hasattr(object, key):
         method = getattr(object, key)
-        return method()
+        return cleaned(method())
     else:
-        d = {}
-        for k,v in object.__dict__.items():
-            if isinstance(v, ParentMethod):
-                continue
+        return cleaned(object.__dict__)
+    
+def cleaned(state):
+    d = {}
+    for k,v in state.items():
+        if not isinstance(v, ParentMethod):
             d[k] = v
-        return d
+    return d
     
 def setstate(object, state):
     key = '__setstate__'
