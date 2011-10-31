@@ -175,7 +175,7 @@ class BaseFetch(object):
         grinder_write_locker = GrinderLock(filePath + '.lock')
         existing_lock_pid = grinder_write_locker.readlock()
         new_pid = os.getpid()
-        if existing_lock_pid and int(existing_lock_pid) != new_pid and grinder_write_locker.isvalid():
+        if existing_lock_pid and int(existing_lock_pid) != new_pid and grinder_write_locker.isvalid(existing_lock_pid):
             # If there is an existing write pid
             # and if the pid is not same as the current pid
             # and pid is valid there is another process alive
