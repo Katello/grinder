@@ -98,6 +98,46 @@ class ProgressTracker(object):
         finally:
             self.lock.release()
 
+    def modify_item_size(self, fetchURL, size):
+        """
+        @param fetchURL: unique URL identifying where to fetch this item
+        @type fetchURL: str
+
+        @param size: expected size
+        @type size: int
+        """
+        # This method would not be called on typical operations
+        # Typically we would know the size of a file ahead of time when we read metadata
+        # sometimes this metadata may be inaccurate, for those situations this method will
+        # be invoked when we are told from pycurl that the size of the file is different
+        # than what we expected, we will update our progress counters to reflect the
+        # new information.
+        self.lock.acquire()
+        try:
+            if size < 0:
+                LOG.error("size is negative, fetchURL=<%s> size=<%s>" % (fetchURL, size))
+                return
+            if not self.items.has_key(fetchURL):
+                LOG.error("Unable to find <%s>" % (fetchURL))
+                return
+            item = self.items[fetchURL]
+            # diff_in_size could be negative or positive, both are valid
+            diff_in_size = size - item["total_size_bytes"]
+            LOG.warning("Modifying size information for <%s>. original size = <%s>, new size = <%s>, diff_in_size = <%s>" % (fetchURL, item["total_size_bytes"], size, diff_in_size))
+            item_type = item["item_type"]
+            if not self.type_info.has_key(item_type):
+                self.type_info[item_type]["total_size_bytes"] += diff_in_size
+                self.type_info[item_type]["size_left"] += diff_in_size
+
+            self.items[fetchURL]["total_size_bytes"] = size
+            self.items[fetchURL]["remaining_bytes"] += diff_in_size
+
+            # Total Information for all Items
+            self.total_size_bytes += diff_in_size
+            self.remaining_bytes += diff_in_size
+        finally:
+            self.lock.release()
+
     def item_complete(self, fetchURL, status):
         """
         @param fetchURL: url of an item
@@ -157,12 +197,14 @@ class ProgressTracker(object):
             # Note curl will invoke this method initially with download_total=0 and downloaded=0, ignore that invokation
             if download_total == 0 or downloaded == 0:
                 return
+            if download_total != self.items[fetchURL]["total_size_bytes"]:
+                self.modify_item_size(fetchURL, download_total)
             prev_remaining_bytes = self.items[fetchURL]["remaining_bytes"]
             remaining_bytes = download_total - downloaded
             delta_bytes = prev_remaining_bytes - remaining_bytes
             if delta_bytes < 0:
-                LOG.error("Negative delta_bytes <%s>. download_total=<%s>, downloaded=<%s>, prev_remaining_bytes=<%s>, remaining_bytes=<%s>, %s" % \
-                        (delta_bytes, download_total, downloaded, prev_remaining_bytes, remaining_bytes, fetchURL))
+                LOG.error("Negative delta_bytes <%s>. download_total=<%s>, downloaded=<%s>, prev_remaining_bytes=<%s>, remaining_bytes=<%s>, total_size_bytes=<%s>, %s" % \
+                        (delta_bytes, download_total, downloaded, prev_remaining_bytes, remaining_bytes, self.items[fetchURL]["total_size_bytes"], fetchURL))
                 return
             else:
                 self.items[fetchURL]["remaining_bytes"] = remaining_bytes

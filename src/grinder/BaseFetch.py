@@ -198,7 +198,7 @@ class BaseFetch(object):
             #f = open(filePath, "wb")
             curl = pycurl.Curl()
             def item_progress_callback(download_total, downloaded, upload_total, uploaded):
-                LOG.debug("%s status %s/%s bytes" % (fileName, downloaded, download_total))
+                #LOG.debug("%s status %s/%s bytes" % (fileName, downloaded, download_total))
                 self.update_bytes_transferred(fetchURL, download_total, downloaded)
             curl.setopt(curl.NOPROGRESS, False)
             curl.setopt(curl.PROGRESSFUNCTION, item_progress_callback)
