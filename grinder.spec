@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.123
+Version: 0.0.124
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Nov 01 2011 John Matthews <jmatthews@redhat.com> 0.0.124-1
+- Update progress tracking to account for when actual file size is different
+  than expected (jmatthews@redhat.com)
+- 749902 - fixing lock validity to check existing lock (pkilambi@redhat.com)
+
 * Fri Oct 28 2011 John Matthews <jmatthews@redhat.com> 0.0.123-1
 - Enabling download progress per item (jmatthews@redhat.com)
 - purge ParentMethod from __getstate__() result as well. (jortel@redhat.com)
