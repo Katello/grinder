@@ -142,19 +142,23 @@ class ParallelFetch(object):
                 self.syncStatusDict[status] = self.syncStatusDict[status] + 1
             else:
                 self.syncStatusDict[status] = 1
-            if status not in (BaseFetch.STATUS_ERROR, BaseFetch.STATUS_UNAUTHORIZED):
+            if status not in (BaseFetch.STATUS_ERROR, BaseFetch.STATUS_UNAUTHORIZED,
+                BaseFetch.STATUS_SIZE_MISSMATCH, BaseFetch.STATUS_MD5_MISSMATCH):
                 self.syncCompleteQ.put(itemInfo)
             else:
+                if not errorInfo and itemInfo.has_key("downloadurl"):
+                    errorInfo = "%s on %s" % (status, itemInfo["downloadurl"])
                 self.syncErrorQ.put(itemInfo)
-                self.addErrorDetails(itemInfo, {"error_type":status, "error":errorInfo, "traceback":""})
+                self.addErrorDetails(itemInfo, {"error_type":status, "error":errorInfo})
             LOG.debug("%s status updated, %s success %s error" % (itemInfo,
                 self.syncCompleteQ.qsize(), self.syncErrorQ.qsize()))
             if itemInfo.has_key("downloadurl"):
                 fetchURL = itemInfo["downloadurl"]
                 success = True
-                if status in (BaseFetch.STATUS_ERROR, BaseFetch.STATUS_UNAUTHORIZED):
+                if status in (BaseFetch.STATUS_ERROR, BaseFetch.STATUS_UNAUTHORIZED,
+                              BaseFetch.STATUS_SIZE_MISSMATCH, BaseFetch.STATUS_MD5_MISSMATCH):
                     success = False
-                LOG.debug("Calling item_complete(%s,%s)" % (fetchURL, success))
+                LOG.debug("Calling item_complete(%s,%s) status = %s" % (fetchURL, success, status))
                 self.tracker.item_complete(fetchURL, success)
             else:
                 LOG.info("Skipping item_complete for %s" % (itemInfo))
