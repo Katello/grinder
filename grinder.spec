@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.124
+Version: 0.0.125
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Nov 01 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.125-1
+- changing the parse metadata to be a plain list to support same checksum
+  different filename scenario (pkilambi@redhat.com)
+
 * Tue Nov 01 2011 John Matthews <jmatthews@redhat.com> 0.0.124-1
 - Update progress tracking to account for when actual file size is different
   than expected (jmatthews@redhat.com)
