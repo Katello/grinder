@@ -52,12 +52,12 @@ def parseCSV(filepath):
 
 def parseManifest(manifest_file_path):
     filelist = parseCSV(manifest_file_path)
-    file_info = {}
+    file_info = []
     for finfo in filelist:
         if isinstance(finfo, list) and len(finfo) == 3:
             #default to sha256
             filename, checksum, size = finfo
-            file_info[checksum] = dict(filename=filename, size=size)
+            file_info.append(dict(filename=filename, checksum=checksum, size=size))
         else:
             LOG.error("Invalid csv line [%s]; skipping..")
             continue

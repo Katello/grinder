@@ -92,17 +92,17 @@ class FileGrinder(object):
             file_info = parseManifest(file_manifest_path)
         else:
             LOG.info("File Metadata Not Found at url %s" % self.repo_url)
-        for hash, fileinfo in file_info.items():
+        for fileinfo in file_info:
             info = {}
             info['downloadurl'] = self.repo_url + '/' + fileinfo['filename']
             info['fileName']    = os.path.basename(fileinfo['filename'])
             info['savepath']    = file_path #+ '/' + os.path.dirname(info['filename'])
             info['checksumtype'] = 'sha256'
-            info['checksum'] = hash
+            info['checksum'] = fileinfo['checksum']
             info['size']        = int(fileinfo['size'])
             if self.filepath:
                 info['pkgpath']  = "%s/%s/%s/%s/" % (self.filepath, os.path.basename(fileinfo['filename'])[:3], \
-                                        os.path.basename(fileinfo['filename']), hash)
+                                        os.path.basename(fileinfo['filename']), fileinfo['checksum'])
             else:
                 info['pkgpath'] = None
             info['item_type'] = BaseFetch.FILE
