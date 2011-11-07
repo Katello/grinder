@@ -104,7 +104,7 @@ class YumRepoGrinder(object):
                         cacert=self.sslcacert, clicert=self.sslclientcert, clikey=self.sslclientkey,
                         proxy_url=self.proxy_url, proxy_port=self.proxy_port,
                         proxy_user=self.proxy_user, proxy_pass=self.proxy_pass,
-                        sslverify=self.sslverify)
+                        sslverify=self.sslverify, skip=self.skip)
         info.setUp()
         if info.rpms:
             self.rpmlist = info.rpms
@@ -135,7 +135,10 @@ class YumRepoGrinder(object):
         # Determine what needs to be downloaded, store in self.downloadinfo
         self.fetchPkgs.processCallback(ProgressReport.DownloadMetadata)
         self.setupYumInfo()
-        self.setupDistroInfo()
+        if not self.skip.has_key('distribution') or self.skip['distribution'] != 1:
+            self.setupDistroInfo()
+        else:
+            LOG.debug("skipping distributions from sync")
         try:
             self.fetchPkgs.addItemList(self.downloadinfo)
             self.fetchPkgs.start()
