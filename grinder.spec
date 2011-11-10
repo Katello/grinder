@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.127
+Version: 0.0.128
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Nov 10 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.128-1
+- 752784 - check treeinfo ddata for empty strings along with config existance
+  (pkilambi@redhat.com)
+
 * Mon Nov 07 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.127-1
 - 751860 - fix for grinder to account for excludes passed in from pulp to skip
   packages or distributions (pkilambi@redhat.com)
