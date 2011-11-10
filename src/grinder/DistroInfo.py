@@ -74,19 +74,13 @@ class DistroInfo(object):
             return
         arch = variant = version = family = None
         if cfgparser.has_section('general'):
-            arch = None
-            if cfgparser.has_option('general', 'arch'):
-                arch = cfgparser.get('general', 'arch')
-            variant = None
-            if cfgparser.has_option('general', 'variant'):
-                variant = cfgparser.get('general', 'variant')
-            version = None
-            if cfgparser.has_option('general', 'version'):
-                version = cfgparser.get('general', 'version')
-            family = None
-            if cfgparser.has_option('general', 'family'):
-                family = cfgparser.get('general', 'family')
-        ks_label = "ks-%s-%s-%s-%s" % (family, variant, version, arch)
+            for field in ['arch', 'variant', 'version', 'family']:
+                if (cfgparser.has_option('general', field) and \
+                    len(cfgparser.get('general', field)) > 0):
+                    vars(self)[field] = cfgparser.get('general', field)
+                else:
+                    vars(self)[field] = None
+        ks_label = "ks-%s-%s-%s-%s" % (self.family, self.variant, self.version, self.arch)
         tree_info = {}
         if cfgparser.has_section('checksums'):
             # This should give us all the kernel/image files
@@ -95,9 +89,9 @@ class DistroInfo(object):
                 tree_info[opt_fn] = (csum_type, csum)
         else:
             #No checksum section, look manually for images
-            if cfgparser.has_section('images-%s' % arch):
+            if cfgparser.has_section('images-%s' % self-arch):
                 try:
-                    imgs = 'images-%s' % arch
+                    imgs = 'images-%s' % self.arch
                     for fn in cfgparser.options(imgs):
                         fileinf = cfgparser.get(imgs, fn)
                         tree_info[fileinf] = (None, None)
@@ -133,3 +127,5 @@ class DistroInfo(object):
             LOG.info("creating symlink from [%s] to [%s]" % (tree_distro_location, tree_repo_location))
             os.symlink(tree_distro_location, tree_repo_location)
         return distro_items
+
+        
