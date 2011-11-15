@@ -182,7 +182,7 @@ class BaseFetch(object):
                 relFilePath = GrinderUtils.get_relative_path(filePath, repofilepath)
                 LOG.info("Symlink missing in repo directory. Creating link %s to %s" % (repofilepath, relFilePath))
                 if not os.path.islink(repofilepath):
-                    os.symlink(relFilePath, repofilepath)
+                    self.makeSafeSymlink(relFilePath, repofilepath)
             return (BaseFetch.STATUS_NOOP,None)
 
         # Acquire a write lock so no other process duplicates the effort
