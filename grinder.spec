@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.128
+Version: 0.0.129
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Nov 16 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.129-1
+- changing repofile path link to use new method for symlinks
+  (pkilambi@redhat.com)
+- 753805 - handle symlink exists exception when multiple concurrent processes
+  try to create same link (pkilambi@redhat.com)
+
 * Thu Nov 10 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.128-1
 - 752784 - check treeinfo ddata for empty strings along with config existance
   (pkilambi@redhat.com)
