@@ -89,7 +89,7 @@ class DistroInfo(object):
                 tree_info[opt_fn] = (csum_type, csum)
         else:
             #No checksum section, look manually for images
-            if cfgparser.has_section('images-%s' % self-arch):
+            if cfgparser.has_section('images-%s' % self.arch):
                 try:
                     imgs = 'images-%s' % self.arch
                     for fn in cfgparser.options(imgs):
