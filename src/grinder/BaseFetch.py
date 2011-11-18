@@ -102,6 +102,20 @@ class BaseFetch(object):
                 LOG.debug("%s" % (tb_info))
                 LOG.critical(e)
                 raise e
+    
+    def makeSafeSymlink(self, src_path, dst_path):
+        try:
+            if os.path.islink(dst_path):
+                os.unlink(dst_path)
+            os.symlink(src_path, dst_path)
+        except OSError, e:
+            # Another thread may have created the symlink since we checked,
+            # if that's the case we'll see errno=17, so ignore that exception
+            if e.errno != 17:
+                tb_info = traceback.format_exc()
+                LOG.debug("%s" % (tb_info))
+                LOG.critical(e)
+                raise e
 
     def update_bytes_transferred(self, fetchURL, download_total, downloaded):
         # Intended to be invoked on parent, not in ActiveObject Child
@@ -168,7 +182,7 @@ class BaseFetch(object):
                 relFilePath = GrinderUtils.get_relative_path(filePath, repofilepath)
                 LOG.info("Symlink missing in repo directory. Creating link %s to %s" % (repofilepath, relFilePath))
                 if not os.path.islink(repofilepath):
-                    os.symlink(relFilePath, repofilepath)
+                    self.makeSafeSymlink(relFilePath, repofilepath)
             return (BaseFetch.STATUS_NOOP,None)
 
         # Acquire a write lock so no other process duplicates the effort
@@ -290,9 +304,7 @@ class BaseFetch(object):
             if packages_location and os.path.exists(filePath):
                 relFilePath = GrinderUtils.get_relative_path(filePath, repofilepath)
                 LOG.info("Create a link in repo directory for the package at %s to %s" % (repofilepath, relFilePath))
-                if os.path.islink(repofilepath):
-                    os.unlink(repofilepath)
-                os.symlink(relFilePath, repofilepath)
+                self.makeSafeSymlink(relFilePath, repofilepath)
             grinder_write_locker.release()
             LOG.debug("Successfully Fetched Package - [%s]" % filePath)
             return (vstatus, None)
