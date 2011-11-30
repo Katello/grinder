@@ -181,7 +181,7 @@ class YumRepoGrinder(object):
         dpkgs = []
         if self.rpmlist:
             for pkg in self.rpmlist:
-                dpkgs.append(os.path.join(self.repo_dir, pkg['relativepath']))
+                dpkgs.append(os.path.join(self.repo_dir, os.path.dirname(pkg['relativepath']), pkg['fileName']))
         if os.path.exists(self.repo_dir):
             for root, dirs, files in os.walk(self.repo_dir):
                 for f in files:
