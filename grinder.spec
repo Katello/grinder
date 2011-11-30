@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.130
+Version: 0.0.131
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -55,6 +55,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Nov 30 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.131-1
+- 753940 - fix purge orphaned logic to use the actual file name written on
+  filesystem (pkilambi@redhat.com)
+
 * Fri Nov 18 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.130-1
 - fixing typo (pkilambi@redhat.com)
 
