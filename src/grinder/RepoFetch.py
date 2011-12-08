@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright (c) 2011 Red Hat, Inc.
 #
@@ -125,6 +124,8 @@ class YumRepoGrinder(object):
                  (self.repo_label, self.repo_url, basepath, verify_options))
         startTime = time.time()
         self.repo_dir = os.path.join(basepath, self.repo_label)
+        LOG.info("%s, %s, Calling RepoFetch with: cacert=<%s>, clicert=<%s>, clikey=<%s>, proxy_url=<%s>, proxy_port=<%s>, proxy_user=<%s>, proxy_pass=<%s>, sslverify=<%s>, max_speed=<%s>, verify_options=<%s>" % \
+            (self.repo_label, self.repo_url, self.sslcacert, self.sslclientcert, self.sslclientkey, self.proxy_url, self.proxy_port, self.proxy_user, self.proxy_pass, self.sslverify, self.max_speed, verify_options))
         self.repoFetch = RepoFetch(cacert=self.sslcacert, clicert=self.sslclientcert, clikey=self.sslclientkey, \
                     proxy_url=self.proxy_url, proxy_port=self.proxy_port,
                     proxy_user=self.proxy_user, proxy_pass=self.proxy_pass,
@@ -155,7 +156,7 @@ class YumRepoGrinder(object):
                     self.fetchPkgs.processCallback(ProgressReport.PurgeOrphanedPackages)
                     self.purgeOrphanPackages()
             endTime = time.time()
-            LOG.info("Processed <%s> items in [%d] seconds. Report: %s" % (len(self.downloadinfo), \
+            LOG.info("Processed <%s>,<%s> with <%s> items in [%d] seconds. Report: %s" % (self.repo_label, self.repo_url, len(self.downloadinfo), \
                   (endTime - startTime), report))
             return report
         finally:

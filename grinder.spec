@@ -7,8 +7,8 @@ Summary: A tool for synchronizing repositories and their contents
 
 Group: Development/Tools
 License: GPLv2
-URL: http://github.com/mccun934/grinder
-Source0: http://mmccune.fedorapeople.org/grinder/grinder-%{version}.tar.gz
+URL: http://git.fedorahosted.org/git/?p=grinder.git
+Source0: https://fedorahosted.org/releases/g/r/%{name}/%{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch: noarch
@@ -26,7 +26,7 @@ Requires: curl => 7.19.7
 
 
 %description
-A tool for synching content from the Red Hat Network.
+A tool for syncing content from the Red Hat Network.
 
 %prep
 %setup -q -n grinder-%{version}
