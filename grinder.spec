@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.131
+Version: 0.0.132
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -58,6 +58,15 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Dec 12 2011 John Matthews <jmatthews@redhat.com> 0.0.132-1
+- Update man page (jmatthews@redhat.com)
+- Rpmlint error fix to move python-hashlib from general requires to only
+  required in el6 (jmatthews@redhat.com)
+- Adding a makefile to handle scp'ing src tarball and spec to fedorahosted for
+  each build (jmatthews@redhat.com)
+- Removing proxy_password from log output (jmatthews@redhat.com)
+- rpmlint update and added more logging output (jmatthews@redhat.com)
+
 * Wed Nov 30 2011 Pradeep Kilambi <pkilambi@redhat.com> 0.0.131-1
 - 753940 - fix purge orphaned logic to use the actual file name written on
   filesystem (pkilambi@redhat.com)
