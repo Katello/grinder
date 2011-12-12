@@ -12,16 +12,16 @@ Source0: https://fedorahosted.org/releases/g/r/%{name}/%{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch: noarch
-BuildRequires: python-setuptools
-Requires:      createrepo, python >= 2.4
-Requires:      PyYAML
-Requires:      python-pycurl
-Requires:      python-hashlib
+BuildRequires:  python-setuptools
+Requires:       createrepo, python >= 2.4
+Requires:       PyYAML
+Requires:       python-pycurl
 %if 0%{?rhel} == 6
 # RHEL-6, 
 # Require updated nss/curl for BZ: https://bugzilla.redhat.com/show_bug.cgi?id=710455
-Requires: nss >= 3.12.9
-Requires: curl => 7.19.7
+Requires:       nss >= 3.12.9
+Requires:       curl => 7.19.7
+Requires:       python-hashlib
 %endif
 
 
@@ -29,7 +29,7 @@ Requires: curl => 7.19.7
 A tool for syncing content from the Red Hat Network.
 
 %prep
-%setup -q -n grinder-%{version}
+%setup -q 
 
 
 %build
