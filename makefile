@@ -26,13 +26,10 @@ release : srpm
 	scp $(SPEC) $(FEDORAHOSTEDGRINDER)
 
 srpm	:
-	rm -rf $(TITODIR)
 	tito build --srpm
 
 
 clean :
-	rm -rf src/dist
-	rm -rf src/build
-	rm -rf src/$(PKG).egg-info
+	rm -rf $(TITODIR)
 
 .PHONY : clean

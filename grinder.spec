@@ -40,18 +40,21 @@ A tool for syncing content from the Red Hat Network.
 rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
 rm -f $RPM_BUILD_ROOT%{python_sitelib}/*egg-info/requires.txt
+mkdir -p $RPM_BUILD_ROOT%{_mandir}/man8/
+cp man/grinder.8 $RPM_BUILD_ROOT%{_mandir}/man8/grinder.8
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%doc README COPYING
+%doc README COPYING LICENSE
 %{_bindir}/grinder
 %dir %{python_sitelib}/grinder
 %{python_sitelib}/grinder/*
 %{python_sitelib}/grinder-*.egg-info
 %config(noreplace) %{_sysconfdir}/grinder/grinder.yml
+%{_mandir}/man8/grinder.8.gz
 
 
 %changelog
