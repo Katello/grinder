@@ -279,10 +279,10 @@ class BaseFetch(object):
                 grinder_write_locker.release()
                 cleanup(filePath)
                 return (BaseFetch.STATUS_UNAUTHORIZED, "HTTP status code of %s received for %s" % (status, fetchURL))
-            if status != 200:
+            if status not in (200, 206):
                 if retryTimes > 0:
                     retryTimes -= 1
-                    LOG.warn("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
+                    LOG.warn("Retrying fetch of: %s with %s retry attempts left. HTTP status was %s" % (fileName, retryTimes, status))
                     cleanup(filePath)
                     return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype,
                                       checksum , headers, retryTimes, packages_location)
@@ -296,7 +296,7 @@ class BaseFetch(object):
                 # Incase of a network glitch or issue with RHN, retry the rpm fetch
                 #
                 retryTimes -= 1
-                LOG.error("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
+                LOG.error("Retrying fetch of: %s with %s retry attempts left.  VerifyStatus was %s" % (fileName, retryTimes, vstatus))
                 cleanup(filePath)
                 return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                   checksum, headers, retryTimes, packages_location)
