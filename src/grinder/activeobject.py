@@ -204,9 +204,13 @@ class ActiveObject:
         p = self.__child
         self.__child = None
         kill(p.pid)
-        p.stdin.close()
-        p.stdout.close()
-        p.wait()
+        self.__lock()
+        try:
+            p.stdin.close()
+            p.stdout.close()
+            p.wait()
+        finally:
+            self.__unlock()
 
     def __lock(self):
         """
@@ -225,8 +229,9 @@ class ActiveObject:
         Method invocation.
         An IOError indictes a broken pipe(s) between the parent and
         child process.  This usually indicates that the child has terminated.
-        For robustness, we respawn the child and try again.  An EOFError and a
-        __child = None, indicates the child was killed through the parent __kill().
+        For robustness, we respawn the child and try again.  An EOFError|ValueError
+        and a __child = None, indicates the child was killed through the
+        parent __kill().
         @param args: The argument list.
         @type args: list
         @param kwargs: The kwargs argument dict.
@@ -236,15 +241,15 @@ class ActiveObject:
         while True:
             try:
                 return self.__rmi(method.name, args, kwargs)
-            except EOFError, e:
+            except (EOFError, ValueError):
                 if not self.__child:
-                    break # aborted
-            except IOError, e:
+                    break # killed/aborted
+            except IOError:
                 if retry:
                     self.__respawn()
                     retry -= 1
                 else:
-                    raise e
+                    raise
     
     def __call__(self, method, *args, **kwargs):
         """
