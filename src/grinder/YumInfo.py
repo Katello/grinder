@@ -43,7 +43,7 @@ class YumMetadataObj(object):
                  mirrorlist=None,
                  proxy_url=None, proxy_port=None,
                  proxy_user=None, proxy_pass=None,
-                 sslverify=1):
+                 sslverify=1, tmp_path=None):
         self.repo = None
         self.repo_label = repo_label
         self.repo_url = repo_url.encode('ascii', 'ignore')
@@ -58,6 +58,7 @@ class YumMetadataObj(object):
         self.proxy_user = proxy_user
         self.proxy_pass = proxy_pass
         self.sslverify  = sslverify
+        self.tmp_path = tmp_path
 
     def getDownloadItems(self, repo_dir="./", packages_location=None,
                          skip=None, newest=False, remove_old=False, numOldPackages=None):
@@ -86,6 +87,8 @@ class YumMetadataObj(object):
         """
         download_items = {}
         try:
+            if self.tmp_path:
+                TmpDir.ROOT = os.path.join(self.tmp_path, "grinder")
             TmpDir.clean()
             tmpdir = TmpDir()
             tmpdir.create(self.repo_label)
@@ -291,7 +294,7 @@ class YumInfo(object):
                 proxy_url=None, proxy_port=None, proxy_user=None,
                 proxy_pass=None, sslverify=1,
                 remove_old=False, numOldPackages=2, skip=None, max_speed=None,
-                purge_orphaned=True, distro_location=None):
+                purge_orphaned=True, distro_location=None, tmp_path=None):
         self.rpms = []
         self.drpms = []
         self.repo_label = repo_label
@@ -320,6 +323,7 @@ class YumInfo(object):
         self.purge_orphaned = purge_orphaned
         self.stopped = False
         self.distropath = distro_location
+        self.tmp_path = tmp_path
 
     def setUp(self):
         yum_metadata_obj = YumMetadataObj(repo_label=self.repo_label, repo_url=self.repo_url,
@@ -327,7 +331,7 @@ class YumInfo(object):
                                           cacert=self.sslcacert, clicert=self.sslclientcert, clikey=self.sslclientkey,
                                           proxy_url=self.proxy_url, proxy_port=self.proxy_port,
                                           proxy_user=self.proxy_user, proxy_pass=self.proxy_pass,
-                                          sslverify=self.sslverify)
+                                          sslverify=self.sslverify, tmp_path=self.tmp_path)
         yumAO = None
         try:
             yumAO = ActiveObject(yum_metadata_obj)

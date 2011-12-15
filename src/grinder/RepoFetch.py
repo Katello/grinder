@@ -60,7 +60,7 @@ class YumRepoGrinder(object):
                        proxy_url=None, proxy_port=None, proxy_user=None, \
                        proxy_pass=None, sslverify=1, packages_location=None, \
                        remove_old=False, numOldPackages=2, skip=None, max_speed=None, \
-                       purge_orphaned=True, distro_location=None):
+                       purge_orphaned=True, distro_location=None, tmp_path=None):
         self.repo_label = repo_label
         self.repo_url = repo_url
         self.repo_dir = None
@@ -95,6 +95,7 @@ class YumRepoGrinder(object):
         self.distropath = distro_location
         self.rpmlist = []
         self.drpmlist = []
+        self.tmp_path = tmp_path
 
     def setupYumInfo(self):
         info = YumInfo(repo_label=self.repo_label, repo_url=self.repo_url, mirrors = self.mirrors,
@@ -103,7 +104,7 @@ class YumRepoGrinder(object):
                         cacert=self.sslcacert, clicert=self.sslclientcert, clikey=self.sslclientkey,
                         proxy_url=self.proxy_url, proxy_port=self.proxy_port,
                         proxy_user=self.proxy_user, proxy_pass=self.proxy_pass,
-                        sslverify=self.sslverify, skip=self.skip)
+                        sslverify=self.sslverify, skip=self.skip, tmp_path=self.tmp_path)
         info.setUp()
         if info.rpms:
             self.rpmlist = info.rpms
