@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.132
+Version: 0.0.133
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -58,6 +58,18 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Dec 15 2011 John Matthews <jmatthews@redhat.com> 0.0.133-1
+- 754787 - Disruption in Internet Connectivity leave a large number of sleeping
+  grinder processes (jmatthews@redhat.com)
+- 765930 - ProgressTracker: Issue when re-downloading a failed file, "Error
+  Negative delat_bytes" (jmatthews@redhat.com)
+- Allow 206 as successful status, fix for resuming a partial download
+  (jmatthews@redhat.com)
+- 767261 - better handling of RMI killed/aborted. (jortel@redhat.com)
+- 752288 - Progress Reporting jumps from 99% to 88% when syncing with
+  distribution files present Moved distro items to front of queue so size
+  adjustment happens early in the sync progress. (jmatthews@redhat.com)
+
 * Mon Dec 12 2011 John Matthews <jmatthews@redhat.com> 0.0.132-1
 - Update man page (jmatthews@redhat.com)
 - Rpmlint error fix to move python-hashlib from general requires to only
