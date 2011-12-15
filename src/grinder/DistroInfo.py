@@ -31,6 +31,20 @@ class DistroInfo(object):
         self.distropath = distropath
 
     def prepareTrees(self, fetcher):
+        fetcherAO = ActiveObject(fetcher)
+        try:
+            return self.__prepareTrees(fetcherAO)
+        finally:
+            #Note: We want to explicitly kill the child activeobject
+            # so will use abort() on activeobject's Method class
+            fetcherAO.dummy_method.abort()
+            # We were seeing the invocation of __del__() on activeobject
+            # being delayed, hence child processes weren't dying when they should.
+            # therefore we added the explicit abort()
+            del fetcherAO
+            fetchAO = None
+
+    def __prepareTrees(self, fetcherAO):
         """
         @param fetcher instance of a BaseFetch instance capable of retrieving .treeinfo/treeinfo metadata
         @type fetcher: Instance of grinder.BaseFetch.BaseFetch
@@ -38,7 +52,6 @@ class DistroInfo(object):
         @return List of dicts representing distribution tree files to fetch
         """
         distro_items = []
-        fetcherAO = ActiveObject(fetcher)
         LOG.info("Preparing to fetch any available trees..")
         # In certain cases, treeinfo is not a hidden file. Try if one fails..
         for treeinfo in ['.treeinfo', 'treeinfo']:

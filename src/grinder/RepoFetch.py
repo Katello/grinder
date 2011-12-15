@@ -135,12 +135,12 @@ class YumRepoGrinder(object):
         self.fetchPkgs = ParallelFetch(self.repoFetch, self.numThreads, callback=callback)
         # Determine what needs to be downloaded, store in self.downloadinfo
         self.fetchPkgs.processCallback(ProgressReport.DownloadMetadata)
-        if not self.skip.has_key('distribution') or self.skip['distribution'] != 1:
-            self.setupDistroInfo()
-        else:
-            LOG.debug("skipping distributions from sync")
-        self.setupYumInfo()
         try:
+            if not self.skip.has_key('distribution') or self.skip['distribution'] != 1:
+                self.setupDistroInfo()
+            else:
+                LOG.debug("skipping distributions from sync")
+            self.setupYumInfo()
             self.fetchPkgs.addItemList(self.downloadinfo)
             self.fetchPkgs.start()
             report = self.fetchPkgs.waitForFinish()
