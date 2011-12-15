@@ -124,10 +124,11 @@ class ProgressTracker(object):
             diff_in_size = size - item["total_size_bytes"]
             LOG.warning("Modifying size information for <%s>. original size = <%s>, new size = <%s>, diff_in_size = <%s>" % (fetchURL, item["total_size_bytes"], size, diff_in_size))
             item_type = item["item_type"]
-            if not self.type_info.has_key(item_type):
+            if self.type_info.has_key(item_type):
+                LOG.warning("%s changing tracker for %s total_size_bytes from %s to %s" % (fetchURL, item_type,
+                    self.type_info[item_type]["total_size_bytes"], self.type_info[item_type]["total_size_bytes"] + diff_in_size))
                 self.type_info[item_type]["total_size_bytes"] += diff_in_size
                 self.type_info[item_type]["size_left"] += diff_in_size
-
             self.items[fetchURL]["total_size_bytes"] = size
             self.items[fetchURL]["remaining_bytes"] += diff_in_size
 
@@ -220,3 +221,31 @@ class ProgressTracker(object):
             self.callback(progress)
 
 
+    def reset_progress(self, fetchURL):
+        """
+        @param fetchURL url of the item, must be unique against all known items being downloaded
+        @type fetchURL: str
+        """
+        self.lock.acquire()
+        try:
+            if not self.items.has_key(fetchURL):
+                return
+            item = self.items[fetchURL]
+            item_type = item["item_type"]
+            LOG.warning("Resetting progress for <%s>" % (fetchURL))
+            # Reset total byte counter
+            # Remove prev remaining, then add in total size
+            self.remaining_bytes -= item["remaining_bytes"]
+            self.remaining_bytes += item["total_size_bytes"]
+            # Reset bytes counter for item_type, example 'rpms', 'tree_files', etc
+            if self.type_info.has_key(item_type):
+                self.type_info[item_type]["size_left"] -= item["remaining_bytes"]
+                self.type_info[item_type]["size_left"] += item["total_size_bytes"]
+            # Reset bytes counter for actual item
+            self.items[fetchURL]["remaining_bytes"] = item["total_size_bytes"]
+        finally:
+            self.lock.release()
+
+        if self.callback:
+            progress = self.get_progress()
+            self.callback(progress)

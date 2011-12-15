@@ -116,6 +116,12 @@ class BaseFetch(object):
                 LOG.critical(e)
                 raise e
 
+    def reset_bytes_transferred(self, fetchURL):
+        # Intended to be invoked on parent, not in ActiveObject Child
+        if hasattr(self, "tracker"):
+            #LOG.debug("self=<%s>, fetchURL = %s, download_total = %s, downloaded = %s" % (self, fetchURL, download_total, downloaded))
+            self.tracker.reset_progress(fetchURL)
+
     def update_bytes_transferred(self, fetchURL, download_total, downloaded):
         # Intended to be invoked on parent, not in ActiveObject Child
         if hasattr(self, "tracker"):
@@ -284,6 +290,7 @@ class BaseFetch(object):
                     retryTimes -= 1
                     LOG.warn("Retrying fetch of: %s with %s retry attempts left. HTTP status was %s" % (fileName, retryTimes, status))
                     cleanup(filePath)
+                    self.reset_bytes_transferred(fetchURL)
                     return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype,
                                       checksum , headers, retryTimes, packages_location)
                 grinder_write_locker.release()
@@ -298,6 +305,7 @@ class BaseFetch(object):
                 retryTimes -= 1
                 LOG.error("Retrying fetch of: %s with %s retry attempts left.  VerifyStatus was %s" % (fileName, retryTimes, vstatus))
                 cleanup(filePath)
+                self.reset_bytes_transferred(fetchURL)
                 return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                   checksum, headers, retryTimes, packages_location)
             if packages_location and os.path.exists(filePath):
@@ -315,6 +323,7 @@ class BaseFetch(object):
                 retryTimes -= 1
                 #grinder_write_locker.release()
                 LOG.error("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
+                self.reset_bytes_transferred(fetchURL)
                 return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                   checksum, headers, retryTimes, packages_location)
             grinder_write_locker.release()

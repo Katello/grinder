@@ -262,7 +262,7 @@ class WorkerThread(Thread):
         """
         Thread.__init__(self)
         self.pFetch = pFetch
-        self.fetcher = ActiveObject(fetcher, "update_bytes_transferred")
+        self.fetcher = ActiveObject(fetcher, "update_bytes_transferred", "reset_bytes_transferred")
         self._stop = threading.Event()
         self.fetcher_lock = Lock()
 
