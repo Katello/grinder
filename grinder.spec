@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.133
+Version: 0.0.134
 Release: 1%{?dist}
 Summary: A tool for synchronizing repositories and their contents
 
@@ -58,6 +58,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Dec 15 2011 John Matthews <jmatthews@redhat.com> 0.0.134-1
+- 761173 - SELinux related: Move grinder usage of /tmp/grinder to
+  /var/run/grinder (jmatthews@redhat.com)
+
 * Thu Dec 15 2011 John Matthews <jmatthews@redhat.com> 0.0.133-1
 - 754787 - Disruption in Internet Connectivity leave a large number of sleeping
   grinder processes (jmatthews@redhat.com)
