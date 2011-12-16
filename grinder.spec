@@ -1,7 +1,7 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.135
+Version: 0.0.136
 Release: 1%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
@@ -59,6 +59,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Dec 15 2011 John Matthews <jmatthews@redhat.com> 0.0.136-1
+- rpmlint updates (jmatthews@redhat.com)
+
 * Thu Dec 15 2011 John Matthews <jmatthews@redhat.com> 0.0.135-1
 - Update for fedora review (jmatthews@redhat.com)
 
