@@ -1,9 +1,9 @@
-%{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
 Version: 0.0.134
 Release: 1%{?dist}
-Summary: A tool for synchronizing repositories and their contents
+Summary: A tool for synchronizing content such as packages, distributions, and errata from yum repositories.
 
 Group: Development/Tools
 License: GPLv2
@@ -26,7 +26,7 @@ Requires:       python-hashlib
 
 
 %description
-A tool for syncing content from the Red Hat Network.
+A tool for synchronizing content such as packages, distributions, and errata from yum repositories.
 
 %prep
 %setup -q 
