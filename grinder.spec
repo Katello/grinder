@@ -3,7 +3,7 @@
 Name: grinder
 Version: 0.0.135
 Release: 1%{?dist}
-Summary: A tool for synchronizing content such as packages, distributions, and errata from yum repositories.
+Summary: A tool for synchronizing content from yum repositories
 
 Group: Development/Tools
 License: GPLv2
@@ -26,7 +26,8 @@ Requires:       python-hashlib
 
 
 %description
-A tool for synchronizing content such as packages, distributions, and errata from yum repositories.
+A tool for synchronizing content such as packages, distributions, and 
+errata from yum repositories.
 
 %prep
 %setup -q 
