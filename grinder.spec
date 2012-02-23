@@ -1,7 +1,7 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.137
+Version: 0.0.138
 Release: 1%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
@@ -59,6 +59,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Feb 23 2012 John Matthews <jmatthews@redhat.com> 0.0.138-1
+- 
+
 * Thu Feb 23 2012 John Matthews <jmatthews@redhat.com> 0.0.137-1
 - Refactor grinder to support integration with Pulp's generic content approach
   (jmatthews@redhat.com)
