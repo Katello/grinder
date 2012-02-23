@@ -216,7 +216,14 @@ class YumMetadataObj(object):
             info["version"] = pkg.version
             info["arch"] = pkg.arch
             info["release"] = pkg.release
+            info["epoch"] = pkg.epoch
             info["relativepath"] = pkg.relativepath
+            info["vendor"] = pkg.vendor
+            info["license"] = pkg.license
+            info["requires"] = pkg.requires
+            info["provides"] = pkg.provides
+            info["buildhost"] = pkg.buildhost
+            info["description"] = pkg.description
             items.append(info)
         LOG.info("%s packages have been marked to be fetched" % len(items))
         return items

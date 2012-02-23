@@ -38,7 +38,7 @@ class TestYumMetadataParse(unittest.TestCase):
         self.clean()
 
     def test_basic_metadata_parse(self):
-        test_url = "http://repos.fedorapeople.org/repos/pulp/pulp/testing/6Server/i386/"
+        test_url = "http://repos.fedorapeople.org/repos/pulp/pulp/v1/testing/6Server/i386/"
         temp_label = "temp_label"
         temp_dir = tempfile.mkdtemp()
         try:
@@ -49,7 +49,7 @@ class TestYumMetadataParse(unittest.TestCase):
             shutil.rmtree(temp_dir)
 
     def ignore_test_basic_yum_info_parse(self):
-        test_url = "http://repos.fedorapeople.org/repos/pulp/pulp/testing/6Server/i386/"
+        test_url = "http://repos.fedorapeople.org/repos/pulp/pulp/v1/testing/6Server/i386/"
         temp_label = "temp_label"
         yum_info = None
         temp_dir = os.path.join(tempfile.mkdtemp(), temp_label)
