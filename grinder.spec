@@ -1,7 +1,7 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.138
+Version: 0.0.139
 Release: 1%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
@@ -59,6 +59,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Feb 27 2012 John Matthews <jmatthews@redhat.com> 0.0.139-1
+- 797195 - Syncing multiple repos concurrently could cause missing symlinks
+  (jmatthews@redhat.com)
+
 * Thu Feb 23 2012 John Matthews <jmatthews@redhat.com> 0.0.138-1
 - 
 
