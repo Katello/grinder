@@ -201,3 +201,51 @@ class TestYumSync(unittest.TestCase):
         finally:
             shutil.rmtree(temp_dir_a)
             shutil.rmtree(temp_dir_b)
+
+    def test_concurrent_sync_same_package(self):
+        class SyncThread(Thread):
+            def __init__(self, thread_id, repo_url, pkg_loc, repos_loc):
+                Thread.__init__(self)
+                self.temp_label = "test_concurrent_sync_same_package_%s" % (thread_id)
+                self.repo_url = repo_url
+                self.pkg_loc = pkg_loc
+                self.repos_loc = repos_loc
+                self.max_speed = 1000
+                self.parallel = 1
+                self.sync_report = None
+                self.running = True
+
+            def run(self):
+                try:
+                    self.yum_fetch = RepoFetch.YumRepoGrinder(self.temp_label, self.repo_url, 
+                        parallel=self.parallel, max_speed=self.max_speed, packages_location=self.pkg_loc)
+                    self.sync_report = self.yum_fetch.fetchYumRepo(self.repos_loc)
+                finally:
+                    self.running = False
+
+        test_url = "http://jmatthews.fedorapeople.org/test_single_package"
+        temp_dir = tempfile.mkdtemp()
+        pkg_loc = tempfile.mkdtemp()
+        try:
+            sync_thread_A = SyncThread("A", test_url, pkg_loc, temp_dir)
+            sync_thread_B = SyncThread("B", test_url, pkg_loc, temp_dir)
+            sync_thread_A.start()
+            sync_thread_B.start()
+            while sync_thread_A.running or sync_thread_B.running:
+                # Wait for threads to finish
+                time.sleep(1)
+            self.assertEquals(sync_thread_A.sync_report.errors, 0)
+            self.assertEquals(sync_thread_B.sync_report.errors, 0)
+            # Verify that the rpm has been downloaded to the expected package location
+            test_pkg_path = os.path.join(pkg_loc, "pulp-large_1mb_test-packageA/0.1.1/1.fc14/noarch/a23/pulp-large_1mb_test-packageA-0.1.1-1.fc14.noarch.rpm")
+            print test_pkg_path
+            self.assertTrue(os.path.exists(test_pkg_path))
+            # Verify that the number of successes matches the number of symlinks
+            sym_link_a = os.path.join(temp_dir, sync_thread_A.temp_label, "pulp-large_1mb_test-packageA-0.1.1-1.fc14.noarch.rpm")
+            sym_link_b = os.path.join(temp_dir, sync_thread_B.temp_label, "pulp-large_1mb_test-packageA-0.1.1-1.fc14.noarch.rpm")
+            self.assertTrue(os.path.exists(sym_link_a))
+            self.assertTrue(os.path.exists(sym_link_b))
+        finally:
+            shutil.rmtree(temp_dir)
+            shutil.rmtree(pkg_loc)
+

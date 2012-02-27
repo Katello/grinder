@@ -35,6 +35,7 @@ class BaseFetch(object):
     STATUS_ERROR = 'error'
     STATUS_UNAUTHORIZED = "unauthorized"
     STATUS_SKIP_VALIDATE = "skip_validate"
+    STATUS_REQUEUE = "requeue"
 
     RPM = 'rpm'
     DELTA_RPM = 'delta_rpm'
@@ -200,15 +201,15 @@ class BaseFetch(object):
             # and pid is valid there is another process alive
             # and handling this, exit here.
             LOG.debug("another process is already handling this path [%s] and is alive; no need to process this again " % filePath)
-            return (BaseFetch.STATUS_NOOP,None)
+            return (BaseFetch.STATUS_REQUEUE,None)
         # this means either there is no pid or a pid matching current pid exists(retry case),
         # verify lock and either skip or re-acquire it
         try:
             grinder_write_locker.acquire()
             existing_lock_pid = grinder_write_locker.readlock()
         except:
-            LOG.debug("lock acquired skipping")
-            return (BaseFetch.STATUS_NOOP,None)
+            LOG.debug("Unable to acquire lock.")
+            return (BaseFetch.STATUS_REQUEUE,None)
         if not existing_lock_pid or existing_lock_pid != str(os.getpid()):
             # This means, either we still dont have a lock and hence not safe to proceed or
             # the acquired lock doesnt match current pid, return and let the next process handle it

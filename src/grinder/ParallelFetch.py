@@ -59,10 +59,11 @@ class ParallelFetch(object):
             self.threads.append(wt)
         self.startTime = time.time()
 
-    def addItem(self, item):
+    def addItem(self, item, requeue=False):
         self.toSyncQ.put(item)
-        if item.has_key("item_type") and item.has_key("downloadurl") and item.has_key("size"):
-            self.tracker.add_item(item["downloadurl"], item['size'], item["item_type"])
+        if not requeue:
+            if item.has_key("item_type") and item.has_key("downloadurl") and item.has_key("size"):
+                self.tracker.add_item(item["downloadurl"], item['size'], item["item_type"])
 
     def addItemList(self, items):
         for p in items:
@@ -137,6 +138,10 @@ class ParallelFetch(object):
         LOG.info("%s threads are active. %s items left to be fetched" % (self._running(), (self.toSyncQ.qsize() + self._running())))
         self.statusLock.acquire()
         try:
+            if status == BaseFetch.STATUS_REQUEUE:
+                LOG.info("Requeueing: %s" % (itemInfo))
+                self.addItem(itemInfo, requeue=True)
+                return
             if status in self.syncStatusDict:
                 self.syncStatusDict[status] = self.syncStatusDict[status] + 1
             else:
@@ -295,6 +300,8 @@ class WorkerThread(Thread):
                 if result:
                     status, msg = result
                     self.pFetch.markStatus(itemInfo, status, msg)
+                    if status == BaseFetch.STATUS_REQUEUE:
+                        time.sleep(2)
             except Exception, e:
                 LOG.error("%s" % (traceback.format_exc()))
                 LOG.error(e)
