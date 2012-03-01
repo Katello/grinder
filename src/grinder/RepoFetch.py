@@ -164,6 +164,7 @@ class YumRepoGrinder(object):
         try:
             startTime = time.time()
             self.fetchPkgs.start()
+            self.fetchPkgs.processCallback(ProgressReport.DownloadItems)
             report = self.fetchPkgs.waitForFinish()
             self.finalizeMetadata()
             if not self.skip.has_key('packages') or self.skip['packages'] != 1:
@@ -176,6 +177,11 @@ class YumRepoGrinder(object):
                     LOG.info("Cleaning any orphaned packages..")
                     self.fetchPkgs.processCallback(ProgressReport.PurgeOrphanedPackages)
                     self.purgeOrphanPackages()
+                if self.remove_old:
+                    # Need to re-test remove_old is functioning
+                    # We added the ability to limit the old packages from being downloaded
+                    # I think we need to address the case of existing packages from a prior sync
+                    self.fetchPkgs.processCallback(ProgressReport.RemoveOldPackages)
             endTime = time.time()
             LOG.info("Processed <%s>,<%s> with <%s> items in [%d] seconds. Report: %s" % (self.repo_label, self.repo_url, len(self.downloadinfo),\
                                                                                           (endTime - startTime), report))
