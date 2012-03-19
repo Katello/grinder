@@ -30,8 +30,7 @@ from grinder.RepoFetch import RepoFetch, YumRepoGrinder
 class TestDistributionSync(unittest.TestCase):
 
     def clean(self):
-        #shutil.rmtree(self.temp_dir)
-        pass
+        shutil.rmtree(self.temp_dir)
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
@@ -78,7 +77,6 @@ class TestDistributionSync(unittest.TestCase):
         self.assertEquals(len(distro_tree_files), 3)
     
     def test_sync_of_repo_no_treeinfo(self):
-        print "self.temp_dir = %s" % (self.temp_dir)
         test_url = "http://repos.fedorapeople.org/repos/pulp/pulp/demo_repos/repo_resync_a/"
         temp_label = "test_sync_of_repo_no_treeinfo"
         yum_fetch = YumRepoGrinder(temp_label, test_url, 5)
