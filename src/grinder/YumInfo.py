@@ -202,6 +202,10 @@ class YumMetadataObj(object):
             #urljoin doesnt like epoch in rpm name so using string concat
             info['fileName'] = pkg.name + "-" + pkg.version + "-" + \
                                 pkg.release + "." + pkg.arch + ".rpm"
+            # Adding a 'filename' to make life easier for Pulp v2 client support
+            # keeping 'fileName' to not break Pulp v1
+            info["filename"] = info["fileName"]
+
             info['downloadurl'] = pkg.remote_url or self.repo_url + '/' + pkg.relativepath
             info['savepath'] = self.repo_dir + '/' + os.path.dirname(pkg.relativepath)
             info['checksumtype'], info['checksum'], status = pkg.checksums[0]
