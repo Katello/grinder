@@ -237,7 +237,7 @@ class TestYumSync(unittest.TestCase):
             self.assertEquals(sync_thread_A.sync_report.errors, 0)
             self.assertEquals(sync_thread_B.sync_report.errors, 0)
             # Verify that the rpm has been downloaded to the expected package location
-            test_pkg_path = os.path.join(pkg_loc, "pulp-large_1mb_test-packageA/0.1.1/1.fc14/noarch/a23/pulp-large_1mb_test-packageA-0.1.1-1.fc14.noarch.rpm")
+            test_pkg_path = os.path.join(pkg_loc, "pulp-large_1mb_test-packageA/0.1.1/1.fc14/noarch/a234230b4adac9e1990492b76c706b4d7fcfe8a17fdc959b6672a3447e4f94f6/pulp-large_1mb_test-packageA-0.1.1-1.fc14.noarch.rpm")
             print test_pkg_path
             self.assertTrue(os.path.exists(test_pkg_path))
             # Verify that the number of successes matches the number of symlinks
@@ -246,6 +246,7 @@ class TestYumSync(unittest.TestCase):
             self.assertTrue(os.path.exists(sym_link_a))
             self.assertTrue(os.path.exists(sym_link_b))
         finally:
-            shutil.rmtree(temp_dir)
-            shutil.rmtree(pkg_loc)
+            #shutil.rmtree(temp_dir)
+            #shutil.rmtree(pkg_loc)
+            pass
 
