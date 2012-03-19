@@ -130,7 +130,7 @@ class BaseFetch(object):
             self.tracker.update_progress_download(fetchURL, download_total, downloaded)
 
     def fetch(self, fileName, fetchURL, savePath, itemSize=None, hashtype=None, checksum=None, 
-             headers=None, retryTimes=2, packages_location=None, verify_options=None):
+             headers=None, retryTimes=2, packages_location=None, verify_options=None, probing=None):
         """
         @param fileName file name
         @type fileName str
@@ -162,8 +162,12 @@ class BaseFetch(object):
         @param verify_options optional parameter to limit the verify operations run on existing files
         @type verify_options dict{option=value}, where option is one of "size", "checksum" and value is True/False
 
+        @param probing if True will be silent and not log warnings/errors, useful when we are probing to see if a file exists
+        @type probing bool
+
         @return true/false if item was fetched successfully
         @rtype bool
+
         """
         if packages_location is not None:
             # this option is to store packages in a central location
@@ -267,7 +271,8 @@ class BaseFetch(object):
                 curl.setopt(pycurl.RESUME_FROM, wf.offset)
             curl.setopt(curl.WRITEFUNCTION, wf.callback)
             curl.setopt(curl.FOLLOWLOCATION, 1)
-            LOG.info("Fetching %s bytes: %s from %s" % (itemSize or "Unknown", fileName, fetchURL))
+            if not probing:
+                LOG.info("Fetching %s bytes: %s from %s" % (itemSize or "Unknown", fileName, fetchURL))
             curl.perform()
             status = curl.getinfo(curl.HTTP_CODE)
             curl.close()
@@ -286,7 +291,9 @@ class BaseFetch(object):
                 grinder_write_locker.release()
                 cleanup(filePath)
                 return (BaseFetch.STATUS_UNAUTHORIZED, "HTTP status code of %s received for %s" % (status, fetchURL))
-            if status not in (200, 206):
+            if status not in (0, 200, 206, 226):
+                # 0 - for local syncs
+                # 200 - is typical http return code, yet 206 and 226 have also been seen to be returned and valid
                 if retryTimes > 0:
                     retryTimes -= 1
                     LOG.warn("Retrying fetch of: %s with %s retry attempts left. HTTP status was %s" % (fileName, retryTimes, status))
@@ -317,6 +324,11 @@ class BaseFetch(object):
             LOG.debug("Successfully Fetched Package - [%s]" % filePath)
             return (vstatus, None)
         except Exception, e:
+            if probing:
+                LOG.info("Probed for %s and determined it is missing." % (fetchURL))
+                grinder_write_locker.release()
+                cleanup(filePath)
+                return BaseFetch.STATUS_ERROR, None
             tb_info = traceback.format_exc()
             LOG.debug("%s" % (tb_info))
             LOG.error("Caught exception<%s> in fetch(%s, %s)" % (e, fileName, fetchURL))
@@ -344,6 +356,7 @@ def get_temp_file_name(file_name):
     return "%s.%s" % (file_name, "part")
 
 def cleanup(filepath):
+    LOG.info("Cleanup %s" % (filepath))
     if os.path.exists(filepath):
         os.unlink(filepath)
 

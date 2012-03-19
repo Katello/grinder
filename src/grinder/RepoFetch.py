@@ -40,7 +40,7 @@ class RepoFetch(BaseFetch):
     def stop(self, state=True):
         self.stopped = state
 
-    def fetchItem(self, info):
+    def fetchItem(self, info, probing=None):
         return self.fetch(info['fileName'], 
                           str(info['downloadurl']), 
                           info['savepath'],
@@ -48,7 +48,7 @@ class RepoFetch(BaseFetch):
                           hashtype=info['checksumtype'], 
                           checksum=info['checksum'],
                           packages_location=info['pkgpath'] or None,
-                          verify_options=self.verify_options)
+                          verify_options=self.verify_options, probing=probing)
 
 
 class YumRepoGrinder(object):

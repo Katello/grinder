@@ -11,6 +11,7 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 import os
+import pycurl
 import time
 import logging
 import shutil
@@ -33,7 +34,12 @@ class DistroInfo(object):
     def prepareTrees(self, fetcher):
         fetcherAO = ActiveObject(fetcher)
         try:
-            return self.__prepareTrees(fetcherAO)
+            LOG.info("Checking if distribution info exists in repository: %s" % (self.repo_url))
+            tree_manifest = self.get_tree_manifest(fetcherAO)
+            if not tree_manifest:
+                LOG.info("No distribution tree manifest found.")
+                return []
+            return self.__prepareTrees(tree_manifest)
         finally:
             #Note: We want to explicitly kill the child activeobject
             # so will use abort() on activeobject's Method class
@@ -44,46 +50,27 @@ class DistroInfo(object):
             del fetcherAO
             fetchAO = None
 
-    def __prepareTrees(self, fetcherAO):
+    def __prepareTrees(self, tree_manifest):
         """
         @param fetcher instance of a BaseFetch instance capable of retrieving .treeinfo/treeinfo metadata
         @type fetcher: Instance of grinder.BaseFetch.BaseFetch
 
         @return List of dicts representing distribution tree files to fetch
         """
-        distro_items = []
-        LOG.info("Preparing to fetch any available trees..")
-        # In certain cases, treeinfo is not a hidden file. Try if one fails..
-        for treeinfo in ['.treeinfo', 'treeinfo']:
-            tree_manifest = treeinfo
-            treeinfo_url = self.repo_url + '/' + tree_manifest
-            treeinfo_name   = tree_manifest
-            treeinfo_path   = self.repo_dir
-            info = {
-                    'downloadurl'   : treeinfo_url,
-                    'fileName'      : treeinfo_name,
-                    'savepath'      : treeinfo_path,
-                    'checksumtype'  :  None,
-                    'checksum'      : None,
-                    'size'          : None,
-                    'pkgpath'       : None,
-                    }
-            # Will fetch tree metadata through ActiveObject
-            # This avoids a timing issue seen with NSS and multiple threads
-            fetcherAO.fetchItem(info)
-            if os.path.exists(os.path.join(treeinfo_path, tree_manifest)):
-                LOG.info("Tree info fetched from %s" % treeinfo_url)
-                break
-        
+        tree_info_file = os.path.join(self.repo_dir, tree_manifest)
+        if not os.path.exists(tree_info_file):
+            LOG.warning("Unable to find %s, will skip distribution synchronization." % (tree_info_file))
+            return []
+        LOG.info("Preparing to fetch any available distribution trees..")
+        treecfg = open(tree_info_file)
         cfgparser = ConfigParser.ConfigParser()
         cfgparser.optionxform = str # prevent cfgparser to converts data to lowercase.
         try:
-            treecfg = open(os.path.join(treeinfo_path, tree_manifest))
             cfgparser.readfp(treecfg)
         except Exception, e:
             LOG.info("Unable to read the tree info config.")
             LOG.info(e)
-            return
+            return []
         arch = variant = version = family = None
         if cfgparser.has_section('general'):
             for field in ['arch', 'variant', 'version', 'family']:
@@ -114,8 +101,10 @@ class DistroInfo(object):
                     tree_info[mainimage] = (None, None)
                 except ConfigParser.NoOptionError, e:
                     LOG.info("Invalid treeinfo: %s" % str(e))
-                    return
+                    return []
         treecfg.close()
+        distro_items = []
+        treeinfo_path = self.repo_dir
         for relpath, hashinfo in tree_info.items():
             info = {}
             info['downloadurl'] = self.repo_url + '/' + relpath
@@ -140,4 +129,30 @@ class DistroInfo(object):
             os.symlink(tree_distro_location, tree_repo_location)
         return distro_items
 
-        
+    def get_tree_manifest(self, fetcherAO):
+        # In certain cases, treeinfo is not a hidden file. Try if one fails..
+        found = False
+        tree_manifest = None
+        treeinfo_path   = self.repo_dir
+        for treeinfo in ['.treeinfo', 'treeinfo']:
+            tree_manifest = treeinfo
+            treeinfo_url = self.repo_url + '/' + tree_manifest
+            info = {
+                'downloadurl'   : treeinfo_url,
+                'fileName'      : tree_manifest,
+                'savepath'      : treeinfo_path,
+                'checksumtype'  :  None,
+                'checksum'      : None,
+                'size'          : None,
+                'pkgpath'       : None,
+                }
+            # Will fetch tree metadata through ActiveObject
+            # This avoids a timing issue seen with NSS and multiple threads
+            fetcherAO.fetchItem(info, probing=True)
+            if os.path.exists(os.path.join(treeinfo_path, tree_manifest)):
+                LOG.info("Tree info fetched from %s" % treeinfo_url)
+                found = True
+                break
+        if found:
+            return tree_manifest
+        return None
