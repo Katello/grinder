@@ -212,7 +212,7 @@ class YumMetadataObj(object):
             info['size'] = pkg.size
             if self.pkgpath:
                 info['pkgpath']  = "%s/%s/%s/%s/%s/%s" % (self.pkgpath, pkg.name, pkg.version, \
-                                                          pkg.release, pkg.arch, info['checksum'][:3])
+                                                          pkg.release, pkg.arch, info['checksum'])
             else:
                 info['pkgpath'] = None
             info['item_type'] = BaseFetch.RPM
