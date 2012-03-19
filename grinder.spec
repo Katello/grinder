@@ -1,7 +1,7 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.140
+Version: 0.0.141
 Release: 1%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
@@ -59,6 +59,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Mar 19 2012 John Matthews <jmatthews@redhat.com> 0.0.141-1
+- Fix unit tests to reflect full checksum being used (jmatthews@redhat.com)
+- Unit tests for local sync (jmatthews@redhat.com)
+
 * Mon Mar 19 2012 Pradeep Kilambi <pkilambi@redhat.com> 0.0.140-1
 - Include the full checksum when creating package paths (pkilambi@redhat.com)
 - Added support for local syncs, URLs using file:///  - Refactored Distribution
