@@ -484,7 +484,12 @@ def main():
     addpath(sys.argv[1:])
     logging.getLogger = Logger
     while True:
-        process()
-    
+        try:
+            process()
+        except IOError, ioe:
+            # This is added to silence the exceptions printed when a process ends unexpectedly
+            if ioe.errno == 32:
+                break
+            raise
 if __name__ == '__main__':
     main()
