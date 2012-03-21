@@ -148,7 +148,7 @@ class DistroInfo(object):
                 }
             # Will fetch tree metadata through ActiveObject
             # This avoids a timing issue seen with NSS and multiple threads
-            fetcherAO.fetchItem(info, probing=True)
+            fetcherAO.fetchItem(info, probing=True, force=True)
             if os.path.exists(os.path.join(treeinfo_path, tree_manifest)):
                 LOG.info("Tree info fetched from %s" % treeinfo_url)
                 found = True

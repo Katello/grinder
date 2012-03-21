@@ -130,7 +130,7 @@ class BaseFetch(object):
             self.tracker.update_progress_download(fetchURL, download_total, downloaded)
 
     def fetch(self, fileName, fetchURL, savePath, itemSize=None, hashtype=None, checksum=None, 
-             headers=None, retryTimes=2, packages_location=None, verify_options=None, probing=None):
+             headers=None, retryTimes=2, packages_location=None, verify_options=None, probing=None, force=False):
         """
         @param fileName file name
         @type fileName str
@@ -165,6 +165,9 @@ class BaseFetch(object):
         @param probing if True will be silent and not log warnings/errors, useful when we are probing to see if a file exists
         @type probing bool
 
+        @param force if True will force fetch the download file; use this for downloads that dont have checksum and size info for verification
+        @type force bool
+
         @return true/false if item was fetched successfully
         @rtype bool
 
@@ -186,7 +189,7 @@ class BaseFetch(object):
             self.makeDirSafe(tempDirPath)
 
         if os.path.exists(filePath) and \
-            verifyExisting(filePath, itemSize, hashtype, checksum, verify_options):
+            verifyExisting(filePath, itemSize, hashtype, checksum, verify_options) and not force:
             LOG.debug("%s exists with expected information, no need to fetch." % (filePath))
             if repofilepath is not None and not os.path.exists(repofilepath):
                 relFilePath = GrinderUtils.get_relative_path(filePath, repofilepath)
