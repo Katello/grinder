@@ -308,8 +308,9 @@ class WorkerThread(Thread):
                 errorInfo = {}
                 exctype, value = sys.exc_info()[:2]
                 errorInfo["error_type"] = str(exctype)
-                errorInfo["error"] = str(value)
+                errorInfo["value"] = str(value)
                 errorInfo["traceback"] = traceback.format_exc().splitlines()
+                errorInfo["exception"] = e
                 self.pFetch.markStatus(itemInfo, BaseFetch.STATUS_ERROR, errorInfo)
 
         LOG.info("WorkerThread deleting ActiveObject")

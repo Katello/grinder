@@ -133,6 +133,8 @@ class ActiveObject:
                 return retval
             if code == EXCEPTION:
                 ex = packet[1]
+                if isinstance(ex, Exception):
+                    raise ex
                 raise Exception(ex)
             if code == LOG:
                 lr = packet[1]
@@ -428,9 +430,9 @@ def process():
         kwargs = call[3]
         retval = method(*args, **kwargs)
         state = getstate(object)
-    except:
+    except Exception, e:
         code = EXCEPTION
-        retval = trace()
+        retval = e
     result = (code, retval, state)
     pickle.dump(result, sys.stdout)
     sys.stdout.flush()
