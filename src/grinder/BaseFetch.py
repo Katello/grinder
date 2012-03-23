@@ -297,7 +297,7 @@ class BaseFetch(object):
             if status not in (0, 200, 206, 226):
                 # 0 - for local syncs
                 # 200 - is typical http return code, yet 206 and 226 have also been seen to be returned and valid
-                if retryTimes > 0:
+                if retryTimes > 0 and not fetchURL.startswith("file:"):
                     retryTimes -= 1
                     LOG.warn("Retrying fetch of: %s with %s retry attempts left. HTTP status was %s" % (fileName, retryTimes, status))
                     cleanup(filePath)
@@ -327,15 +327,16 @@ class BaseFetch(object):
             LOG.debug("Successfully Fetched Package - [%s]" % filePath)
             return (vstatus, None)
         except Exception, e:
+            cleanup(tmp_write_file)
+            cleanup(filePath)
             if probing:
                 LOG.info("Probed for %s and determined it is missing." % (fetchURL))
                 grinder_write_locker.release()
-                cleanup(filePath)
                 return BaseFetch.STATUS_ERROR, None
             tb_info = traceback.format_exc()
-            LOG.debug("%s" % (tb_info))
             LOG.error("Caught exception<%s> in fetch(%s, %s)" % (e, fileName, fetchURL))
-            if retryTimes > 0:
+            LOG.error("%s" % (tb_info))
+            if retryTimes > 0 and not fetchURL.startswith("file:"):
                 retryTimes -= 1
                 #grinder_write_locker.release()
                 LOG.error("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
@@ -343,7 +344,6 @@ class BaseFetch(object):
                 return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
                                   checksum, headers, retryTimes, packages_location)
             grinder_write_locker.release()
-            cleanup(filePath)
             raise
 
     def __getstate__(self):

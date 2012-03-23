@@ -153,7 +153,9 @@ class ParallelFetch(object):
                 if not errorInfo and itemInfo.has_key("downloadurl"):
                     errorInfo = "%s on %s" % (status, itemInfo["downloadurl"])
                 self.syncErrorQ.put(itemInfo)
-                self.addErrorDetails(itemInfo, {"error_type":status, "error":errorInfo})
+                # Keeping "error" for backwards compatibility with Pulp V1
+                self.addErrorDetails(itemInfo, {"error_type":status, "value":errorInfo, "error":errorInfo,
+                                                "exception": "", "traceback": ""})
             LOG.debug("%s status updated, %s success %s error" % (itemInfo,
                 self.syncCompleteQ.qsize(), self.syncErrorQ.qsize()))
             if itemInfo.has_key("downloadurl"):
@@ -309,6 +311,8 @@ class WorkerThread(Thread):
                 exctype, value = sys.exc_info()[:2]
                 errorInfo["error_type"] = str(exctype)
                 errorInfo["value"] = str(value)
+                # Keeping "error" for backward compatibility with Pulp v1
+                errorInfo["error"] = str(value)
                 errorInfo["traceback"] = traceback.format_exc().splitlines()
                 errorInfo["exception"] = e
                 self.pFetch.markStatus(itemInfo, BaseFetch.STATUS_ERROR, errorInfo)
