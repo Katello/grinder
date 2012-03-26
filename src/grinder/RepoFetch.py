@@ -122,8 +122,8 @@ class YumRepoGrinder(object):
         @type verify_options: dict{"size":bool,"checksum":bool}
         """
         self.repo_dir = os.path.join(basepath, self.repo_label)
-        LOG.info("%s, %s, Calling RepoFetch with: cacert=<%s>, clicert=<%s>, clikey=<%s>, proxy_url=<%s>, proxy_port=<%s>, proxy_user=<%s>, proxy_pass=<NOT_LOGGED>, sslverify=<%s>, max_speed=<%s>, verify_options=<%s>" %\
-             (self.repo_label, self.repo_url, self.sslcacert, self.sslclientcert, self.sslclientkey, self.proxy_url, self.proxy_port, self.proxy_user, self.sslverify, self.max_speed, verify_options))
+        LOG.info("%s, %s, Calling RepoFetch with: cacert=<%s>, clicert=<%s>, clikey=<%s>, proxy_url=<%s>, proxy_port=<%s>, proxy_user=<%s>, proxy_pass=<NOT_LOGGED>, sslverify=<%s>, max_speed=<%s>, verify_options=<%s>, filter=<%s>" %\
+             (self.repo_label, self.repo_url, self.sslcacert, self.sslclientcert, self.sslclientkey, self.proxy_url, self.proxy_port, self.proxy_user, self.sslverify, self.max_speed, verify_options, self.filter))
 
         self.repoFetch = RepoFetch(cacert=self.sslcacert, clicert=self.sslclientcert, clikey=self.sslclientkey,\
         proxy_url=self.proxy_url, proxy_port=self.proxy_port,

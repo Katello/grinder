@@ -22,10 +22,10 @@ from setuptools import setup, find_packages
 setup(
     name="grinder",
     version='0.0.144',
-    description='A tool for synching content from the Red Hat Network.',
-    author='Mike McCune, John Matthews, Pradeep Kilambi',
-    author_email='mmccune@redhat.com',
-    url='http://github.com/mccun934/grinder',
+    description='A tool for synching RPM based content.',
+    author='Mike McCune, John Matthews, Pradeep Kilambi, Jeff Ortel',
+    author_email='jmatthews@redhat.com',
+    url='http://git.fedorahosted.org/git/?p=grinder.git',
     license='GPLv2+',
 
     package_dir={
