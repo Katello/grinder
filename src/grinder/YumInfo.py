@@ -43,7 +43,7 @@ class YumMetadataObj(object):
                  mirrorlist=None,
                  proxy_url=None, proxy_port=None,
                  proxy_user=None, proxy_pass=None,
-                 sslverify=1, tmp_path=None):
+                 sslverify=1, tmp_path=None, filter=None):
         self.repo = None
         self.repo_label = repo_label
         self.repo_url = repo_url.encode('ascii', 'ignore')
@@ -59,6 +59,7 @@ class YumMetadataObj(object):
         self.proxy_pass = proxy_pass
         self.sslverify  = sslverify
         self.tmp_path = tmp_path
+        self.filter = filter
 
     def getDownloadItems(self, repo_dir="./", packages_location=None,
                          skip=None, newest=False, remove_old=False, numOldPackages=None):
@@ -197,6 +198,8 @@ class YumMetadataObj(object):
         pkglist = self.__getPackageList(newest)
         if remove_old and not newest:
             pkglist = self._prune_package_list(pkglist, numOldPackages)
+        if self.filter:
+            pkglist = self._filter_package_list(pkglist)
         for pkg in pkglist:
             info = {}
             #urljoin doesnt like epoch in rpm name so using string concat
@@ -287,6 +290,22 @@ class YumMetadataObj(object):
         LOG.debug("_prune_package_list() returning %s pruned package list" % (len(pkglist)))
         return pkglist
 
+    def _filter_package_list(self, pkglist):
+        """
+        run pkglist through self.filter
+        pkglist: list of packages as returned from yum's package sack
+        """
+        if pkglist:
+            LOG.debug("YumInfo._filter_package_list(pkglist=<%s packages>)" 
+                      % (len(pkglist)))
+        if not self.filter:
+            LOG.debug("_filter_package_list() called with no filter")
+            return pkglist
+        pkglist_filtered = [ pkg for pkg in pkglist if self.filter.test(pkg) ]
+        LOG.debug("_filter_package_list():  %s packages after filtering" % 
+                  (len(pkglist_filtered)))
+        return pkglist_filtered
+
     def __getstate__(self):
         """
         Get the object state for pickling.
@@ -299,13 +318,14 @@ class YumMetadataObj(object):
 
 class YumInfo(object):
     def __init__(self, repo_label, repo_url, repo_dir="./",
-                packages_location=None,
-                mirrors=None, newest=False,
-                cacert=None, clicert=None, clikey=None,
-                proxy_url=None, proxy_port=None, proxy_user=None,
-                proxy_pass=None, sslverify=1,
-                remove_old=False, numOldPackages=2, skip=None, max_speed=None,
-                purge_orphaned=True, distro_location=None, tmp_path=None):
+                 packages_location=None,
+                 mirrors=None, newest=False,
+                 cacert=None, clicert=None, clikey=None,
+                 proxy_url=None, proxy_port=None, proxy_user=None,
+                 proxy_pass=None, sslverify=1,
+                 remove_old=False, numOldPackages=2, skip=None, max_speed=None,
+                 purge_orphaned=True, distro_location=None, tmp_path=None,
+                 filter=None):
         self.rpms = []
         self.drpms = []
         self.repo_label = repo_label
@@ -335,14 +355,18 @@ class YumInfo(object):
         self.stopped = False
         self.distropath = distro_location
         self.tmp_path = tmp_path
+        self.filter = filter
 
     def setUp(self):
-        yum_metadata_obj = YumMetadataObj(repo_label=self.repo_label, repo_url=self.repo_url,
-                                          mirrorlist=self.mirrors,
-                                          cacert=self.sslcacert, clicert=self.sslclientcert, clikey=self.sslclientkey,
-                                          proxy_url=self.proxy_url, proxy_port=self.proxy_port,
-                                          proxy_user=self.proxy_user, proxy_pass=self.proxy_pass,
-                                          sslverify=self.sslverify, tmp_path=self.tmp_path)
+        yum_metadata_obj = YumMetadataObj(
+            repo_label=self.repo_label, repo_url=self.repo_url,
+            mirrorlist=self.mirrors,
+            cacert=self.sslcacert, clicert=self.sslclientcert, 
+            clikey=self.sslclientkey,
+            proxy_url=self.proxy_url, proxy_port=self.proxy_port,
+            proxy_user=self.proxy_user, proxy_pass=self.proxy_pass,
+            sslverify=self.sslverify, tmp_path=self.tmp_path,
+            filter=self.filter)
         yumAO = None
         try:
             yumAO = ActiveObject(yum_metadata_obj)

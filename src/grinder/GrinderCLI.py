@@ -22,6 +22,7 @@ from grinder.RepoFetch import YumRepoGrinder
 from grinder.RHNSync import RHNSync
 from grinder.GrinderExceptions import *
 from grinder.FileFetch import FileGrinder
+from grinder.Filter import Filter
 
 LOG = logging.getLogger("grinder.GrinderCLI")
 
@@ -228,6 +229,10 @@ class RepoDriver(CliDriver):
                           help="skip verify size of existing packages")
         self.parser.add_option('--skip_verify_checksum', action="store_true",
                           help="skip verify checksum of existing packages")
+        self.parser.add_option('--filter', action="store",
+                          help="add a filter, either whitelist or blacklist")
+        self.parser.add_option('--filter_regex', action="append",
+                          help="add a filter regex; may be use multiple times")
 
     def _validate_options(self):
         if not self.options.label:
@@ -240,6 +245,19 @@ class RepoDriver(CliDriver):
 
         if self.options.parallel:
             self.parallel = self.options.parallel
+
+        if self.options.filter:
+            if ((self.options.filter != "whitelist") and 
+                (self.options.filter != "blacklist")):
+                print("--filter=<type> should be either " +
+                      "'whitelist' or 'blacklist'")
+                sys.exit(-1)
+            if not self.options.filter_regex:
+                print("please provide a --filter_regex when using --filter")
+                sys.exit(-1)
+            LOG.debug("--filter=%s --filter_regex=%s" % 
+                      (self.options.filter, 
+                       self.options.filter_regex))
 
     def _do_command(self):
         """
@@ -257,14 +275,20 @@ class RepoDriver(CliDriver):
             verify_options["size"] = False
         if self.options.skip_verify_checksum:
             verify_options["checksum"] = False
-        self.yfetch = YumRepoGrinder(self.options.label, self.options.url, \
-                                self.parallel, cacert=self.options.cacert, \
-                                clicert=self.options.clicert, clikey=self.options.clikey, \
-                                proxy_url=self.options.proxy_url, 
-                                proxy_port=self.options.proxy_port, \
-                                proxy_user=self.options.proxy_user, \
-                                proxy_pass=self.options.proxy_pass,
-                                sslverify=sslverify, max_speed=limit)
+        if self.options.filter:
+            self.options.filter = Filter(self.options.filter, 
+                                         regex_list=self.options.filter_regex)
+        self.yfetch = YumRepoGrinder(
+            self.options.label, self.options.url,
+            self.parallel, cacert=self.options.cacert,
+            clicert=self.options.clicert,
+            clikey=self.options.clikey,
+            proxy_url=self.options.proxy_url, 
+            proxy_port=self.options.proxy_port,
+            proxy_user=self.options.proxy_user,
+            proxy_pass=self.options.proxy_pass,
+            sslverify=sslverify, max_speed=limit,
+            filter=self.options.filter)
         if self.options.basepath:
             self.yfetch.fetchYumRepo(self.options.basepath, verify_options=verify_options)
         else:

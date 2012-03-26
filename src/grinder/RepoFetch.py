@@ -55,12 +55,13 @@ class YumRepoGrinder(object):
     """
       Driver class to fetch content from a Yum Repository
     """
-    def __init__(self, repo_label, repo_url, parallel=10, mirrors=None, \
-                       newest=False, cacert=None, clicert=None, clikey=None, \
-                       proxy_url=None, proxy_port=None, proxy_user=None, \
-                       proxy_pass=None, sslverify=1, packages_location=None, \
-                       remove_old=False, numOldPackages=2, skip=None, max_speed=None, \
-                       purge_orphaned=True, distro_location=None, tmp_path=None):
+    def __init__(self, repo_label, repo_url, parallel=10, mirrors=None,
+                 newest=False, cacert=None, clicert=None, clikey=None,
+                 proxy_url=None, proxy_port=None, proxy_user=None,
+                 proxy_pass=None, sslverify=1, packages_location=None,
+                 remove_old=False, numOldPackages=2, skip=None, max_speed=None,
+                 purge_orphaned=True, distro_location=None, tmp_path=None,
+                 filter=None):
         self.repo_label = repo_label
         self.repo_url = repo_url
         self.repo_dir = None
@@ -96,6 +97,7 @@ class YumRepoGrinder(object):
         self.rpmlist = []
         self.drpmlist = []
         self.tmp_path = tmp_path
+        self.filter = filter
 
     def getRPMItems(self):
         return self.rpmlist
@@ -132,13 +134,16 @@ class YumRepoGrinder(object):
         self.fetchPkgs = ParallelFetch(self.repoFetch, self.numThreads, callback=callback)
         self.fetchPkgs.processCallback(ProgressReport.DownloadMetadata)
 
-        info = YumInfo(repo_label=self.repo_label, repo_url=self.repo_url, mirrors = self.mirrors,
-                        repo_dir=self.repo_dir, packages_location=self.pkgpath,
-                        newest=self.newest, remove_old=self.remove_old, numOldPackages=self.numOldPackages,
-                        cacert=self.sslcacert, clicert=self.sslclientcert, clikey=self.sslclientkey,
-                        proxy_url=self.proxy_url, proxy_port=self.proxy_port,
-                        proxy_user=self.proxy_user, proxy_pass=self.proxy_pass,
-                        sslverify=self.sslverify, skip=self.skip, tmp_path=self.tmp_path)
+        info = YumInfo(
+            repo_label=self.repo_label, repo_url=self.repo_url, 
+            mirrors = self.mirrors, repo_dir=self.repo_dir, 
+            packages_location=self.pkgpath, newest=self.newest,
+            remove_old=self.remove_old, numOldPackages=self.numOldPackages,
+            cacert=self.sslcacert, clicert=self.sslclientcert, 
+            clikey=self.sslclientkey, proxy_url=self.proxy_url, 
+            proxy_port=self.proxy_port, proxy_user=self.proxy_user, 
+            proxy_pass=self.proxy_pass, sslverify=self.sslverify, skip=self.skip,
+            tmp_path=self.tmp_path, filter=self.filter)
         info.setUp()
         self.rpmlist = info.rpms
         self.drpmlist = info.drpms
