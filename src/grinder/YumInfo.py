@@ -241,18 +241,25 @@ class YumMetadataObj(object):
         if not deltarpms:
             return
 
-        for dpkg in deltarpms:
-            info = {}
-            relativepath = dpkg.deltas.values()[0].filename
-            info['fileName'] = dpkg.deltas.values()[0].filename
-            info['downloadurl'] = self.repo_url + '/' + relativepath
-            info['savepath'] = self.repo_dir
-            info['checksumtype'] = dpkg.deltas.values()[0].checksum_type
-            info['checksum'] = dpkg.deltas.values()[0].checksum
-            info['size'] = dpkg.deltas.values()[0].size
-            info['pkgpath']  = self.pkgpath
-            info['item_type'] = BaseFetch.DELTA_RPM
-            items.append(info)
+        for nevra, dpkg in deltarpms.items():
+            for drpm in dpkg.deltas.values():
+                info = {}
+                relativepath = drpm.filename
+                info['new_package'] = nevra
+                info['fileName'] = drpm.filename
+                info['downloadurl'] = self.repo_url + '/' + relativepath
+                info['savepath'] = self.repo_dir
+                info['epoch'] = drpm.epoch
+                info['release'] = drpm.release
+                info['version'] = drpm.version
+                info['sequence'] = drpm.sequence
+                info['checksumtype'] = drpm.checksum_type
+                info['checksum'] = drpm.checksum
+                info['size'] = drpm.size
+                info['pkgpath']  = self.pkgpath
+                info['item_type'] = BaseFetch.DELTA_RPM
+                items.append(info)
+                LOG.info("delta rpm added %s" % info)
         LOG.info("%s delta rpms have been marked to be fetched" % len(items))
         return items
 
