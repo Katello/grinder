@@ -150,7 +150,7 @@ class YumMetadataObj(object):
         if not self.deltamd:
             return []
         sack = PrestoParser(self.deltamd).getDeltas()
-        return sack.values()
+        return sack
 
     def __getRepoXmlFileTypes(self):
         try:
@@ -240,7 +240,6 @@ class YumMetadataObj(object):
         deltarpms = self.__getDeltaPackageList()
         if not deltarpms:
             return
-
         for nevra, dpkg in deltarpms.items():
             for drpm in dpkg.deltas.values():
                 info = {}
