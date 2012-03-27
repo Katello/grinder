@@ -234,6 +234,12 @@ class BaseFetch(object):
                 limit = self.max_speed*1024
                 curl.setopt(curl.MAX_RECV_SPEED_LARGE, limit)
             curl.setopt(curl.VERBOSE,0)
+            # We have seen rare and intermittent problems with grinder syncing against a remote server
+            #  the remote server leaves a socket open but does not send back data.  Grinder has been stuck
+            #  for several days looping over a poll of the socket with no data being sent.
+            #   Slower than 1000 byes over 5 minutes will mark the connection as too slow and abort
+            curl.setopt(curl.LOW_SPEED_LIMIT,1000)
+            curl.setopt(curl.LOW_SPEED_TIME,60*5)
             # When using multiple threads you should set the CURLOPT_NOSIGNAL option to 1 for all handles
             # May impact DNS timeouts
             curl.setopt(curl.NOSIGNAL, 1)
