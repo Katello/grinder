@@ -148,14 +148,23 @@ class ParallelFetch(object):
                 self.syncStatusDict[status] = 1
             if status not in (BaseFetch.STATUS_ERROR, BaseFetch.STATUS_UNAUTHORIZED,
                 BaseFetch.STATUS_SIZE_MISSMATCH, BaseFetch.STATUS_MD5_MISSMATCH):
+                # Handle Success
                 self.syncCompleteQ.put(itemInfo)
             else:
+                # Handle Errors
                 if not errorInfo and itemInfo.has_key("downloadurl"):
-                    errorInfo = "%s on %s" % (status, itemInfo["downloadurl"])
+                    msg = "%s on %s" % (status, itemInfo["downloadurl"])
+                    # Keeping "error" for backwards compatibility with Pulp V1
+                    self.addErrorDetails(itemInfo, {"error_type":status, "value":msg, "error":msg,
+                                                    "exception": "", "traceback": ""})
+                elif isinstance(errorInfo, dict):
+                    self.addErrorDetails(itemInfo, errorInfo)
+                else:
+                    # Handle case when errorInfo is a string such as:
+                    #  'HTTP status code of 403 received for http://blah.../foo.rpm'
+                    self.addErrorDetails(itemInfo, {"error_type":status, "value":errorInfo, "error":errorInfo,
+                                                    "exception": "", "traceback": ""})
                 self.syncErrorQ.put(itemInfo)
-                # Keeping "error" for backwards compatibility with Pulp V1
-                self.addErrorDetails(itemInfo, {"error_type":status, "value":errorInfo, "error":errorInfo,
-                                                "exception": "", "traceback": ""})
             LOG.debug("%s status updated, %s success %s error" % (itemInfo,
                 self.syncCompleteQ.qsize(), self.syncErrorQ.qsize()))
             if itemInfo.has_key("downloadurl"):
