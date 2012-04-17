@@ -1,7 +1,7 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.146
+Version: 0.0.147
 Release: 1%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
@@ -59,6 +59,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Apr 17 2012 John Matthews <jmatthews@redhat.com> 0.0.147-1
+- 797880 - 'NaN' token in JSON response (jmatthews@redhat.com)
+
 * Tue Apr 10 2012 John Matthews <jmatthews@redhat.com> 0.0.146-1
 - Update error report (jmatthews@redhat.com)
 
