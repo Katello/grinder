@@ -60,6 +60,12 @@ class ProgressTracker(object):
         @param item_type: type of item being fetch, example could be "rpm"
         @type item_type: str
         """
+        try:
+            size = int(size)
+        except ValueError:
+            LOG.error("Error in add_item casting '%s' to an integer on %s  <%s>" % (size, item_type, fetchURL))
+            size = 0
+
         self.lock.acquire()
         try:
             if size < 0:
@@ -111,6 +117,12 @@ class ProgressTracker(object):
         # be invoked when we are told from pycurl that the size of the file is different
         # than what we expected, we will update our progress counters to reflect the
         # new information.
+        try:
+            size = int(size)
+        except ValueError:
+            LOG.error("Error in modify_item_size when casting '%s' to an integer on <%s>" % (size, fetchURL))
+            size = 0
+
         self.lock.acquire()
         try:
             if size < 0:
@@ -188,6 +200,17 @@ class ProgressTracker(object):
         @param downloaded number of bytes downloaded up till now for this item
         @type downloaded: int
         """
+        try:
+            download_total = int(download_total)
+        except ValueError:
+            LOG.error("Error in update_progress_download when casting '%s' to an integer on <%s>" % (download_total, fetchURL))
+            download_total = 0
+        try:
+            downloaded = int(downloaded)
+        except ValueError:
+            LOG.error("Error in update_progress_download when casting '%s' to an integer on <%s>" % (downloaded, fetchURL))
+            downloaded = 0
+
         # This method is used to note progress made while a specific item is being downloaded
         # Example, it can note that 100kb of a file has been downloaded of a 1GB file
         self.lock.acquire()
