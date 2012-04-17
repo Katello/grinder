@@ -262,4 +262,57 @@ class TestProgress(unittest.TestCase):
         self.assertEquals(progress["type_info"]["rpm"]["num_success"], 1)
         self.assertEquals(progress["type_info"]["rpm"]["num_error"], 0)
 
+    def test_update_progress_with_NaN(self):
+        tracker = ProgressTracker()
+        progress = tracker.get_progress()
+        # Simulate a call with 'NaN'
+        tracker.add_item("http://test1", 100, "rpm")
+        tracker.update_progress_download("http://test1", float("nan"), 5)
+        progress = tracker.get_progress()
+        self.assertEquals(progress["total_size_bytes"], 100)
+        self.assertEquals(progress["remaining_bytes"], 100)
+        self.assertEquals(progress["total_num_items"], 1)
+        self.assertEquals(progress["remaining_num_items"], 1)
+        self.assertTrue(progress["type_info"].has_key("rpm"))
+        self.assertEquals(progress["type_info"]["rpm"]["total_size_bytes"], 100)
+        self.assertEquals(progress["type_info"]["rpm"]["size_left"], 100)
+        self.assertEquals(progress["type_info"]["rpm"]["total_count"], 1)
+        self.assertEquals(progress["type_info"]["rpm"]["items_left"], 1)
+        self.assertEquals(progress["type_info"]["rpm"]["num_success"], 0)
+        self.assertEquals(progress["type_info"]["rpm"]["num_error"], 0)
+
+    def test_update_progress_with_bad_data(self):
+        tracker = ProgressTracker()
+        progress = tracker.get_progress()
+        # Simulate a call with bad data
+        tracker.add_item("http://test1", "Bad_Value_Non_Integer", "rpm")
+        tracker.update_progress_download("http://test1", "Bad_Value", 5)
+        progress = tracker.get_progress()
+        self.assertEquals(progress["total_size_bytes"], 0)
+        self.assertEquals(progress["remaining_bytes"], 0)
+        self.assertEquals(progress["total_num_items"], 1)
+        self.assertEquals(progress["remaining_num_items"], 1)
+        self.assertTrue(progress["type_info"].has_key("rpm"))
+        self.assertEquals(progress["type_info"]["rpm"]["total_size_bytes"], 0)
+        self.assertEquals(progress["type_info"]["rpm"]["size_left"], 0)
+        self.assertEquals(progress["type_info"]["rpm"]["total_count"], 1)
+        self.assertEquals(progress["type_info"]["rpm"]["items_left"], 1)
+        self.assertEquals(progress["type_info"]["rpm"]["num_success"], 0)
+        self.assertEquals(progress["type_info"]["rpm"]["num_error"], 0)
+        # Now simulate if update is called subsequently with good data
+        # Ensure it's working
+        tracker.update_progress_download("http://test1", 100, 5)
+        progress = tracker.get_progress()
+        self.assertEquals(progress["total_size_bytes"], 100)
+        self.assertEquals(progress["remaining_bytes"], 95)
+        self.assertEquals(progress["total_num_items"], 1)
+        self.assertEquals(progress["remaining_num_items"], 1)
+        self.assertTrue(progress["type_info"].has_key("rpm"))
+        self.assertEquals(progress["type_info"]["rpm"]["total_size_bytes"], 100)
+        self.assertEquals(progress["type_info"]["rpm"]["size_left"], 95)
+        self.assertEquals(progress["type_info"]["rpm"]["total_count"], 1)
+        self.assertEquals(progress["type_info"]["rpm"]["items_left"], 1)
+        self.assertEquals(progress["type_info"]["rpm"]["num_success"], 0)
+        self.assertEquals(progress["type_info"]["rpm"]["num_error"], 0)
+
 
