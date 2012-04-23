@@ -202,7 +202,7 @@ class YumRepoGrinder(object):
         self.setup(basepath, callback, verify_options)
         if not self.skip.has_key('distribution') or self.skip['distribution'] != 1:
             self.setupDistroInfo()
-            self.addItems(self.distro_items)
+            self.addItems(self.distro_items['files'])
         else:
             LOG.debug("skipping distributions from sync")
         self.addItems(self.rpmlist)

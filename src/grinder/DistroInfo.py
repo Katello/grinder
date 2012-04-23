@@ -79,7 +79,11 @@ class DistroInfo(object):
                     vars(self)[field] = cfgparser.get('general', field)
                 else:
                     vars(self)[field] = None
-        ks_label = "ks-%s-%s-%s-%s" % (self.family, self.variant, self.version, self.arch)
+#        ks_label = "ks-%s-%s-%s-%s" % (self.family, self.variant, self.version, self.arch)
+        ks_label = "ks"
+        for field in (self.family, self.variant, self.version, self.arch):
+            if field is not None:
+                ks_label += "-%s" % field
         tree_info = {}
         if cfgparser.has_section('checksums'):
             # This should give us all the kernel/image files
@@ -105,6 +109,7 @@ class DistroInfo(object):
         treecfg.close()
         distro_items = []
         treeinfo_path = self.repo_dir
+        ksfiles = []
         for relpath, hashinfo in tree_info.items():
             info = {}
             info['downloadurl'] = self.repo_url + '/' + relpath
@@ -116,7 +121,14 @@ class DistroInfo(object):
             if self.distropath:
                 info['pkgpath'] = "%s/%s" % (self.distropath, ks_label)
             info['item_type'] = BaseFetch.TREE_FILE
-            distro_items.append(info)
+            ksfiles.append(info)
+        distro_info = {}
+        distro_info['id'] = ks_label
+        distro_info['family'] = self.family
+        distro_info['version'] = self.version
+        distro_info['variant'] = self.variant
+        distro_info['arch'] = self.arch
+        distro_info['files'] = ksfiles
         LOG.info("%s Tree files have been marked to be fetched" % len(tree_info))
         # write the treeinfo file to distro location for reuse
         tree_repo_location = os.path.join(treeinfo_path, tree_manifest)
@@ -127,7 +139,7 @@ class DistroInfo(object):
             shutil.move(tree_repo_location, tree_distro_location)
             LOG.info("creating symlink from [%s] to [%s]" % (tree_distro_location, tree_repo_location))
             os.symlink(tree_distro_location, tree_repo_location)
-        return distro_items
+        return distro_info
 
     def get_tree_manifest(self, fetcherAO):
         # In certain cases, treeinfo is not a hidden file. Try if one fails..
