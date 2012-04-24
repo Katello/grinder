@@ -113,7 +113,7 @@ class DistroInfo(object):
         for relpath, hashinfo in tree_info.items():
             info = {}
             info['downloadurl'] = self.repo_url + '/' + relpath
-            info['fileName']    = os.path.basename(relpath)
+            info['fileName']    = relpath
             info['savepath']    = treeinfo_path + '/' + os.path.dirname(relpath)
             (info['checksumtype'], info['checksum']) = hashinfo
             info['size']        = 0
