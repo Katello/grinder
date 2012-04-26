@@ -88,7 +88,7 @@ class YumRepoGrinder(object):
         self.remove_old = remove_old
         self.skip = skip
         if not self.skip:
-            self.skip = {}
+            self.skip = []
         self.sslverify  = sslverify
         self.max_speed = max_speed
         self.purge_orphaned = purge_orphaned
@@ -172,7 +172,7 @@ class YumRepoGrinder(object):
             self.fetchPkgs.processCallback(ProgressReport.DownloadItems)
             report = self.fetchPkgs.waitForFinish()
             self.finalizeMetadata()
-            if not self.skip.has_key('packages') or self.skip['packages'] != 1:
+            if 'rpm' not in self.skip:
                 if self.purge_orphaned:
                     # Includes logic of:
                     # 1) removing previously existing packages that have been
@@ -200,7 +200,7 @@ class YumRepoGrinder(object):
         LOG.info("fetchYumRepo() repo_label = %s, repo_url = %s, basepath = %s, verify_options = %s" % \
                  (self.repo_label, self.repo_url, basepath, verify_options))
         self.setup(basepath, callback, verify_options)
-        if not self.skip.has_key('distribution') or self.skip['distribution'] != 1:
+        if 'distribution' not in self.skip:
             self.setupDistroInfo()
             self.addItems(self.distro_items['files'])
         else:

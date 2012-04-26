@@ -97,11 +97,12 @@ class YumMetadataObj(object):
             self.__getRepoData()
             if not skip:
                 skip = {}
-            if not skip.has_key("packages") or skip["packages"] != 1:
+            if 'rpm' not in skip:
                 rpms = self.__getRPMs(newest, remove_old, numOldPackages)
-                drpms = self.__getDRPMs()
+                if 'drpm' not in skip:
+                    drpms = self.__getDRPMs()
+                    download_items["drpms"] = drpms
                 download_items["rpms"] = rpms
-                download_items["drpms"] = drpms
         finally:
             self.__closeRepo()
             tmpdir.delete()
@@ -354,7 +355,7 @@ class YumInfo(object):
         self.remove_old = remove_old
         self.skip = skip
         if not self.skip:
-            self.skip = {}
+            self.skip = []
         self.sslverify  = sslverify
         self.max_speed = max_speed
         self.purge_orphaned = purge_orphaned
