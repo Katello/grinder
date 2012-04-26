@@ -46,7 +46,7 @@ class TestDistributionSync(unittest.TestCase):
                           distropath=self.temp_dir)
         repoFetch = RepoFetch()
         distro_items = info.prepareTrees(repoFetch)
-        self.assertEquals(len(distro_items), 3)
+        self.assertEquals(len(distro_items['files']), 3)
 
     def test_prepareTrees_no_treeinfo(self):
         test_url = "http://repos.fedorapeople.org/repos/pulp/pulp/demo_repos/repo_resync_a/"
@@ -74,6 +74,7 @@ class TestDistributionSync(unittest.TestCase):
         yum_fetch = YumRepoGrinder(temp_label, test_url, 5)
         sync_report = yum_fetch.fetchYumRepo(self.temp_dir)
         distro_tree_files = glob.glob("%s/%s/images/*" % (self.temp_dir, temp_label))
+        print distro_tree_files
         self.assertEquals(len(distro_tree_files), 3)
     
     def test_sync_of_repo_no_treeinfo(self):

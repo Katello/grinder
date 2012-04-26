@@ -152,7 +152,7 @@ class YumRepoGrinder(object):
         info = DistroInfo(repo_url=self.repo_url, repo_dir=self.repo_dir,
                           distropath=self.distropath)
         distro_items = info.prepareTrees(self.repoFetch)
-        self.distro_items = []
+        self.distro_items = {}
         if distro_items:
             self.distro_items = distro_items
 
@@ -202,7 +202,8 @@ class YumRepoGrinder(object):
         self.setup(basepath, callback, verify_options)
         if 'distribution' not in self.skip:
             self.setupDistroInfo()
-            self.addItems(self.distro_items['files'])
+            if self.distro_items:
+                self.addItems(self.distro_items['files'])
         else:
             LOG.debug("skipping distributions from sync")
         self.addItems(self.rpmlist)
