@@ -1,7 +1,7 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.1.2
+Version: 0.1.3
 Release: 1%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
@@ -59,6 +59,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Apr 26 2012 Pradeep Kilambi <pkilambi@redhat.com> 0.1.3-1
+- fixing unit tests (pkilambi@redhat.com)
+- changing the skip from dict to a list and using new skip types
+  (pkilambi@redhat.com)
+
 * Tue Apr 24 2012 Pradeep Kilambi <pkilambi@redhat.com> 0.1.2-1
 - fix the filename in ksfiles to  include relativepath (pkilambi@redhat.com)
 - Adding more details to distro info post preparing trees (pkilambi@redhat.com)
