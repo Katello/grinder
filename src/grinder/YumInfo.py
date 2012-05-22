@@ -23,6 +23,7 @@ from grinder.BaseFetch import BaseFetch
 from grinder.PrestoParser import PrestoParser
 from grinder.GrinderExceptions import GrinderException
 from grinder.GrinderUtils import GrinderUtils
+from grinder.Retry import Retry
 from grinder.tmpdir import TmpDir
 
 LOG = logging.getLogger("grinder.YumInfo")
@@ -153,11 +154,20 @@ class YumMetadataObj(object):
         sack = PrestoParser(self.deltamd).getDeltas()
         return sack
 
+    @Retry()
     def __getRepoXmlFileTypes(self):
         try:
             return self.repo.repoXML.fileTypes()
         except Exception, e:
-            LOG.error("Caught exception when trying to fetch content from [%s]: %s" % (self.repo_url, e))
+            LOG.error("Caught exception when trying to fetch repomd.xml from [%s]: %s" % (self.repo_url, e))
+            raise
+
+    @Retry()
+    def __retrieveMD(self, ftype):
+        try:
+            return self.repo.retrieveMD(ftype)
+        except Exception, e:
+            LOG.error("Caught exception when trying to fetch metadata file %s from [%s]: %s" % (ftype, self.repo_url, e))
             raise
 
     def __getRepoData(self):
@@ -173,7 +183,7 @@ class YumMetadataObj(object):
                 if ftype == "primary_db":
                     self.repo.retrieved["primary_db"] = 0
                 time_a = time.time()
-                ftypefile = self.repo.retrieveMD(ftype)
+                ftypefile = self.__retrieveMD(ftype)
                 time_b = time.time()
                 LOG.debug("self.repo.retrieveMD(%s) took %s seconds" % (ftype, (time_b-time_a)))
                 basename  = os.path.basename(ftypefile)
