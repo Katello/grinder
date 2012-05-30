@@ -2,7 +2,7 @@
 
 Name: grinder
 Version: 0.0.136
-Release: 1%{?dist}
+Release: 1%{?dist}.rhui
 Summary: A tool for synchronizing content from yum repositories
 
 Group: Development/Tools
