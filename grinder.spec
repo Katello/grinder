@@ -1,7 +1,7 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.0.136
+Version: 0.0.137
 Release: 1%{?dist}.rhui
 Summary: A tool for synchronizing content from yum repositories
 
@@ -59,6 +59,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed May 30 2012 John Matthews <jmatthews@redhat.com> 0.0.137-1.rhui
+- Adding a .rhui to release (jmatthews@redhat.com)
+- Update URLs in unit tests (jmatthews@redhat.com)
+- Adding retry attempts to fetching of Yum repodata (jmatthews@redhat.com)
+
 * Thu Dec 15 2011 John Matthews <jmatthews@redhat.com> 0.0.136-1
 - rpmlint updates (jmatthews@redhat.com)
 
