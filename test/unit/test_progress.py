@@ -193,7 +193,7 @@ class TestProgress(unittest.TestCase):
 
     def test_basic_sync(self):
         return
-        test_url = "http://repos.fedorapeople.org/repos/pulp/pulp/testing/6Server/i386/"
+        test_url = "http://repos.fedorapeople.org/repos/pulp/pulp/v1/testing/6Server/i386/"
         temp_label = "temp_label"
         yum_fetch = RepoFetch.YumRepoGrinder(temp_label, test_url, 5)
         temp_dir = tempfile.mkdtemp()
