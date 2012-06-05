@@ -2,7 +2,7 @@
 %define pulp_tag pulp_1.0
 
 Name: grinder
-Version: 0.0.142
+Version: 0.0.143
 Release: 1%{pulp_tag}%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
@@ -60,6 +60,14 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Jun 05 2012 John Matthews <jmatthews@redhat.com> 0.0.143-1pulp_1.0
+- Changing .spec so tito will keep the pulp_1.0 tag in subsequent tagging
+  operations (jmatthews@redhat.com)
+- Change release to include 'pulp_1.0' to avoid version/release conflicts in
+  brew (jmatthews@redhat.com)
+- Adding a low speed limit threshold to recognize a hung connection and abort
+  (jmatthews@redhat.com)
+
 * Wed Mar 21 2012 Pradeep Kilambi <pkilambi@redhat.com> 0.0.142-1
 - 805543 - adding an optional arg to force fetch files; this is useful for
   files like treeinfo that dont have checksum/size info for validation
