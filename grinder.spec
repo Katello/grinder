@@ -2,7 +2,7 @@
 
 Name: grinder
 Version: 0.0.142
-Release: 1%{?dist}
+Release: 1_pulp_1.0%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
 Group: Development/Tools
