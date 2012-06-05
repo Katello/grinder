@@ -1,8 +1,9 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+%define pulp_tag pulp_1.0
 
 Name: grinder
 Version: 0.0.142
-Release: 1_pulp_1.0%{?dist}
+Release: 1%{pulp_tag}%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
 Group: Development/Tools
