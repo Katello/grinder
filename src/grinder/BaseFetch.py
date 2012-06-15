@@ -45,7 +45,7 @@ class BaseFetch(object):
     def __init__(self, cacert=None, clicert=None, clikey=None, 
             proxy_url=None, proxy_port=None, proxy_user=None, 
             proxy_pass=None, sslverify=1, max_speed = None,
-            verify_options = None, tracker = None):
+            verify_options = None, tracker = None, num_retries=None):
         self.sslcacert = cacert
         self.sslclientcert = clicert
         self.sslclientkey = clikey
@@ -59,6 +59,9 @@ class BaseFetch(object):
         if not tracker:
             tracker = ProgressTracker()
         self.tracker = tracker
+        self.num_retries = 2
+        if num_retries is not None:
+            self.num_retries=num_retries
 
     def validateDownload(self, filePath, size, hashtype, checksum):
         """
@@ -130,7 +133,7 @@ class BaseFetch(object):
             self.tracker.update_progress_download(fetchURL, download_total, downloaded)
 
     def fetch(self, fileName, fetchURL, savePath, itemSize=None, hashtype=None, checksum=None, 
-             headers=None, retryTimes=2, packages_location=None, verify_options=None, probing=None, force=False):
+             headers=None, retryTimes=None, packages_location=None, verify_options=None, probing=None, force=False):
         """
         @param fileName file name
         @type fileName str
@@ -172,6 +175,9 @@ class BaseFetch(object):
         @rtype bool
 
         """
+        if retryTimes is None:
+            retryTimes = self.num_retries
+
         if packages_location is not None:
             # this option is to store packages in a central location
             # and symlink pkgs to individual repo directories

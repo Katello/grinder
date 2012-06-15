@@ -31,11 +31,11 @@ class RepoFetch(BaseFetch):
     """
     def __init__(self, cacert=None, clicert=None, clikey=None,
                  proxy_url=None, proxy_port=None, proxy_user=None, proxy_pass=None,
-                 sslverify=1, max_speed=None, verify_options=None):
+                 sslverify=1, max_speed=None, verify_options=None, num_retries=None):
         BaseFetch.__init__(self, cacert=cacert, clicert=clicert, clikey=clikey,
                 proxy_url=proxy_url, proxy_port=proxy_port, 
                 proxy_user=proxy_user, proxy_pass=proxy_pass, sslverify=sslverify,
-                max_speed=max_speed, verify_options=verify_options)
+                max_speed=max_speed, verify_options=verify_options, num_retries=num_retries)
 
     def stop(self, state=True):
         self.stopped = state
@@ -108,7 +108,7 @@ class YumRepoGrinder(object):
     def getDistroItems(self):
         return self.distro_items
 
-    def setup(self, basepath="./", callback=None, verify_options=None):
+    def setup(self, basepath="./", callback=None, verify_options=None, num_retries=None, retry_delay=None):
         """
         Fetches yum metadata and determines what object should be downloaded.
 
@@ -120,6 +120,12 @@ class YumRepoGrinder(object):
 
         @param verify_options: controls verification checks on "size" and "checksum".
         @type verify_options: dict{"size":bool,"checksum":bool}
+
+        @param num_retries: number of retries to perform if an error occurs
+        @type num_retries: int
+
+        @param retry_delay: delay in seconds between retries, delay = 'retry_attempt' * 'retry_delay'
+        @type retry_delay: int
         """
         self.repo_dir = os.path.join(basepath, self.repo_label)
         LOG.info("%s, %s, Calling RepoFetch with: cacert=<%s>, clicert=<%s>, clikey=<%s>, proxy_url=<%s>, proxy_port=<%s>, proxy_user=<%s>, proxy_pass=<NOT_LOGGED>, sslverify=<%s>, max_speed=<%s>, verify_options=<%s>, filter=<%s>" %\
@@ -130,7 +136,7 @@ class YumRepoGrinder(object):
         proxy_user=self.proxy_user, proxy_pass=self.proxy_pass,
         sslverify=self.sslverify,
         max_speed=self.max_speed,
-        verify_options=verify_options)
+        verify_options=verify_options, num_retries=num_retries)
         self.fetchPkgs = ParallelFetch(self.repoFetch, self.numThreads, callback=callback)
         self.fetchPkgs.processCallback(ProgressReport.DownloadMetadata)
 
@@ -143,7 +149,8 @@ class YumRepoGrinder(object):
             clikey=self.sslclientkey, proxy_url=self.proxy_url, 
             proxy_port=self.proxy_port, proxy_user=self.proxy_user, 
             proxy_pass=self.proxy_pass, sslverify=self.sslverify, skip=self.skip,
-            tmp_path=self.tmp_path, filter=self.filter)
+            tmp_path=self.tmp_path, filter=self.filter,
+            num_retries=num_retries, retry_delay=retry_delay)
         info.setUp()
         self.rpmlist = info.rpms
         self.drpmlist = info.drpms

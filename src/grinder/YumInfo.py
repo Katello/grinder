@@ -44,7 +44,7 @@ class YumMetadataObj(object):
                  mirrorlist=None,
                  proxy_url=None, proxy_port=None,
                  proxy_user=None, proxy_pass=None,
-                 sslverify=1, tmp_path=None, filter=None):
+                 sslverify=1, tmp_path=None, filter=None, num_retries=None, retry_delay=None):
         self.repo = None
         self.repo_label = repo_label
         self.repo_url = repo_url.encode('ascii', 'ignore')
@@ -61,6 +61,10 @@ class YumMetadataObj(object):
         self.sslverify  = sslverify
         self.tmp_path = tmp_path
         self.filter = filter
+        self.num_retries = num_retries
+        self.retry_delay = retry_delay
+        LOG.info("YumMetadataObj:  self.num_retries = %s, self.retry_delay = %s" % (self.num_retries, self.retry_delay))
+
 
     def getDownloadItems(self, repo_dir="./", packages_location=None,
                          skip=None, newest=False, remove_old=False, numOldPackages=None):
@@ -116,6 +120,7 @@ class YumMetadataObj(object):
         self.repo_dir = repo_dir
         self.repo = yum.yumRepo.YumRepository(self.repo_label)
         self.repo.basecachedir = tmp_dir
+        self.repo.base_persistdir = tmp_dir
         self.repo.cache = 0
         self.repo.metadata_expire = 0
         if self.mirrorlist:
@@ -342,7 +347,7 @@ class YumInfo(object):
                  proxy_pass=None, sslverify=1,
                  remove_old=False, numOldPackages=2, skip=None, max_speed=None,
                  purge_orphaned=True, distro_location=None, tmp_path=None,
-                 filter=None):
+                 filter=None, num_retries=None, retry_delay=None):
         self.rpms = []
         self.drpms = []
         self.repo_label = repo_label
@@ -373,6 +378,8 @@ class YumInfo(object):
         self.distropath = distro_location
         self.tmp_path = tmp_path
         self.filter = filter
+        self.num_retries = num_retries
+        self.retry_delay = retry_delay
 
     def setUp(self):
         yum_metadata_obj = YumMetadataObj(
@@ -383,7 +390,7 @@ class YumInfo(object):
             proxy_url=self.proxy_url, proxy_port=self.proxy_port,
             proxy_user=self.proxy_user, proxy_pass=self.proxy_pass,
             sslverify=self.sslverify, tmp_path=self.tmp_path,
-            filter=self.filter)
+            filter=self.filter, num_retries=self.num_retries, retry_delay=self.retry_delay)
         yumAO = None
         try:
             yumAO = ActiveObject(yum_metadata_obj)
