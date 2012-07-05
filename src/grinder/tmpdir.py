@@ -91,7 +91,7 @@ class TmpDir:
         try:
             os.makedirs(path)
             if mode:
-                os.chmod(path, 0777)
+                os.chmod(path, 0750)
         except OSError, e:
             if e.errno != errno.EEXIST:
                 raise
@@ -103,7 +103,7 @@ class TmpDir:
         return s[2:]
 
     def __init__(self):
-        self.mkdir(self.ROOT, 0777)
+        self.mkdir(self.ROOT, 0750)
         self.subdir = self.random()
         
     def path(self):
