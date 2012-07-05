@@ -2,7 +2,7 @@
 %define pulp_tag pulp_1.0
 
 Name: grinder
-Version: 0.0.143
+Version: 0.0.144
 Release: 1%{pulp_tag}%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
@@ -60,6 +60,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Jul 05 2012 Pradeep Kilambi <pkilambi@redhat.com> 0.0.144-1pulp_1.0
+- 828447 - fix permissions on grinder tmpdir (pkilambi@redhat.com)
+
 * Tue Jun 05 2012 John Matthews <jmatthews@redhat.com> 0.0.143-1pulp_1.0
 - Changing .spec so tito will keep the pulp_1.0 tag in subsequent tagging
   operations (jmatthews@redhat.com)
