@@ -247,6 +247,10 @@ class YumMetadataObj(object):
             info["provides"] = pkg.provides
             info["buildhost"] = pkg.buildhost
             info["description"] = pkg.description
+            # include metadata dumps per package
+            info["repodata"] = {"primary"  : pkg.xml_dump_primary_metadata(),
+                                "filelists": pkg.xml_dump_filelists_metadata(),
+                                "other" : pkg.xml_dump_other_metadata(),}
             items.append(info)
         LOG.info("%s packages have been marked to be fetched" % len(items))
         return items
