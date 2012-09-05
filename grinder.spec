@@ -1,7 +1,7 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.1.5
+Version: 0.1.6
 Release: 1%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
@@ -59,6 +59,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Sep 05 2012 Pradeep Kilambi <pkilambi@redhat.com> 0.1.6-1
+- Include metadata info per package when rpm info is setup during sync
+  (pkilambi@redhat.com)
+
 * Thu Jul 05 2012 Pradeep Kilambi <pkilambi@redhat.com> 0.1.5-1
 - 828447 - fix permissions on grinder tmpdir (pkilambi@redhat.com)
 
