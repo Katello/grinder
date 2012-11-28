@@ -98,14 +98,15 @@ class DistroInfo(object):
                     for fn in cfgparser.options(imgs):
                         fileinf = cfgparser.get(imgs, fn)
                         tree_info[fileinf] = (None, None)
-                    if cfgparser.has_section('stage2'):
-                        mainimage = cfgparser.get('stage2', 'mainimage')
-                    else:
-                        mainimage = 'images/stage2.img'
-                    tree_info[mainimage] = (None, None)
                 except ConfigParser.NoOptionError, e:
                     LOG.info("Invalid treeinfo: %s" % str(e))
                     return []
+        if cfgparser.has_section('stage2'):
+            mainimage = cfgparser.get('stage2', 'mainimage')
+        else:
+            mainimage = 'images/stage2.img'
+        if not tree_info.has_key(mainimage):
+            tree_info[mainimage] = (None, None)
         treecfg.close()
         distro_items = []
         treeinfo_path = self.repo_dir
