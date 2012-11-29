@@ -1,7 +1,7 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.1.7
+Version: 0.1.8
 Release: 1%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
@@ -59,6 +59,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Nov 29 2012 Pradeep Kilambi <pkilambi@redhat.com> 0.1.8-1
+- fixing distro syncs to not bail if stage2 is not in treeinfo
+  (pkilambi@redhat.com)
+
 * Wed Nov 28 2012 Pradeep Kilambi <pkilambi@redhat.com> 0.1.7-1
 - 858048 - Fix the distro sync to look for stage2 section for mainimage
   (pkilambi@redhat.com)
