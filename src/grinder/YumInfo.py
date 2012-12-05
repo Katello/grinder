@@ -13,6 +13,7 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 #
 import os
+import re
 import yum
 import time
 import logging
@@ -27,6 +28,8 @@ from grinder.Retry import Retry
 from grinder.tmpdir import TmpDir
 
 LOG = logging.getLogger("grinder.YumInfo")
+
+URL_PROTO_REGEX = '(?:http|ftp|https|file)://'
 
 class YumMetadataObj(object):
     """
@@ -224,8 +227,10 @@ class YumMetadataObj(object):
             # Adding a 'filename' to make life easier for Pulp v2 client support
             # keeping 'fileName' to not break Pulp v1
             info["filename"] = info["fileName"]
-
-            info['downloadurl'] = pkg.remote_url or self.repo_url + '/' + pkg.relativepath
+            if re.match(URL_PROTO_REGEX, pkg.remote_url):
+                info['downloadurl'] = pkg.remote_url
+            else:
+                info['downloadurl'] = self.repo_url + '/' + pkg.relativepath
             info['savepath'] = self.repo_dir + '/' + os.path.dirname(pkg.relativepath)
             info['checksumtype'], info['checksum'], status = pkg.checksums[0]
             info['size'] = pkg.size
