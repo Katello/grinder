@@ -252,6 +252,11 @@ class YumMetadataObj(object):
             info["provides"] = pkg.provides
             info["buildhost"] = pkg.buildhost
             info["description"] = pkg.description
+            # set the basepath to empty string so metadata doesnt preserve the source url
+            # this way yum handles what baseurl to append from .repo file. Since a package
+            # in pulp is shared between multiple repo we dont want to set a specific url
+            # anyway
+            pkg.basepath = " "
             # include metadata dumps per package
             info["repodata"] = {"primary"  : pkg.xml_dump_primary_metadata(),
                                 "filelists": pkg.xml_dump_filelists_metadata(),
