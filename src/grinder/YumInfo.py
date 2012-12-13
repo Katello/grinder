@@ -68,7 +68,6 @@ class YumMetadataObj(object):
         self.retry_delay = retry_delay
         LOG.info("YumMetadataObj:  self.num_retries = %s, self.retry_delay = %s" % (self.num_retries, self.retry_delay))
 
-
     def getDownloadItems(self, repo_dir="./", packages_location=None,
                          skip=None, newest=False, remove_old=False, numOldPackages=None):
         """
@@ -252,18 +251,49 @@ class YumMetadataObj(object):
             info["provides"] = pkg.provides
             info["buildhost"] = pkg.buildhost
             info["description"] = pkg.description
-            # set the basepath to empty string so metadata doesnt preserve the source url
-            # this way yum handles what baseurl to append from .repo file. Since a package
-            # in pulp is shared between multiple repo we dont want to set a specific url
-            # anyway
-            pkg.basepath = " "
+            #
+            # We are saving the primary xml that YUM creates and will be passing this back to
+            # the calling application.  These xml snippets will be assembled into repo metadata
+            # ..note this different approach has an impact to the <location> attribute
+            # yum will modify this to use a "xml:base" attribute on <location>
+            # if <location> has "xml:base" set it will impact some clients and cause them to fail to use
+            # the repos generated with grinder's repodata.
+            #
+            # Also, note that grinder will store all RPMs in a directory on peer with 'repodata'
+            # therefore we are manually updating <location> to:
+            # - drop xml:base
+            # - include only the basename() of the relativepath
+            #
+            primary_xml_dump = self.change_location_tag(pkg.xml_dump_primary_metadata(), pkg.relativepath)
+
             # include metadata dumps per package
-            info["repodata"] = {"primary"  : pkg.xml_dump_primary_metadata(),
+            info["repodata"] = {"primary"  : primary_xml_dump,
                                 "filelists": pkg.xml_dump_filelists_metadata(),
                                 "other" : pkg.xml_dump_other_metadata(),}
             items.append(info)
         LOG.info("%s packages have been marked to be fetched" % len(items))
         return items
+
+    def change_location_tag(self, primary_xml_snippet, relpath):
+        """
+        Method will transform the <location> tag to strip out leading directories so it matches
+        grinder's behavior of putting all rpms in same director as 'repodata'
+
+        @param primary_xml_snippet: snippet of primary xml text for a single package
+        @type primary_xml_snippet: str
+
+        @param relpath: Package's 'relativepath'
+        @type relpath: str
+        """
+
+        basename = os.path.basename(relpath)
+        start_index = primary_xml_snippet.find("<location ")
+        end_index = primary_xml_snippet.find("/>", start_index) + 2 # adjust to end of closing tag
+
+        first_portion = primary_xml_snippet[:start_index]
+        end_portion = primary_xml_snippet[end_index:]
+        location = """<location href="%s"/>""" % (basename)
+        return first_portion + location + end_portion
 
     def __getDRPMs(self):
         items = []
