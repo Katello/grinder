@@ -16,6 +16,7 @@
 #
 
 import gzip
+import lzma
 try:
     from cElementTree import iterparse
 except:
@@ -83,6 +84,8 @@ class PrestoParser(object):
         
         if filename.endswith(".gz"):
             fo = gzip.open(filename)
+        elif filename.endswith("xz"):
+            fo = lzma.LZMAFile(filename, 'r')
         else:
             fo = open(filename, 'rt')
         for event, elem in iterparse(fo):

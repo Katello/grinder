@@ -16,6 +16,7 @@ BuildRequires:  python-setuptools
 Requires:       createrepo, python >= 2.4
 Requires:       PyYAML
 Requires:       python-pycurl
+Requires:       pyliblzma
 %if 0%{?rhel} == 6
 # RHEL-6, 
 # Require updated nss/curl for BZ: https://bugzilla.redhat.com/show_bug.cgi?id=710455
