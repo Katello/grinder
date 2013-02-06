@@ -87,6 +87,24 @@ class TestYumMetadataParse(unittest.TestCase):
         finally:
             shutil.rmtree(temp_dir)
 
+    def test_rpm_changelog_files_data(self):
+        repo_dir = os.path.abspath(os.path.join(DATA_DIR, "repo_separate_pkg_dir"))
+        test_url = "file://%s" % (repo_dir)
+        temp_label = "temp_label"
+        temp_dir = tempfile.mkdtemp()
+        try:
+            yum_metadata_obj = YumMetadataObj(temp_label, test_url)
+            pkglist = yum_metadata_obj.getDownloadItems(repo_dir=temp_dir)
+            self.assertTrue(pkglist.has_key("rpms"))
+            self.assertEquals(len(pkglist["rpms"]), 2)
+            pkg = pkglist["rpms"][0]
+            self.assertTrue(pkg.has_key("changelog"))
+            self.assertTrue(pkg.has_key("files"))
+            self.assertEquals(len(pkg['changelog']), 2)
+            self.assertEquals(len(pkg['files']), 1)
+        finally:
+            shutil.rmtree(temp_dir)
+
     def test_change_location_tag(self):
         yum_metadata_obj = YumMetadataObj("test_label", "unused_url")
         orig_xml = """

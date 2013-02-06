@@ -251,6 +251,8 @@ class YumMetadataObj(object):
             info["provides"] = pkg.provides
             info["buildhost"] = pkg.buildhost
             info["description"] = pkg.description
+            info["changelog"] = pkg.changelog
+            info["files"] = pkg.files
             #
             # We are saving the primary xml that YUM creates and will be passing this back to
             # the calling application.  These xml snippets will be assembled into repo metadata
