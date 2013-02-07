@@ -99,8 +99,10 @@ class TestYumMetadataParse(unittest.TestCase):
             self.assertEquals(len(pkglist["rpms"]), 2)
             pkg = pkglist["rpms"][0]
             self.assertTrue(pkg.has_key("changelog"))
+            self.assertTrue(pkg.has_key("filelist"))
             self.assertTrue(pkg.has_key("files"))
             self.assertEquals(len(pkg['changelog']), 2)
+            self.assertEquals(len(pkg['filelist']), 1)
             self.assertEquals(len(pkg['files']), 1)
         finally:
             shutil.rmtree(temp_dir)
