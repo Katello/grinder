@@ -33,10 +33,11 @@ class SyncReport:
         return "%s successes, %s downloads, %s errors" % (self.successes, self.downloads, self.errors)
 
 class ParallelFetch(object):
-    def __init__(self, fetcher, numThreads=3, callback=None):
+    def __init__(self, fetcher, numThreads=3, callback=None, incr_progress=False):
         self.fetcher = fetcher
         self.tracker = fetcher.tracker
-        self.tracker.callback = self.incremental_progress_update
+        if incr_progress:
+            self.tracker.callback = self.incremental_progress_update
         self.numThreads = numThreads
         self.callback = callback
         self.error_details = []

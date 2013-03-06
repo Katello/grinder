@@ -108,7 +108,7 @@ class YumRepoGrinder(object):
     def getDistroItems(self):
         return self.distro_items
 
-    def setup(self, basepath="./", callback=None, verify_options=None, num_retries=None, retry_delay=None):
+    def setup(self, basepath="./", callback=None, verify_options=None, num_retries=None, retry_delay=None, incr_progress=False):
         """
         Fetches yum metadata and determines what object should be downloaded.
 
@@ -126,6 +126,9 @@ class YumRepoGrinder(object):
 
         @param retry_delay: delay in seconds between retries, delay = 'retry_attempt' * 'retry_delay'
         @type retry_delay: int
+
+        @param incr_progress: if true, incremental progress on each item as it's downloaded will be reported
+        @type inc_progress: bool
         """
         self.repo_dir = os.path.join(basepath, self.repo_label)
         LOG.info("%s, %s, Calling RepoFetch with: cacert=<%s>, clicert=<%s>, clikey=<%s>, proxy_url=<%s>, proxy_port=<%s>, proxy_user=<%s>, proxy_pass=<NOT_LOGGED>, sslverify=<%s>, max_speed=<%s>, verify_options=<%s>, filter=<%s>" %\
@@ -137,7 +140,7 @@ class YumRepoGrinder(object):
         sslverify=self.sslverify,
         max_speed=self.max_speed,
         verify_options=verify_options, num_retries=num_retries)
-        self.fetchPkgs = ParallelFetch(self.repoFetch, self.numThreads, callback=callback)
+        self.fetchPkgs = ParallelFetch(self.repoFetch, self.numThreads, callback=callback, incr_progress=incr_progress)
         self.fetchPkgs.processCallback(ProgressReport.DownloadMetadata)
 
         info = YumInfo(
