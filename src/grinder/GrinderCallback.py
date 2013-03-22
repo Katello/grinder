@@ -28,6 +28,7 @@ class ProgressReport(object):
         self.items_left = itemLeft      # Number of items left to process
         self.size_total = sizeTotal     # Total number of bytes 
         self.size_left = sizeLeft       # Bytes left to process
+        self.item_complete = False      # If true, marks the item referenced by item_name has completed
         self.item_name = itemName       # Name of last item worked on
         self.status = status            # Status Message
         self.item_type = itemType       # Type of item fetched
@@ -42,7 +43,7 @@ class ProgressReport(object):
     def __str__(self):
         s = "Step: %s, " % (self.step)
         #if not self.item_name:
-        s += "Item<%s>: %s, Status: %s, " % (self.item_type, self.item_name, self.status)
+        s += "Item<%s>: %s:%s, Status: %s, " % (self.item_type, self.item_name, self.item_complete, self.status)
         s += "%s/%s items remaining, %s/%s size remaining, " % (self.items_left,
                 self.items_total, self.size_left, self.size_total)
         s += "%s num_error, %s num_success, %s num_download, " % (self.num_error, 

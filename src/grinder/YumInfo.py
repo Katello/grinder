@@ -244,35 +244,7 @@ class YumMetadataObj(object):
             info["arch"] = pkg.arch
             info["release"] = pkg.release
             info["epoch"] = pkg.epoch
-            info["relativepath"] = pkg.relativepath
-            info["vendor"] = pkg.vendor
-            info["license"] = pkg.license
-            info["requires"] = pkg.requires
-            info["provides"] = pkg.provides
-            info["buildhost"] = pkg.buildhost
-            info["description"] = pkg.description
-            info["changelog"] = pkg.changelog
-            info["filelist"] = pkg.filelist
-            info['files'] = pkg.files
-            #
-            # We are saving the primary xml that YUM creates and will be passing this back to
-            # the calling application.  These xml snippets will be assembled into repo metadata
-            # ..note this different approach has an impact to the <location> attribute
-            # yum will modify this to use a "xml:base" attribute on <location>
-            # if <location> has "xml:base" set it will impact some clients and cause them to fail to use
-            # the repos generated with grinder's repodata.
-            #
-            # Also, note that grinder will store all RPMs in a directory on peer with 'repodata'
-            # therefore we are manually updating <location> to:
-            # - drop xml:base
-            # - include only the basename() of the relativepath
-            #
-            primary_xml_dump = self.change_location_tag(pkg.xml_dump_primary_metadata(), pkg.relativepath)
-
-            # include metadata dumps per package
-            info["repodata"] = {"primary"  : primary_xml_dump,
-                                "filelists": pkg.xml_dump_filelists_metadata(),
-                                "other" : pkg.xml_dump_other_metadata(),}
+            info["relativepath"] = pkg.relativepath            
             items.append(info)
         LOG.info("%s packages have been marked to be fetched" % len(items))
         return items
@@ -310,6 +282,7 @@ class YumMetadataObj(object):
                 info['new_package'] = nevra
                 info['fileName'] = drpm.filename
                 info['downloadurl'] = self.repo_url + '/' + relativepath
+                info['relativepath'] = relativepath
                 info['savepath'] = self.repo_dir
                 info['epoch'] = drpm.epoch
                 info['release'] = drpm.release

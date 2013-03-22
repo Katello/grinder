@@ -37,6 +37,9 @@ class BaseFetch(object):
     STATUS_SKIP_VALIDATE = "skip_validate"
     STATUS_REQUEUE = "requeue"
 
+
+    SUCCESS = (STATUS_NOOP, STATUS_DOWNLOADED, STATUS_SKIP_VALIDATE)
+
     RPM = 'rpm'
     DELTA_RPM = 'delta_rpm'
     TREE_FILE = 'tree_file'
