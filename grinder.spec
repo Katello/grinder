@@ -1,7 +1,7 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name: grinder
-Version: 0.1.15
+Version: 0.1.16
 Release: 1%{?dist}
 Summary: A tool for synchronizing content from yum repositories
 
@@ -60,6 +60,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Apr 08 2013 Jay Dobies <jason.dobies@redhat.com> 0.1.16-1
+- 873313 - Very high memory usage during repo sync (jwmatthews@gmail.com)
+
 * Mon Mar 11 2013 Jeff Ortel <jortel@redhat.com> 0.1.15-1
 - Default to _not_ sending incremental progress reports as an item downloads
   This means if you are downloading a 100MB file you will only see a progress

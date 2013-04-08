@@ -21,7 +21,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="grinder",
-    version='0.1.15',
+    version='0.1.16',
     description='A tool for synching RPM based content.',
     author='Mike McCune, John Matthews, Pradeep Kilambi, Jeff Ortel',
     author_email='jmatthews@redhat.com',
