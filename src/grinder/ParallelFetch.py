@@ -118,10 +118,11 @@ class ParallelFetch(object):
         r = ProgressReport(progress["total_size_bytes"], progress["remaining_bytes"], self.itemTotal, itemsLeft)
         r.item_name = None
         if itemInfo:
-            if itemInfo.has_key("fileName"):
-                r.item_name = itemInfo["fileName"]
-            if itemInfo.has_key("item_type"):
-                r.item_type = itemInfo["item_type"]
+            r.item_complete = True
+            r.item_name = itemInfo["fileName"]
+            r.item_type = itemInfo["item_type"]
+            r.item_relativepath = itemInfo["relativepath"]
+            r.item_download_success = (status in BaseFetch.SUCCESS)
         r.status = None
         if status:
             r.status = status
