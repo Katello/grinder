@@ -355,7 +355,7 @@ class RHNSync(object):
                     report.errors, (endTime-startTime)))
         return report
 
-    def syncPackages(self, channelLabel, savePath, verbose=0, callback=None):
+    def syncPackages(self, channelLabel, savePath, verbose=0, callback=None, checksum="sha256"):
         """
         channelLabel - channel to sync packages from
         savePath - path to save packages, relative to basePath if basePath has been set
@@ -394,7 +394,7 @@ class RHNSync(object):
         if self.removeOldPackages:
             LOG.info("Remove old packages from %s" % (savePath))
             self.gutils.runRemoveOldPackages(savePath)
-        self.createRepo(savePath)
+        self.createRepo(savePath, checksum)
         self.updateRepo(os.path.join(savePath,"updateinfo.xml"),
                 os.path.join(savePath,"repodata/"))
         return report
@@ -476,9 +476,9 @@ class RHNSync(object):
         f.write(gzip.open(fname, 'r').read())
         f.close()
 
-    def createRepo(self, dir):
+    def createRepo(self, dir, checksum):
         startTime = time.time()
-        status, out = commands.getstatusoutput('createrepo --update -g comps.xml %s' % (dir))
+        status, out = commands.getstatusoutput('createrepo --update -g comps.xml -s %s %s' % (checksum, dir))
 
         class CreateRepoError:
             def __init__(self, output):
