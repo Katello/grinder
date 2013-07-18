@@ -18,10 +18,11 @@ import traceback
 import hashlib
 import types
 import unicodedata
+import urlparse
 from grinder.GrinderExceptions import GrinderException
 from grinder.ProgressTracker import ProgressTracker
 from grinder import GrinderUtils
-from WriteFunction import WriteFunction 
+from WriteFunction import WriteFunction
 from grinder.GrinderLock import GrinderLock
 
 LOG = logging.getLogger("grinder.BaseFetch")
@@ -45,8 +46,8 @@ class BaseFetch(object):
     TREE_FILE = 'tree_file'
     FILE      = 'file'
 
-    def __init__(self, cacert=None, clicert=None, clikey=None, 
-            proxy_url=None, proxy_port=None, proxy_user=None, 
+    def __init__(self, cacert=None, clicert=None, clikey=None,
+            proxy_url=None, proxy_port=None, proxy_user=None,
             proxy_pass=None, sslverify=1, max_speed = None,
             verify_options = None, tracker = None, num_retries=None):
         self.sslcacert = cacert
@@ -96,7 +97,7 @@ class BaseFetch(object):
             return BaseFetch.STATUS_MD5_MISSMATCH
         LOG.debug("Package [%s] is valid with checksum [%s] and size [%s]" % (fileName, checksum, size))
         return BaseFetch.STATUS_DOWNLOADED
-    
+
     def makeDirSafe(self, path):
         try:
             os.makedirs(path)
@@ -108,7 +109,7 @@ class BaseFetch(object):
                 LOG.debug("%s" % (tb_info))
                 LOG.critical(e)
                 raise e
-    
+
     def makeSafeSymlink(self, src_path, dst_path):
         try:
             if os.path.islink(dst_path):
@@ -135,7 +136,7 @@ class BaseFetch(object):
             #LOG.debug("self=<%s>, fetchURL = %s, download_total = %s, downloaded = %s" % (self, fetchURL, download_total, downloaded))
             self.tracker.update_progress_download(fetchURL, download_total, downloaded)
 
-    def fetch(self, fileName, fetchURL, savePath, itemSize=None, hashtype=None, checksum=None, 
+    def fetch(self, fileName, fetchURL, savePath, itemSize=None, hashtype=None, checksum=None,
              headers=None, retryTimes=None, packages_location=None, verify_options=None, probing=None, force=False):
         """
         @param fileName file name
@@ -252,10 +253,12 @@ class BaseFetch(object):
             # When using multiple threads you should set the CURLOPT_NOSIGNAL option to 1 for all handles
             # May impact DNS timeouts
             curl.setopt(curl.NOSIGNAL, 1)
-            
+
             if type(fetchURL) == types.UnicodeType:
                 #pycurl does not accept unicode strings for a URL, so we need to convert
                 fetchURL = unicodedata.normalize('NFKD', fetchURL).encode('ascii','ignore')
+            #clean url path from double slashes
+            fetchURL = urlparse.urljoin(fetchURL, urlparse.urlparse(fetchURL).path.replace('//','/'))
             curl.setopt(curl.URL, fetchURL)
             if self.sslcacert:
                 curl.setopt(curl.CAINFO, self.sslcacert)
@@ -323,7 +326,7 @@ class BaseFetch(object):
                 cleanup(filePath)
                 LOG.warn("ERROR: Response = %s fetching %s." % (status, fetchURL))
                 return (BaseFetch.STATUS_ERROR, "HTTP status code of %s received for %s" % (status, fetchURL))
-            if vstatus in [BaseFetch.STATUS_ERROR, BaseFetch.STATUS_SIZE_MISSMATCH, 
+            if vstatus in [BaseFetch.STATUS_ERROR, BaseFetch.STATUS_SIZE_MISSMATCH,
                 BaseFetch.STATUS_MD5_MISSMATCH] and retryTimes > 0:
                 #
                 # Incase of a network glitch or issue with RHN, retry the rpm fetch
@@ -332,7 +335,7 @@ class BaseFetch(object):
                 LOG.error("Retrying fetch of: %s with %s retry attempts left.  VerifyStatus was %s" % (fileName, retryTimes, vstatus))
                 cleanup(filePath)
                 self.reset_bytes_transferred(fetchURL)
-                return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
+                return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype,
                                   checksum, headers, retryTimes, packages_location)
             if packages_location and os.path.exists(filePath):
                 relFilePath = GrinderUtils.get_relative_path(filePath, repofilepath)
@@ -356,7 +359,7 @@ class BaseFetch(object):
                 #grinder_write_locker.release()
                 LOG.error("Retrying fetch of: %s with %s retry attempts left." % (fileName, retryTimes))
                 self.reset_bytes_transferred(fetchURL)
-                return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype, 
+                return self.fetch(fileName, fetchURL, savePath, itemSize, hashtype,
                                   checksum, headers, retryTimes, packages_location)
             grinder_write_locker.release()
             raise
@@ -441,7 +444,7 @@ def verifyExisting(filePath, expectedSize, hashtype, checksum, options=None):
     if checksum_check and hashtype and checksum:
         if getFileChecksum(hashtype, filename=filePath) != checksum:
             return False
-        
+
     return True
 
 def curlifyHeaders(headers):
@@ -465,7 +468,7 @@ if __name__ == "__main__":
     channelLabel = "rhel-i386-server-vt-5"
     fetchURL = baseURL + "/SAT/$RHN/" + channelLabel + "/getPackage/" + fetchName;
     itemSize = "1731195"
-    md5sum = "91b0f20aeeda88ddae4959797003a173" 
+    md5sum = "91b0f20aeeda88ddae4959797003a173"
     hashtype = "md5"
     savePath = "./test123"
     from RHNComm import RHNComm
@@ -489,4 +492,4 @@ if __name__ == "__main__":
     baseURL = "http://download.fedora.devel.redhat.com/pub/fedora/linux/releases/12/Everything/x86_64/os/"
     bf = BaseFetch(baseURL)
     itemInfo = {}
-    
+
