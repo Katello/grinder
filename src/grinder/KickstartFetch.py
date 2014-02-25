@@ -42,11 +42,11 @@ class KickstartFetch(BaseFetch):
         channelLabel = itemInfo['channelLabel']
         savePath = itemInfo['savePath']
         fetchURL = self.getFetchURL(channelLabel, ksLabel, fileName)
-        status = self.fetch(fileName, fetchURL, itemSize, hashType, md5sum, savePath, headers=authMap)
+        status = self.fetch(fileName, fetchURL, savePath, itemSize, hashType, md5sum, headers=authMap)
         if status == BaseFetch.STATUS_UNAUTHORIZED:
             LOG.warn("Unauthorized request from fetch().  Will attempt to update authentication credentials and retry")
             authMap = self.login(refresh=True)
-            return self.fetch(fileName, fetchURL, itemSize, hashType, md5sum, savePath, headers=authMap)
+            return self.fetch(fileName, fetchURL, savePath, itemSize, hashType, md5sum, headers=authMap)
         return status
 
 if __name__ == "__main__":

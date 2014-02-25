@@ -172,10 +172,15 @@ class RHNDriver(CliDriver):
             report = {}
             for info in channels:
                 label = info['label']
+                checksum = info['checksum'] if "checksum" in info else False
                 savePath = info['relpath']
                 report[label] = {}
                 if not self.options.skippackages:
-                    report[label]["packages"] = self.rhnSync.syncPackages(label, 
+                    if checksum:
+                        report[label]["packages"] = self.rhnSync.syncPackages(label,
+                            savePath, self.rhnSync.getVerbose(), checksum=checksum)
+                    else:
+                        report[label]["packages"] = self.rhnSync.syncPackages(label,
                             savePath, self.rhnSync.getVerbose())
                 if self.options.kickstarts:
                     report[label]["kickstarts"] = self.rhnSync.syncKickstarts(label, 

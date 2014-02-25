@@ -24,7 +24,7 @@ class SatDumpClient(object):
         self.baseURL = url
         if not transport:
             transport = RHNTransport()
-            transport.addProperty("X-RHN-Satellite-XML-Dump-Version", "3.4")
+            transport.addProperty("X-RHN-Satellite-XML-Dump-Version", "3.7")
         self.transport = transport
         self.client = RhnApi(self.baseURL + "/SAT-DUMP/", 
                 verbose=verbose, transport=self.transport)
@@ -83,6 +83,7 @@ class SatDumpClient(object):
                     fileInfo["hashtype"] = "md5"
                     fileInfo["size"] = f.getAttribute("file-size")
                     fileInfo["fileName"] = f.getAttribute("relative-path")
+                    fileInfo["relative-path"] = f.getAttribute("relative-path")
                     for key in ["last-modified", "md5sum"]:
                         fileInfo[key] = f.getAttribute(key)
                     retVal[ksLabel]["files"].append(fileInfo)
