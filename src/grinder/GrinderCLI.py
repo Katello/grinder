@@ -198,7 +198,7 @@ class RHNDriver(CliDriver):
 class RepoDriver(CliDriver):
     parallel = 5
     def __init__(self):
-        usage = "usage: %prog yum [OPTIONS]"
+        usage = "usage: %prog yum XXX [OPTIONS]"
         shortdesc = "Fetches content from a yum source."
         desc = "yum"
         CliDriver.__init__(self, "yum", usage, shortdesc, desc)
@@ -238,6 +238,8 @@ class RepoDriver(CliDriver):
                           help="add a filter, either whitelist or blacklist")
         self.parser.add_option('--filter_regex', action="append",
                           help="add a filter regex; may be use multiple times")
+        self.parser.add_option("--newest", action="store_true", dest="newest",
+                          help="only sync newest packages in a repo, will ignore older versions")
 
     def _validate_options(self):
         if not self.options.label:
@@ -293,7 +295,8 @@ class RepoDriver(CliDriver):
             proxy_user=self.options.proxy_user,
             proxy_pass=self.options.proxy_pass,
             sslverify=sslverify, max_speed=limit,
-            filter=self.options.filter)
+            filter=self.options.filter,
+            newest=self.options.newest)
         if self.options.basepath:
             self.yfetch.fetchYumRepo(self.options.basepath, verify_options=verify_options)
         else:
